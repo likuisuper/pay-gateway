@@ -24,8 +24,11 @@ func NewOrderPayLogic(ctx context.Context, svcCtx *svc.ServiceContext) *OrderPay
 }
 
 // 创建支付订单
-func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (*pb.OrderPayResp, error) {
-	// todo: add your logic here and delete this line
+func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (out *pb.OrderPayResp, err error) {
 
 	return &pb.OrderPayResp{}, nil
+}
+
+func (l *OrderPayLogic) crete() {
+
 }

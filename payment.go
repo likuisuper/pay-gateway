@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"gitee.com/zhuyunkj/pay-gateway/db"
 
 	"gitee.com/zhuyunkj/pay-gateway/internal/config"
 	"gitee.com/zhuyunkj/pay-gateway/internal/server"
@@ -23,6 +24,8 @@ func main() {
 
 	var c config.Config
 	conf.MustLoad(*configFile, &c)
+	// 初始化数据库
+	db.DBInit(c.Mysql)
 	ctx := svc.NewServiceContext(c)
 
 	s := zrpc.MustNewServer(c.RpcServerConf, func(grpcServer *grpc.Server) {
