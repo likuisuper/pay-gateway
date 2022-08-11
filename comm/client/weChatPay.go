@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"gitee.com/zhuyunkj/pay-gateway/db/mysql/model"
-	"gitee.com/zhuyunkj/pay-gateway/internal/config"
 	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
 	"github.com/wechatpay-apiv3/wechatpay-go/core"
 	"github.com/wechatpay-apiv3/wechatpay-go/core/auth/verifiers"
@@ -38,6 +37,16 @@ const (
 	WechatTradeType  = "MWEB"
 	WechatSignType   = "MD5"
 )
+
+//微信支付参数
+type WechatPayConfig struct {
+	AppId          string //应用ID
+	MchId          string //直连商户号
+	ApiKey         string //apiV3密钥
+	PrivateKeyPath string //apiV3密钥
+	SerialNumber   string //商户证书序列号
+	NotifyUrl      string //通知地址
+}
 
 //WXOrderParam	微信请求参数
 type WXOrderParam struct {
@@ -84,11 +93,11 @@ type UniAppResp struct {
 }
 
 type WeChatCommPay struct {
-	Config config.WechatPay
+	Config WechatPayConfig
 	Ctx    context.Context
 }
 
-func NewWeChatCommPay(config config.WechatPay) *WeChatCommPay {
+func NewWeChatCommPay(config WechatPayConfig) *WeChatCommPay {
 	return &WeChatCommPay{
 		Config: config,
 		Ctx:    context.Background(),

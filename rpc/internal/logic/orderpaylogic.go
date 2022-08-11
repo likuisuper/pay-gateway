@@ -7,14 +7,13 @@ import (
 	"gitee.com/zhuyunkj/pay-gateway/comm/client"
 	"gitee.com/zhuyunkj/pay-gateway/comm/define"
 	"gitee.com/zhuyunkj/pay-gateway/db/mysql/model"
-	"gitee.com/zhuyunkj/pay-gateway/internal/svc"
-	"gitee.com/zhuyunkj/pay-gateway/pb/pb"
+	"gitee.com/zhuyunkj/pay-gateway/rpc/internal/svc"
+	"gitee.com/zhuyunkj/pay-gateway/rpc/pb/pb"
 	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
 	"gitee.com/zhuyunkj/zhuyun-core/util"
 	"github.com/smartwalle/alipay/v3"
-	"strconv"
-
 	"github.com/zeromicro/go-zero/core/logx"
+	"strconv"
 )
 
 var (
@@ -79,14 +78,14 @@ func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (out *pb.OrderPayResp, err 
 	out = new(pb.OrderPayResp)
 	out.PayType = in.PayType
 
-	switch out.PayType {
-	case pb.PayType_AlipayWap:
-		out.AlipayWap, err = l.createAlipayWapOrder(in, pkgCfg)
-	case pb.PayType_WxUniApp:
-		out.WxUniApp, err = l.createWeChatUniOrder(in, orderInfo, pkgCfg)
-	case pb.PayType_TiktokEc:
-		out.TikTokEc, err = l.createTikTokEcOrder(orderInfo, pkgCfg)
-	}
+	//switch out.PayType {
+	//case pb.PayType_AlipayWap:
+	//	out.AlipayWap, err = l.createAlipayWapOrder(in, pkgCfg)
+	//case pb.PayType_WxUniApp:
+	//	out.WxUniApp, err = l.createWeChatUniOrder(in, orderInfo, pkgCfg)
+	//case pb.PayType_TiktokEc:
+	//	out.TikTokEc, err = l.createTikTokEcOrder(orderInfo, pkgCfg)
+	//}
 
 	return
 }
@@ -94,7 +93,7 @@ func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (out *pb.OrderPayResp, err 
 //支付宝wap支付
 func (l *OrderPayLogic) createAlipayWapOrder(in *pb.OrderPayReq, pkgCfg *svc.AppPkgConfig) (payUrl string, err error) {
 	// 将 key 的验证调整到初始化阶段
-	payClient, err := client.GetAlipayClient(pkgCfg.Alipay)
+	payClient, err := client.GetAlipayClient(client.AliPayConfig(pkgCfg.Alipay))
 	if err != nil {
 		util.CheckError("pkgName= %s, 初使化支付错误，err:=%v", pkgCfg.AppRel.AppPkgName, err)
 		return
@@ -123,7 +122,7 @@ func (l *OrderPayLogic) createAlipayWapOrder(in *pb.OrderPayReq, pkgCfg *svc.App
 
 //微信小程序支付
 func (l *OrderPayLogic) createWeChatUniOrder(in *pb.OrderPayReq, info *model.PmPayOrderTable, pkgCfg *svc.AppPkgConfig) (reply *pb.WxUniAppPayReply, err error) {
-	payClient := client.NewWeChatCommPay(pkgCfg.WechatPay)
+	payClient := client.NewWeChatCommPay(client.WechatPayConfig(pkgCfg.WechatPay))
 	res, err := payClient.WechatPayV3(info, in.WxOpenID)
 	if err != nil {
 		return
@@ -142,7 +141,7 @@ func (l *OrderPayLogic) createWeChatUniOrder(in *pb.OrderPayReq, info *model.PmP
 
 //抖音小程序支付
 func (l *OrderPayLogic) createTikTokEcOrder(info *model.PmPayOrderTable, pkgCfg *svc.AppPkgConfig) (reply *pb.TiktokEcPayReply, err error) {
-	payClient := client.NewTikTokPay(pkgCfg.TikTokPay)
+	payClient := client.NewTikTokPay(client.TikTokPayConfig(pkgCfg.TikTokPay))
 	res, err := payClient.CreateEcPayOrder(info)
 	if err != nil {
 		err = fmt.Errorf("创建订单失败 %w", err)

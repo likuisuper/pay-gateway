@@ -4,11 +4,10 @@ import (
 	"flag"
 	"fmt"
 	"gitee.com/zhuyunkj/pay-gateway/db"
-
-	"gitee.com/zhuyunkj/pay-gateway/internal/config"
-	"gitee.com/zhuyunkj/pay-gateway/internal/server"
-	"gitee.com/zhuyunkj/pay-gateway/internal/svc"
-	"gitee.com/zhuyunkj/pay-gateway/pb/pb"
+	"gitee.com/zhuyunkj/pay-gateway/rpc/internal/config"
+	"gitee.com/zhuyunkj/pay-gateway/rpc/internal/server"
+	"gitee.com/zhuyunkj/pay-gateway/rpc/internal/svc"
+	"gitee.com/zhuyunkj/pay-gateway/rpc/pb/pb"
 
 	"github.com/zeromicro/go-zero/core/conf"
 	"github.com/zeromicro/go-zero/core/service"

@@ -6,7 +6,7 @@ package payment
 import (
 	"context"
 
-	"gitee.com/zhuyunkj/pay-gateway/pb/pb"
+	"gitee.com/zhuyunkj/pay-gateway/rpc/pb/pb"
 
 	"github.com/zeromicro/go-zero/zrpc"
 	"google.golang.org/grpc"

@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"gitee.com/zhuyunkj/pay-gateway/db/mysql/model"
-	"gitee.com/zhuyunkj/pay-gateway/internal/config"
 	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
 	"gitee.com/zhuyunkj/zhuyun-core/util"
 	"github.com/zeromicro/go-zero/core/logx"
@@ -31,13 +30,21 @@ const (
 	tikTokValidTime = 300
 )
 
+//字节支付参数
+type TikTokPayConfig struct {
+	AppId     string //应用ID
+	SALT      string //加密参数
+	NotifyUrl string //通知地址
+	Token     string //token
+}
+
 type TikTokPay struct {
-	Config config.TikTokPay
+	Config TikTokPayConfig
 }
 
 var tikTokPay *TikTokPay
 
-func NewTikTokPay(config config.TikTokPay) *TikTokPay {
+func NewTikTokPay(config TikTokPayConfig) *TikTokPay {
 	if tikTokPay == nil {
 		tikTokPay = &TikTokPay{
 			Config: config,

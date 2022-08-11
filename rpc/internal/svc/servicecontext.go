@@ -1,7 +1,7 @@
 package svc
 
 import (
-	"gitee.com/zhuyunkj/pay-gateway/internal/config"
+	"gitee.com/zhuyunkj/pay-gateway/rpc/internal/config"
 	"github.com/zeromicro/go-zero/core/logx"
 )
 

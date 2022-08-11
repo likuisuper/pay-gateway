@@ -6,9 +6,9 @@ package server
 import (
 	"context"
 
-	"gitee.com/zhuyunkj/pay-gateway/internal/logic"
-	"gitee.com/zhuyunkj/pay-gateway/internal/svc"
-	"gitee.com/zhuyunkj/pay-gateway/pb/pb"
+	"gitee.com/zhuyunkj/pay-gateway/rpc/internal/logic"
+	"gitee.com/zhuyunkj/pay-gateway/rpc/internal/svc"
+	"gitee.com/zhuyunkj/pay-gateway/rpc/pb/pb"
 )
 
 type PaymentServer struct {
