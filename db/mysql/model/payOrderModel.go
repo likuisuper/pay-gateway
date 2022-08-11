@@ -2,9 +2,22 @@
 package model
 
 import (
+	"errors"
 	"gitee.com/zhuyunkj/pay-gateway/db"
+	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
 	"github.com/jinzhu/gorm"
+	"github.com/zeromicro/go-zero/core/logx"
 	"time"
+)
+
+var (
+	createPayOrderErr = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "createPayOrderErr", nil, "创建支付订单失败", nil})}
+	getPayOrderErr    = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "getPayOrderErr", nil, "获取支付订单失败", nil})}
+)
+
+const (
+	PmPayOrderTablePayStatusNo   = 0
+	PmPayOrderTablePayStatusPaid = 1
 )
 
 // 支付订单
@@ -17,6 +30,7 @@ type PmPayOrderTable struct {
 	Subject      string    `gorm:"column:subject;NOT NULL" json:"subject"`                       // 订单标题
 	PayType      int       `gorm:"column:pay_type;default:0;NOT NULL" json:"pay_type"`           // 支付方式
 	NotifyUrl    string    `gorm:"column:notify_url;NOT NULL" json:"notify_url"`                 // 回调通知地址
+	PayStatus    int       `gorm:"column:pay_status;NOT NULL"`                                   // 支付状态 0未支付  1已支付
 	CreatedAt    time.Time `gorm:"column:created_at;type:datetime" json:"created_at"`
 	UpdatedAt    time.Time `gorm:"column:updated_at;type:datetime" json:"updated_at"`
 }
@@ -33,4 +47,29 @@ func NewPmPayOrderModel(dbName string) *PmPayOrderModel {
 	return &PmPayOrderModel{
 		DB: db.WithDBContext(dbName),
 	}
+}
+
+//创建订单
+func (o *PmPayOrderModel) Create(info *PmPayOrderTable) error {
+	err := o.DB.Create(info).Error
+	if err != nil {
+		logx.Errorf("创建支付订单失败，err:=%v", err)
+		createPayOrderErr.CounterInc()
+	}
+	return err
+}
+
+//获取订单信息
+func (o *PmPayOrderModel) GetOneByCode(orderSn string) (info *PmPayOrderTable, err error) {
+	var orderInfo PmPayOrderTable
+	err = o.DB.Where("`order_sn` = ? ", orderSn).First(&orderInfo).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	if err != nil {
+		logx.Errorf("获取订单信息失败，err:=%v,order_sn=%s", err, orderSn)
+		getPayOrderErr.CounterInc()
+		return nil, err
+	}
+	return &orderInfo, nil
 }

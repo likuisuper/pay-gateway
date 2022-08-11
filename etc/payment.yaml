@@ -20,7 +20,7 @@ Mysql:
     Charset: utf8mb4
     Domain: 120.79.85.139
     Port: 3306
-    Dbname: cloud_read
+    Dbname: pay_gateway
     Username: game
     Passwd: Spgayg7UtFo.gdVK
     # 单位ms

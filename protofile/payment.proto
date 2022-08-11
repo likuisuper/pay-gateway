@@ -12,6 +12,8 @@ message OrderPayReq {
   string Subject = 4; //订单标题
   PayType PayType = 5; //支付方式
   string NotifyURL = 6; //回调通知地址
+  string returnURL = 7; //H5,wap支付跳转地址
+  string WxOpenID = 8;//微信小程序支付时必传
 }
 
 //支付方式枚举
@@ -23,8 +25,8 @@ enum PayType {
 
 //创建支付订单返回
 message OrderPayResp {
-  string OrderSn = 1;  //唯一订单号
-  string TradeNo = 2; //流水号
+  string OrderSn = 1;  //商户唯一订单号
+  PayType PayType = 6; //支付方式
 
   string AlipayWap = 3; //支付宝wap支付
   WxUniAppPayReply WxUniApp = 4; //微信小程序支付
