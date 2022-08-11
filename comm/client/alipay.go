@@ -9,7 +9,7 @@ var (
 	aliPayClientInitFailNum = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "aliPayClientInitFailNum", nil, "支付宝 client 初始化失败", nil})}
 )
 
-//支付宝参数
+//支付宝配置
 type AliPayConfig struct {
 	AppId            string
 	PrivateKey       string

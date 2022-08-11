@@ -38,7 +38,7 @@ const (
 	WechatSignType   = "MD5"
 )
 
-//微信支付参数
+//微信支付配置
 type WechatPayConfig struct {
 	AppId          string //应用ID
 	MchId          string //直连商户号

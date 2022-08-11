@@ -30,7 +30,7 @@ const (
 	tikTokValidTime = 300
 )
 
-//字节支付参数
+//字节支付配置
 type TikTokPayConfig struct {
 	AppId     string //应用ID
 	SALT      string //加密参数
