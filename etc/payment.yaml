@@ -30,17 +30,17 @@ Mysql:
 Alipay:
   - AppId: "2021002187652486"
     PrivateKey: "MIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQCWmQ32VZ3Z8gobScdnQ0yecrpdiRY/c+gRc6utYMLJvWxk0JbyG1YIchmt6zxaMc3IJpkym0VQmTdZJ6L4+bTvZznNqNDeQSsNAkGDU4HGrP9FnbFVh5lMCy7/5v074ttKRWwumGiNpcZEnUjOCOqrgdzKbAB7I/VustCMJQonLI/KdNABNY+jZn61qB4mIAK3j1haS/pQc23ewi9yVQaPGL4dfLN0FiqMnlFwQpL8YG1q3oHDYJ1h1TL0fmTFR58n//ZCV6DjuQl5o2OMsclICdO7Z1SrAGoe3yvKf0wM2EYmbdUlXR3vbUF489UpXsZ23C2mvSGrO6SiHP50exrdAgMBAAECggEBAJO916rA17lG8I9Q1CUEKxiO6TJ2GLNrXFIyrkvLT41nHf3RfSRLmR10AqlSy8SYc49V/pldJqUpitkWP5YOM2liVZzjbvV77WY3vlm+BOUKNuzvBVgpTUUC+7rlu62Soxu7+6PCtV+xME+EFja7HK3hGuAjEF2+KzvMhTfX5pwCYiLlfW+ETwfrWJ6ZtseJPVsJly7ZD6psFxznpELwY6UXAo/ITuW2sROM12zCF+mQyV5B/cyfA6khcsXEH2n8CFgFIxaKwPRs3JXUEkdiD27xOuma3kgXHZPz+V71iwTeqkYf8rOwCLhFTd2NFN7Iuhj310X4PJ5yol+UgDcPB8ECgYEA2nUkBiJ1LWLDjrMvkdTAPUx4jYQrfsNLoUKqEo0MhdciUUAl07v2r0O+BF3fdmhmLYTd4A5r1VtJYmLLjjAwWwQcJnlpDG7KvOzimG2iTj/71EgjMvGHeDFWoUF/Fe232HoLfydJNAP/4gO+letrQJSn57oZq1Bp73hPQ6uvKPUCgYEAsHp7eqdsNVJs3SDr8s9fCPR4W/fNnwfNEOBMQLBbEjhk3QKg6kE3AJt1B6oNaBq9W4sUJlfWMVdYtr80uY4oLd3GKNEy2CYqWN3Rbbh3ZmLkB/3ezDWh6wsQQaRsVrrqkTgLsM0BGDWzsoFCxnQSf0ZyrGwaWpNcxwxcAT8WmUkCgYEAoXUUY+hRvHKTYEN09A5O6r87FjTKRM0od44izsUqrTzcozqK+pugbdbeeLG8t/HfGuNpbPCbqDvo1+t20KczBgHaoGD5T/QOqWVW8BuPatAFWtbaFQvH+QBWK6aRu+5PA5LoLlkl1GjkVPI5iOpPAZMdKbo0wJYVRaUgyD36noUCgYAO2c/IS4x8lDobBak1XqQFseTrAFhqWJK2J9ni27RePSanvo/iBqjlQS/A/FtydkWXDYYdj+izcEFD56U9NCxHZ9FEIA6iR9vqbIgyLoLFt+6uiXuVPbIpgF3W2EpRphsVK104fJfp/KLpk50V7DCeS0RdJB+3nY0CJxUa+b8iGQKBgQCz7oIoDxBtDlTtBQaboV1wBzk4CIVUdo9SjvnWMyq7PvFE/uX31xwJ3qzVtuYird0WQDe3jd9l1zcaVUHeKJHSYcIVhwTDFhHV6wEWYQio43hQ5Whns3m3L89b/6BKE/zkE4sJe71nR+OBz2pL0wwuZ26YVmn8PpShMbPqdHacYA=="
-    AppCertPublicKey: "./etc/appCertPublicKey_2021002187652486.crt"
-    PublicKey: "./etc/alipayCertPublicKey_RSA2.crt"
-    PayRootCert: "./etc/alipayRootCert.crt"
+    AppCertPublicKey: "./etc/alipay/appCertPublicKey_2021002187652486.crt"
+    PublicKey: "./etc/alipay/alipayCertPublicKey_RSA2.crt"
+    PayRootCert: "./etc/alipay/alipayRootCert.crt"
     IsProduction: true
 WeChatPay:
-  - MchId: "1629060071"
-    AppId: wx60d3a724b283f508
+  - MchId: "1629143252"
+    AppId: wxf9a4501bc10f2b8e
     ApiKey: Zhuyunzongheng072520221234567890
     NotifyUrl: "http://test.playlet-online.go.yunxiacn.com/notify/wechat"
-    PrivateKeyPath: "./etc/apiclient_key.pem"
-    SerialNumber: 6977193BA196D6F692C652112F4919AA6F89BFB7
+    PrivateKeyPath: "./etc/wechatpay/apiclient_key.pem"
+    SerialNumber: 2F3E1C18E7D82152A58419A8D72D57B915A668FC
 TikTokPay:
   - AppId: tt1683603e89bd1ac801
     SALT: BQtFUa548DVXvEXFF3kQ0nBRwEHErEd13zUFZTeJ
@@ -49,6 +49,6 @@ TikTokPay:
 AppRel:
   - AppPkgName: "com.cloud.reading"
     AlipayAppId: "2021002187652486"
-    WechatPayAppId: "wx60d3a724b283f508"
+    WechatPayAppId: "wxf9a4501bc10f2b8e"
     TikTokPayAppId: "tt1683603e89bd1ac801"
 
