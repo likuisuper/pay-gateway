@@ -1,0 +1,54 @@
+syntax = "proto3";
+
+option go_package = "./pb";
+
+package payment;
+
+//创建支付订单
+message OrderPayReq {
+  string AppPkgName = 1; //应用包名
+  string OrderSn = 2;  //唯一订单号
+  int64 Amount = 3; //订单金额，单位分
+  string Subject = 4; //订单标题
+  PayType PayType = 5; //支付方式
+  string NotifyURL = 6; //回调通知地址
+}
+
+//支付方式枚举
+enum PayType {
+  AlipayWap = 0; //支付宝wap支付
+  WxUniApp = 1; //微信小程序支付
+  TiktokEc = 2; //头条小程序支付
+}
+
+//创建支付订单返回
+message OrderPayResp {
+  string OrderSn = 1;  //唯一订单号
+  string TradeNo = 2; //流水号
+
+  string AlipayWap = 3; //支付宝wap支付
+  WxUniAppPayReply WxUniApp = 4; //微信小程序支付
+  TiktokEcPayReply TikTokEc = 5; //抖音小程序支付
+}
+
+//微信uniapp支付返回
+message WxUniAppPayReply {
+  string OrderInfo = 1; //订单信息的json
+  string TimeStamp = 2; //生成订单时间
+  string NonceStr = 3; //用于验签的随机串
+  string Package = 4; //"prepay_id="+预支付交易会话标识
+  string SignType = 5; //签名方式
+  string PaySign = 6; //支付签名
+  string OrderSn = 7; //商户订单号
+}
+
+//抖音小程序支付返回
+message TiktokEcPayReply {
+  string OrderId = 1; //抖音侧唯一订单号
+  string OrderToken = 2; //签名后的订单信息
+}
+
+service Payment {
+  //创建支付订单
+  rpc OrderPay(OrderPayReq) returns(OrderPayResp);
+}
