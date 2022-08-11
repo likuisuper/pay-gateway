@@ -8,7 +8,6 @@ import (
 type Config struct {
 	zrpc.RpcServerConf
 	Mysql []*db.DbConfig `json:"Mysql"`
-	//Redis []*cache.RedisConfigs `json:"Redis"`
 	//支付配置
 	Alipay    []*AliPay
 	WeChatPay []*WechatPay

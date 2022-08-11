@@ -3,7 +3,6 @@ package model
 
 import (
 	"gitee.com/zhuyunkj/pay-gateway/db"
-	redisdb "gitee.com/zhuyunkj/zhuyun-core/cache"
 	"github.com/jinzhu/gorm"
 	"time"
 )
@@ -27,13 +26,11 @@ func (m *PmPayOrderTable) TableName() string {
 }
 
 type PmPayOrderModel struct {
-	DB  *gorm.DB
-	RDb *redisdb.RedisInstance
+	DB *gorm.DB
 }
 
 func NewPmPayOrderModel(dbName string) *PmPayOrderModel {
 	return &PmPayOrderModel{
-		DB:  db.WithDBContext(dbName),
-		RDb: db.WithRedisDBContext(dbName),
+		DB: db.WithDBContext(dbName),
 	}
 }
