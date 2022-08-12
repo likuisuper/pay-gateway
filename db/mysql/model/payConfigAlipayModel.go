@@ -2,7 +2,7 @@
 package model
 
 import (
-	"gitee.com/zhuyunkj/pay-gateway/comm/client"
+	"gitee.com/zhuyunkj/pay-gateway/common/client"
 	"gitee.com/zhuyunkj/pay-gateway/db"
 	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
 	"github.com/jinzhu/gorm"
