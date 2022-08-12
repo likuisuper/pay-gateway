@@ -1,0 +1,43 @@
+syntax = "v1"
+
+info(
+    title: "notify"
+)
+
+type (
+    ByteDanceReq {
+        Timestamp string `json:"timestamp,optional"`
+        Nonce string `json:"nonce,optional"`
+        Msg string `json:"msg,optional"`
+        Type string `json:"type,optional"`
+        MsgSignature string `json:"msg_signature,optional"`
+    }
+    ByteDanceResp {
+        ErrNo int `json:"err_no"`
+        ErrTips string `json:"err_tips"`
+    }
+)
+
+type (
+    WeChatResp {
+        Code string `json:"code,optional"`
+        Message string `json:"message,optional"`
+    }
+)
+
+@server(
+    group: notify
+)
+service payment {
+    @doc(
+        summary: "微信支付回调"
+    )
+    @handler notifyWechat
+    post /notify/wechat (EmptyReq) returns (ResultResp)
+
+    @doc(
+        summary: "字节支付回调"
+    )
+    @handler notifyBytedance
+    post /notify/bytedance (ByteDanceReq) returns (ByteDanceResp)
+}

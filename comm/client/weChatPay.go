@@ -7,7 +7,6 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
-	"gitee.com/zhuyunkj/pay-gateway/db/mysql/model"
 	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
 	"github.com/wechatpay-apiv3/wechatpay-go/core"
 	"github.com/wechatpay-apiv3/wechatpay-go/core/auth/verifiers"
@@ -220,7 +219,7 @@ func (l *WeChatCommPay) getClient() (uniAppResp *core.Client, err error) {
 }
 
 //发起微信支付请求V3请求
-func (l *WeChatCommPay) WechatPayV3(info *model.PmPayOrderTable, openId string) (uniAppResp *UniAppResp, err error) {
+func (l *WeChatCommPay) WechatPayV3(info *PayOrder, openId string) (uniAppResp *UniAppResp, err error) {
 	attach := fmt.Sprintf(`{"order_sn":"%s","type":%d,"value":%d}`, info.OrderSn, info.Amount)
 	client, err := l.getClient()
 	if err != nil {

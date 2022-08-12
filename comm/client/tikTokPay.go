@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"gitee.com/zhuyunkj/pay-gateway/db/mysql/model"
 	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
 	"gitee.com/zhuyunkj/zhuyun-core/util"
 	"github.com/zeromicro/go-zero/core/logx"
@@ -72,7 +71,7 @@ type TikTokNotifyResp struct {
 }
 
 //创建支付订单
-func (t *TikTokPay) CreateEcPayOrder(info *model.PmPayOrderTable) (result TikTokReply, err error) {
+func (t *TikTokPay) CreateEcPayOrder(info *PayOrder) (result TikTokReply, err error) {
 
 	cpExtra := fmt.Sprintf(`{"amount":%d,"order_code":"%s"`, info.Amount, info.OrderSn)
 	body := info.Subject

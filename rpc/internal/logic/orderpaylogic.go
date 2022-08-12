@@ -17,33 +17,44 @@ import (
 )
 
 var (
-	getPkgConfigFailNum = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "getPkgConfigFailNum", nil, "根据包名获取配置失败数量", nil})}
-	alipayWapPayFailNum = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "alipayWapPayFailNum", nil, "根据包名获取配置失败数量", nil})}
+	//getAppConfigFailNum = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "getAppConfigFailNum", nil, "根据包名获取配置失败", nil})}
+	alipayWapPayFailNum = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "alipayWapPayFailNum", nil, "支付宝下单失败", nil})}
+	wechatUniPayFailNum = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "wechatUniPayFailNum", nil, "微信支付下单失败", nil})}
+	tiktokEcPayFailNum  = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "tiktokEcPayFailNum", nil, "字节支付下单失败", nil})}
 )
 
 type OrderPayLogic struct {
 	ctx    context.Context
 	svcCtx *svc.ServiceContext
 	logx.Logger
-	payOrderModel *model.PmPayOrderModel
+	payOrderModel  *model.PmPayOrderModel
+	appConfigModel *model.PmAppConfigModel
+
+	payConfigAlipayModel *model.PmPayConfigAlipayModel
+	payConfigTiktokModel *model.PmPayConfigTiktokModel
+	payConfigWechatModel *model.PmPayConfigWechatModel
 }
 
 func NewOrderPayLogic(ctx context.Context, svcCtx *svc.ServiceContext) *OrderPayLogic {
 	return &OrderPayLogic{
-		ctx:           ctx,
-		svcCtx:        svcCtx,
-		Logger:        logx.WithContext(ctx),
-		payOrderModel: model.NewPmPayOrderModel(define.DbPayGatGateway),
+		ctx:                  ctx,
+		svcCtx:               svcCtx,
+		Logger:               logx.WithContext(ctx),
+		payOrderModel:        model.NewPmPayOrderModel(define.DbPayGateway),
+		appConfigModel:       model.NewPmAppConfigModel(define.DbPayGateway),
+		payConfigAlipayModel: model.NewPmPayConfigAlipayModel(define.DbPayGateway),
+		payConfigTiktokModel: model.NewPmPayConfigTiktokModel(define.DbPayGateway),
+		payConfigWechatModel: model.NewPmPayConfigWechatModel(define.DbPayGateway),
 	}
 }
 
 // 创建支付订单
 func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (out *pb.OrderPayResp, err error) {
 	//读取应用配置
-	pkgCfg := l.svcCtx.AppConfigMap[in.AppPkgName]
-	if pkgCfg == nil {
-		getPkgConfigFailNum.CounterInc()
-		err = errors.New("读取应用配置appRel错误")
+	pkgCfg, err := l.appConfigModel.GetOneByPkgName(in.AppPkgName)
+	if err != nil {
+		util.CheckError("pkgName= %s, 读取应用配置失败，err:=%v", in.AppPkgName, err)
+		err = errors.New("读取应用配置失败")
 		return
 	}
 
@@ -78,24 +89,48 @@ func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (out *pb.OrderPayResp, err 
 	out = new(pb.OrderPayResp)
 	out.PayType = in.PayType
 
-	//switch out.PayType {
-	//case pb.PayType_AlipayWap:
-	//	out.AlipayWap, err = l.createAlipayWapOrder(in, pkgCfg)
-	//case pb.PayType_WxUniApp:
-	//	out.WxUniApp, err = l.createWeChatUniOrder(in, orderInfo, pkgCfg)
-	//case pb.PayType_TiktokEc:
-	//	out.TikTokEc, err = l.createTikTokEcOrder(orderInfo, pkgCfg)
-	//}
+	payOrder := &client.PayOrder{
+		OrderSn: orderInfo.OrderSn,
+		Amount:  orderInfo.Amount,
+		Subject: orderInfo.Subject,
+	}
+
+	switch out.PayType {
+	case pb.PayType_AlipayWap:
+		payCfg, cfgErr := l.payConfigAlipayModel.GetOneByAppID(pkgCfg.AlipayAppID)
+		if cfgErr != nil {
+			err = fmt.Errorf("pkgName= %s, 读取支付宝配置失败，err:=%v", in.AppPkgName, cfgErr)
+			util.CheckError(err.Error())
+			return
+		}
+		out.AlipayWap, err = l.createAlipayWapOrder(in, payCfg.TransClientConfig())
+	case pb.PayType_WxUniApp:
+		payCfg, cfgErr := l.payConfigWechatModel.GetOneByAppID(pkgCfg.WechatPayAppID)
+		if cfgErr != nil {
+			err = fmt.Errorf("pkgName= %s, 读取微信支付配置失败，err:=%v", in.AppPkgName, cfgErr)
+			util.CheckError(err.Error())
+			return
+		}
+		out.WxUniApp, err = l.createWeChatUniOrder(in, payOrder, payCfg.TransClientConfig())
+	case pb.PayType_TiktokEc:
+		payCfg, cfgErr := l.payConfigTiktokModel.GetOneByAppID(pkgCfg.TiktokPayAppID)
+		if cfgErr != nil {
+			err = fmt.Errorf("pkgName= %s, 读取字节支付配置失败，err:=%v", in.AppPkgName, cfgErr)
+			util.CheckError(err.Error())
+			return
+		}
+		out.TikTokEc, err = l.createTikTokEcOrder(in, payOrder, payCfg.TransClientConfig())
+	}
 
 	return
 }
 
 //支付宝wap支付
-func (l *OrderPayLogic) createAlipayWapOrder(in *pb.OrderPayReq, pkgCfg *svc.AppPkgConfig) (payUrl string, err error) {
+func (l *OrderPayLogic) createAlipayWapOrder(in *pb.OrderPayReq, payConf *client.AliPayConfig) (payUrl string, err error) {
 	// 将 key 的验证调整到初始化阶段
-	payClient, err := client.GetAlipayClient(client.AliPayConfig(pkgCfg.Alipay))
+	payClient, err := client.GetAlipayClient(*payConf)
 	if err != nil {
-		util.CheckError("pkgName= %s, 初使化支付错误，err:=%v", pkgCfg.AppRel.AppPkgName, err)
+		util.CheckError("pkgName= %s, 初使化支付错误，err:=%v", in.AppPkgName, err)
 		return
 	}
 	//发起支付请求
@@ -112,7 +147,7 @@ func (l *OrderPayLogic) createAlipayWapOrder(in *pb.OrderPayReq, pkgCfg *svc.App
 	res, err := payClient.TradeWapPay(p)
 	if err != nil {
 		alipayWapPayFailNum.CounterInc()
-		util.CheckError("pkgName= %s, alipayWapPay，err:=%v", pkgCfg.AppRel.AppPkgName, err)
+		util.CheckError("pkgName= %s, alipayWapPay，err:=%v", in.AppPkgName, err)
 		return
 	}
 	payUrl = res.String()
@@ -121,10 +156,12 @@ func (l *OrderPayLogic) createAlipayWapOrder(in *pb.OrderPayReq, pkgCfg *svc.App
 }
 
 //微信小程序支付
-func (l *OrderPayLogic) createWeChatUniOrder(in *pb.OrderPayReq, info *model.PmPayOrderTable, pkgCfg *svc.AppPkgConfig) (reply *pb.WxUniAppPayReply, err error) {
-	payClient := client.NewWeChatCommPay(client.WechatPayConfig(pkgCfg.WechatPay))
+func (l *OrderPayLogic) createWeChatUniOrder(in *pb.OrderPayReq, info *client.PayOrder, payConf *client.WechatPayConfig) (reply *pb.WxUniAppPayReply, err error) {
+	payClient := client.NewWeChatCommPay(*payConf)
 	res, err := payClient.WechatPayV3(info, in.WxOpenID)
 	if err != nil {
+		wechatUniPayFailNum.CounterInc()
+		util.CheckError("pkgName= %s, wechatUniPay，err:=%v", in.AppPkgName, err)
 		return
 	}
 	reply = &pb.WxUniAppPayReply{
@@ -140,11 +177,12 @@ func (l *OrderPayLogic) createWeChatUniOrder(in *pb.OrderPayReq, info *model.PmP
 }
 
 //抖音小程序支付
-func (l *OrderPayLogic) createTikTokEcOrder(info *model.PmPayOrderTable, pkgCfg *svc.AppPkgConfig) (reply *pb.TiktokEcPayReply, err error) {
-	payClient := client.NewTikTokPay(client.TikTokPayConfig(pkgCfg.TikTokPay))
+func (l *OrderPayLogic) createTikTokEcOrder(in *pb.OrderPayReq, info *client.PayOrder, payConf *client.TikTokPayConfig) (reply *pb.TiktokEcPayReply, err error) {
+	payClient := client.NewTikTokPay(*payConf)
 	res, err := payClient.CreateEcPayOrder(info)
 	if err != nil {
-		err = fmt.Errorf("创建订单失败 %w", err)
+		tiktokEcPayFailNum.CounterInc()
+		util.CheckError("pkgName= %s, tiktokEcPay，err:=%v", in.AppPkgName, err)
 		return
 	}
 	reply = &pb.TiktokEcPayReply{

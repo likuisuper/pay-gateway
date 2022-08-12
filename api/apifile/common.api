@@ -1,0 +1,18 @@
+syntax = "v1"
+
+info(
+    title: "common struct"
+)
+
+//统一返回结果
+type ResultResp {
+    RequestId string `json:"RequestId"`
+    Status int64 `json:"STATUS"`
+    Desc string `json:"DESC"`
+    Data interface{} `json:"DATA"`
+}
+
+//空请求体
+type EmptyReq {
+
+}
