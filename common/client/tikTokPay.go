@@ -168,7 +168,7 @@ func (t *TikTokPay) Notify(req *ByteDanceReq) (orderInfo *TikTokNotifyMsgData, e
 		logx.Errorf("回调签名错误")
 		return nil, errors.New("回调签名错误")
 	}
-	logx.Slowf("字节订单回调信息：msg=%s", req.Msg)
+	logx.Infof("字节订单回调信息：msg=%s", req.Msg)
 	var orderData TikTokNotifyMsgData
 	err = json.Unmarshal([]byte(req.Msg), &orderData)
 	if err != nil {
@@ -226,7 +226,7 @@ func (t *TikTokPay) GetOrderStatus(orderCode string) (orderInfo *TikTokPaymentIn
 	}
 	data["sign"] = t.getSign(data)
 	res, err := util.HttpPost(tikTokQueryUri, data, 5*time.Second)
-	logx.Slowf("tikTok请求订单订单返回 res:=%s", res)
+	logx.Infof("tikTok请求订单订单返回 res:=%s", res)
 	if err != nil {
 		tikTokHttpRequestErr.CounterInc()
 		return

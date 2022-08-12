@@ -1,10 +1,8 @@
 package client
 
 import (
-	"bytes"
 	"context"
 	"crypto/md5"
-	"encoding/xml"
 	"errors"
 	"fmt"
 	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
@@ -17,7 +15,6 @@ import (
 	"github.com/wechatpay-apiv3/wechatpay-go/services/payments/jsapi"
 	"github.com/wechatpay-apiv3/wechatpay-go/utils"
 	"github.com/zeromicro/go-zero/core/logx"
-	"io/ioutil"
 	"math/rand"
 	"net/http"
 	"reflect"
@@ -137,38 +134,6 @@ func (w *WeChatCommPay) WXmd5Sign(data interface{}) (sign string) {
 }
 
 /*
-*	submitWXOrder	提交微信订单
-*	param	data	WXOrderParam
-*	reply	prepay_id	预支付交易会话标识
-*	reply	mweb_url	支付跳转链接
- */
-func submitWXOrder(data WXOrderParam) (res *WXOrderReply, err error) {
-
-	xdata, err := xml.Marshal(data)
-	if err != nil {
-	}
-	xmldata := strings.Replace(string(xdata), "WXOrderParam", "xml", -1)
-	body := bytes.NewBufferString(xmldata)
-	resp, err := http.Post(WeChatRequestUri, "content-type:text/xml; charset=utf-8", body)
-	if err != nil {
-		logx.Errorf("发起统一订单支付失败，err:=%v", err)
-	}
-	defer resp.Body.Close()
-
-	result, _ := ioutil.ReadAll(resp.Body)
-	var reply WXOrderReply
-	err = xml.Unmarshal(result, &reply)
-	if err != nil {
-		logx.Errorf("发起统一订单支付失败，err:=%v", err)
-		return nil, err
-	}
-	if reply.ReturnCode == "SUCCESS" && reply.ResultCode == "SUCCESS" {
-		return &reply, nil
-	}
-	return nil, errors.New(reply.ReturnMsg)
-}
-
-/*
 *	getRandStr 获取随机字符串
 *	param	n	位数
 *	reply	随机字符串
@@ -282,7 +247,7 @@ func (l *WeChatCommPay) GetOrderStatus(codeCode string) (orderInfo *payments.Tra
 		logx.Errorf("请求微信查询订单发生错误,err =%v", err)
 		return nil, err
 	}
-	logx.Slowf("请求微信支付成功！resp = %v,result=%v", resp, result)
+	logx.Infof("请求微信支付成功！resp = %v,result=%v", resp, result)
 	return resp, nil
 }
 
@@ -319,8 +284,8 @@ func (l *WeChatCommPay) Notify(r *http.Request) (orderInfo *payments.Transaction
 		return nil, err
 	}
 	// 处理通知内容
-	logx.Slowf("Wechat notifyReq=%v", notifyReq.Summary)
-	logx.Slowf("Wechat content=%v", transaction)
+	logx.Infof("Wechat notifyReq=%v", notifyReq.Summary)
+	logx.Infof("Wechat content=%v", transaction)
 
 	return transaction, nil
 }
