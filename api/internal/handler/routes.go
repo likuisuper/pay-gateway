@@ -25,8 +25,13 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 			},
 			{
 				Method:  http.MethodPost,
-				Path:    "/crt/upload",
+				Path:    "/internal/crt/upload",
 				Handler: notify.CrtUploadHandler(serverCtx),
+			},
+			{
+				Method:  http.MethodPost,
+				Path:    "/internal/getPayNodeList",
+				Handler: notify.GetPayNodeListHandler(serverCtx),
 			},
 		},
 	)

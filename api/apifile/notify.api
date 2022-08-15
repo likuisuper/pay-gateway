@@ -56,5 +56,11 @@ service payment {
         summary: "内部接口-上传证书"
     )
     @handler crtUpload
-    post /crt/upload (CrtUploadReq) returns (ResultResp)
+    post /internal/crt/upload (CrtUploadReq) returns (ResultResp)
+
+    @doc(
+        summary: "内部接口-获取支付rpc的地址列表"
+    )
+    @handler getPayNodeList
+    post /internal/getPayNodeList (EmptyReq) returns (ResultResp)
 }

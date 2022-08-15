@@ -3,6 +3,8 @@ package notify
 import (
 	"bufio"
 	"context"
+	"gitee.com/zhuyunkj/zhuyun-core/util"
+	"google.golang.org/grpc/codes"
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
@@ -63,6 +65,11 @@ func (l *CrtUploadLogic) CrtUpload(req *types.CrtUploadReq, r *http.Request) (re
 		if err != nil {
 			return
 		}
+	}
+
+	resp = &types.ResultResp{
+		RequestId: util.GetUuid(),
+		Status:    int64(codes.OK),
 	}
 
 	return
