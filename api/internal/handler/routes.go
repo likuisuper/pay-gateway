@@ -23,6 +23,11 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 				Path:    "/notify/bytedance",
 				Handler: notify.NotifyBytedanceHandler(serverCtx),
 			},
+			{
+				Method:  http.MethodPost,
+				Path:    "/crt/upload",
+				Handler: notify.CrtUploadHandler(serverCtx),
+			},
 		},
 	)
 }

@@ -23,3 +23,14 @@ type ByteDanceResp struct {
 	ErrNo   int    `json:"err_no"`
 	ErrTips string `json:"err_tips"`
 }
+
+type WeChatResp struct {
+	Code    string `json:"code,optional"`
+	Message string `json:"message,optional"`
+}
+
+type CrtUploadReq struct {
+	AppCertPublicKeyPath string `form:"appCertPublicKeyPath,optional"`
+	PublicKeyPath        string `form:"publicKeyPath,optional"`
+	PayRootCertPath      string `form:"payRootCertPath,optional"`
+}

@@ -1,12 +1,12 @@
 syntax = "v1"
 
 info(
-    title: "muchCloud pay-geteway"
-    desc: "api"
-    author: "muchCloud"
+	title: "muchCloud pay-geteway"
+	desc: "api"
+	author: "muchCloud"
 )
 
 import (
-    "common.api"
-    "notify.api"
+	"common.api"
+	"notify.api"
 )

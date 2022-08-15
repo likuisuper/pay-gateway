@@ -25,6 +25,16 @@ type (
     }
 )
 
+type (
+    CrtUploadReq {
+        AlipayAppCertPublicKeyPath string `form:"alipayAppCertPublicKeyPath,optional"`
+        AlipayPublicKeyPath string `form:"alipayPublicKeyPath,optional"`
+        AlipayPayRootCertPath string `form:"alipayPayRootCertPath,optional"`
+
+        WeChatPayPrivateKey string `form:"weChatPayPrivateKey, optional"`
+    }
+)
+
 @server(
     group: notify
 )
@@ -40,4 +50,11 @@ service payment {
     )
     @handler notifyBytedance
     post /notify/bytedance (ByteDanceReq) returns (ByteDanceResp)
+
+
+    @doc(
+        summary: "内部接口-上传证书"
+    )
+    @handler crtUpload
+    post /crt/upload (CrtUploadReq) returns (ResultResp)
 }
