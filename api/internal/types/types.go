@@ -30,7 +30,8 @@ type WeChatResp struct {
 }
 
 type CrtUploadReq struct {
-	AppCertPublicKeyPath string `form:"appCertPublicKeyPath,optional"`
-	PublicKeyPath        string `form:"publicKeyPath,optional"`
-	PayRootCertPath      string `form:"payRootCertPath,optional"`
+	AlipayAppCertPublicKeyPath string `form:"alipayAppCertPublicKeyPath,optional"`
+	AlipayPublicKeyPath        string `form:"alipayPublicKeyPath,optional"`
+	AlipayPayRootCertPath      string `form:"alipayPayRootCertPath,optional"`
+	WeChatPayPrivateKey        string `form:"weChatPayPrivateKey, optional"`
 }

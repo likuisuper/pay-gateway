@@ -31,26 +31,35 @@ func NewCrtUploadLogic(ctx context.Context, svcCtx *svc.ServiceContext) *CrtUplo
 
 func (l *CrtUploadLogic) CrtUpload(req *types.CrtUploadReq, r *http.Request) (resp *types.ResultResp, err error) {
 
-	acpk, acpkInfo, err := r.FormFile("AppCertPublicKey")
-	pk, pkInfo, err := r.FormFile("PublicKey")
-	prCert, prCertInfo, err := r.FormFile("PayRootCert")
+	acpk, acpkInfo, err := r.FormFile("AlipayAppCertPublicKey")
+	pk, pkInfo, err := r.FormFile("AlipayPublicKey")
+	prCert, prCertInfo, err := r.FormFile("AlipayPayRootCert")
 
-	if acpkInfo != nil && req.AppCertPublicKeyPath != "" {
-		err = l.writeCrtFile(acpk, req.AppCertPublicKeyPath)
+	wxPk, wxPkInfo, err := r.FormFile("WeChatPayPrivateKey")
+
+	if acpkInfo != nil && req.AlipayAppCertPublicKeyPath != "" {
+		err = l.writeCrtFile(acpk, req.AlipayAppCertPublicKeyPath)
 		if err != nil {
 			return
 		}
 	}
 
-	if pkInfo != nil && req.PublicKeyPath != "" {
-		err = l.writeCrtFile(pk, req.PublicKeyPath)
+	if pkInfo != nil && req.AlipayPublicKeyPath != "" {
+		err = l.writeCrtFile(pk, req.AlipayPublicKeyPath)
 		if err != nil {
 			return
 		}
 	}
 
-	if prCertInfo != nil && req.PayRootCertPath != "" {
-		err = l.writeCrtFile(prCert, req.PayRootCertPath)
+	if prCertInfo != nil && req.AlipayPayRootCertPath != "" {
+		err = l.writeCrtFile(prCert, req.AlipayPayRootCertPath)
+		if err != nil {
+			return
+		}
+	}
+
+	if wxPkInfo != nil && req.WeChatPayPrivateKey != "" {
+		err = l.writeCrtFile(wxPk, req.WeChatPayPrivateKey)
 		if err != nil {
 			return
 		}
