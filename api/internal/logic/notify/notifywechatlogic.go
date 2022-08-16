@@ -50,6 +50,7 @@ func (l *NotifyWechatLogic) NotifyWechat(req *types.EmptyReq, r *http.Request) (
 
 	d := new(client.WxNotifyReq)
 	if err = httpx.Parse(r, d); err != nil {
+		logx.Slowf("NotifyWechat, err:%w", err)
 		return
 	}
 	jsonBytes, _ := json.Marshal(d)
