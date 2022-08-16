@@ -43,7 +43,7 @@ func NewNotifyWechatLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Noti
 	}
 }
 
-func (l *NotifyWechatLogic) NotifyWechat(req *types.EmptyReq, request *http.Request) (resp *types.WeChatResp, err error) {
+func (l *NotifyWechatLogic) NotifyWechat(request *http.Request) (resp *types.WeChatResp, err error) {
 	appId := request.Header.Get("AppId")
 	logx.Slowf("NotifyWechat %s", appId)
 
@@ -61,8 +61,6 @@ func (l *NotifyWechatLogic) NotifyWechat(req *types.EmptyReq, request *http.Requ
 	}
 	_ = request.Body.Close()
 	logx.Slowf("NotifyWechat %s", string(body))
-
-	logx.Slow(payCfg.MchID, payCfg.AppID, payCfg.ApiKey, payCfg.PrivateKeyPath, payCfg.SerialNumber)
 
 	var transaction *payments.Transaction
 	var wxCli *client.WeChatCommPay
