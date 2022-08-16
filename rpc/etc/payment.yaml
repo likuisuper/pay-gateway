@@ -23,8 +23,7 @@ Mysql:
     Dbname: pay_gateway
     Username: game
     Passwd: Spgayg7UtFo.gdVK
-    # 单位ms
-    ConnTimeout: 5000
+    ConnTimeout: 5000 # 单位ms
     ReadTimeout: 20000
     WriteTimeout: 5000
 
