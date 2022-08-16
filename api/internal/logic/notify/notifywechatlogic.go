@@ -10,6 +10,7 @@ import (
 	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
 	"gitee.com/zhuyunkj/zhuyun-core/util"
 	"github.com/wechatpay-apiv3/wechatpay-go/services/payments"
+	"io/ioutil"
 	"net/http"
 	"time"
 
@@ -42,8 +43,8 @@ func NewNotifyWechatLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Noti
 	}
 }
 
-func (l *NotifyWechatLogic) NotifyWechat(req *types.EmptyReq, r *http.Request) (resp *types.WeChatResp, err error) {
-	appId := r.Header.Get("AppId")
+func (l *NotifyWechatLogic) NotifyWechat(req *types.EmptyReq, request *http.Request) (resp *types.WeChatResp, err error) {
+	appId := request.Header.Get("AppId")
 	logx.Slowf("NotifyWechat %s", appId)
 
 	payCfg, err := l.payConfigWechatModel.GetOneByAppID(appId)
@@ -53,12 +54,20 @@ func (l *NotifyWechatLogic) NotifyWechat(req *types.EmptyReq, r *http.Request) (
 		return
 	}
 
+	body, err := ioutil.ReadAll(request.Body)
+	if err != nil {
+		err = fmt.Errorf("read request body err: %v", err)
+		return
+	}
+	_ = request.Body.Close()
+	logx.Slowf("NotifyWechat %s", string(body))
+
 	logx.Slow(payCfg.MchID, payCfg.AppID, payCfg.ApiKey, payCfg.PrivateKeyPath, payCfg.SerialNumber)
 
 	var transaction *payments.Transaction
 	var wxCli *client.WeChatCommPay
 	wxCli = client.NewWeChatCommPay(*payCfg.TransClientConfig())
-	transaction, err = wxCli.Notify(r)
+	transaction, err = wxCli.Notify(request)
 	if err != nil {
 		err = fmt.Errorf("解析及验证内容失败！err=%v ", err)
 		logx.Errorf(err.Error())

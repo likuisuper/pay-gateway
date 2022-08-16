@@ -293,7 +293,7 @@ func (l *WeChatCommPay) Notify(r *http.Request) (orderInfo *payments.Transaction
 	notifyReq, err := handler.ParseNotifyRequest(l.Ctx, r, transaction)
 	// 如果验签未通过，或者解密失败
 	if err != nil {
-		//weChatNotifyErr.CounterInc()
+		weChatNotifyErr.CounterInc()
 		err = fmt.Errorf("验签未通过，或者解密失败！err=%w", err)
 		logx.Error(err.Error())
 		//err = errors.New(`{"code": "FAIL","message": "验签未通过，或者解密失败"}`)
