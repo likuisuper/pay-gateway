@@ -88,6 +88,21 @@ type UniAppResp struct {
 	OrderCode string `json:"order_code"` //内部订单号
 }
 
+type WxNotifyReq struct {
+	Id           string    `json:"id"`
+	CreateTime   time.Time `json:"create_time"`
+	ResourceType string    `json:"resource_type"`
+	EventType    string    `json:"event_type"`
+	Summary      string    `json:"summary"`
+	Resource     struct {
+		OriginalType   string `json:"original_type"`
+		Algorithm      string `json:"algorithm"`
+		Ciphertext     string `json:"ciphertext"`
+		AssociatedData string `json:"associated_data"`
+		Nonce          string `json:"nonce"`
+	} `json:"resource"`
+}
+
 type WeChatCommPay struct {
 	Config WechatPayConfig
 	Ctx    context.Context
