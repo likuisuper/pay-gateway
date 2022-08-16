@@ -43,24 +43,19 @@ func NewNotifyWechatLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Noti
 }
 
 func (l *NotifyWechatLogic) NotifyWechat(req *types.EmptyReq, r *http.Request) (resp *types.WeChatResp, err error) {
-	payCfgList, cfgErr := l.payConfigWechatModel.GetAllList()
-	if cfgErr != nil {
-		err = fmt.Errorf("pkgName= %s, 读取微信支付配置失败，err:=%v", "all", cfgErr)
+	appId := r.Header.Get("AppId")
+
+	payCfg, err := l.payConfigWechatModel.GetOneByAppID(appId)
+	if err != nil {
+		err = fmt.Errorf("pkgName= %s, 读取微信支付配置失败，err:=%v", "all", err)
 		util.CheckError(err.Error())
 		return
 	}
 
 	var transaction *payments.Transaction
 	var wxCli *client.WeChatCommPay
-	for _, pkgCfg := range payCfgList {
-		wxCli = client.NewWeChatCommPay(*pkgCfg.TransClientConfig())
-		transaction, err = wxCli.Notify(r)
-		if err != nil {
-			continue
-		} else {
-			break
-		}
-	}
+	wxCli = client.NewWeChatCommPay(*payCfg.TransClientConfig())
+	transaction, err = wxCli.Notify(r)
 	if err != nil {
 		err = fmt.Errorf("解析及验证内容失败！err=%v ", err)
 		logx.Errorf(err.Error())
