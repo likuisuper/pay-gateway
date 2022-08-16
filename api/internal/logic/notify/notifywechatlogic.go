@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"gitee.com/zhuyunkj/pay-gateway/common/client"
 	"gitee.com/zhuyunkj/pay-gateway/common/define"
+	"gitee.com/zhuyunkj/pay-gateway/common/exception"
 	"gitee.com/zhuyunkj/pay-gateway/db/mysql/model"
 	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
 	"gitee.com/zhuyunkj/zhuyun-core/util"
@@ -85,13 +86,9 @@ func (l *NotifyWechatLogic) NotifyWechat(req *types.EmptyReq, r *http.Request) (
 		return
 	}
 
-	//回调业务方
+	//回调业务方接口
 	go func() {
-		defer func() {
-			if msg := recover(); msg != nil {
-				logx.Error("panic recover :", msg)
-			}
-		}()
+		defer exception.Recover()
 		_, _ = util.HttpPost(orderInfo.NotifyUrl, transaction, 5*time.Second)
 	}()
 
