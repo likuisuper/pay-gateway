@@ -2,7 +2,6 @@ package notify
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"gitee.com/zhuyunkj/pay-gateway/common/client"
 	"gitee.com/zhuyunkj/pay-gateway/common/define"
@@ -11,7 +10,6 @@ import (
 	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
 	"gitee.com/zhuyunkj/zhuyun-core/util"
 	"github.com/wechatpay-apiv3/wechatpay-go/services/payments"
-	"github.com/zeromicro/go-zero/rest/httpx"
 	"net/http"
 	"time"
 
@@ -48,13 +46,13 @@ func (l *NotifyWechatLogic) NotifyWechat(req *types.EmptyReq, r *http.Request) (
 	appId := r.Header.Get("AppId")
 	logx.Slowf("NotifyWechat %s", appId)
 
-	d := new(client.WxNotifyReq)
-	if err = httpx.Parse(r, d); err != nil {
-		logx.Slowf("NotifyWechat, err:%w", err)
-		return
-	}
-	jsonBytes, _ := json.Marshal(d)
-	logx.Slowf("NotifyWechat, %s, %s", appId, string(jsonBytes))
+	//d := new(client.WxNotifyReq)
+	//if err = httpx.Parse(r, d); err != nil {
+	//	logx.Slowf("NotifyWechat, err:%w", err)
+	//	return
+	//}
+	//jsonBytes, _ := json.Marshal(d)
+	//logx.Slowf("NotifyWechat, %s, %s", appId, string(jsonBytes))
 
 	payCfg, err := l.payConfigWechatModel.GetOneByAppID(appId)
 	if err != nil {
