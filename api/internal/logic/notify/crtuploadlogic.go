@@ -78,8 +78,7 @@ func (l *CrtUploadLogic) CrtUpload(req *types.CrtUploadReq, r *http.Request) (re
 func (l *CrtUploadLogic) writeCrtFile(file multipart.File, filePath string) (err error) {
 	os.Remove(filePath)
 
-	path, fileName := filepath.Split(filePath)
-	println(fileName)
+	path, _ := filepath.Split(filePath)
 	//创建文件夹
 	err = os.MkdirAll(path, os.ModePerm)
 	if err != nil {

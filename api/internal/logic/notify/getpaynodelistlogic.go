@@ -37,7 +37,9 @@ func (l *GetPayNodeListLogic) GetPayNodeList(req *types.EmptyReq) (resp *types.R
 		DialTimeout: 5 * time.Second,
 	}
 	etcdCli, err := clientv3.New(config)
-	println(err)
+	if err != nil {
+		return
+	}
 	defer etcdCli.Close()
 
 	res, err := etcdCli.Get(l.ctx, "payment.rpc", clientv3.WithPrefix())
