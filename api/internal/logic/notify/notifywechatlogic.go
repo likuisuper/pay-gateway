@@ -46,20 +46,14 @@ func (l *NotifyWechatLogic) NotifyWechat(req *types.EmptyReq, r *http.Request) (
 	appId := r.Header.Get("AppId")
 	logx.Slowf("NotifyWechat %s", appId)
 
-	//d := new(client.WxNotifyReq)
-	//if err = httpx.Parse(r, d); err != nil {
-	//	logx.Slowf("NotifyWechat, err:%w", err)
-	//	return
-	//}
-	//jsonBytes, _ := json.Marshal(d)
-	//logx.Slowf("NotifyWechat, %s, %s", appId, string(jsonBytes))
-
 	payCfg, err := l.payConfigWechatModel.GetOneByAppID(appId)
 	if err != nil {
 		err = fmt.Errorf("pkgName= %s, 读取微信支付配置失败，err:=%v", "all", err)
 		util.CheckError(err.Error())
 		return
 	}
+
+	logx.Slow(payCfg.MchID, payCfg.AppID, payCfg.ApiKey, payCfg.PrivateKeyPath, payCfg.SerialNumber)
 
 	var transaction *payments.Transaction
 	var wxCli *client.WeChatCommPay
