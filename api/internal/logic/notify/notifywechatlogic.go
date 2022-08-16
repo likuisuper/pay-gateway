@@ -83,6 +83,8 @@ func (l *NotifyWechatLogic) NotifyWechat(req *types.EmptyReq, r *http.Request) (
 	orderInfo.PayStatus = model.PmPayOrderTablePayStatusPaid
 	err = l.payOrderModel.UpdateNotify(orderInfo)
 	if err != nil {
+		err = fmt.Errorf("orderSn = %s, UpdateNotify，err:=%v", orderInfo.OrderSn, err)
+		util.CheckError(err.Error())
 		return
 	}
 
