@@ -53,14 +53,6 @@ func (l *NotifyWechatLogic) NotifyWechat(request *http.Request) (resp *types.WeC
 		return
 	}
 
-	//body, err := ioutil.ReadAll(request.Body)
-	//if err != nil {
-	//	err = fmt.Errorf("read request body err: %v", err)
-	//	return
-	//}
-	//_ = request.Body.Close()
-	//logx.Slowf("NotifyWechat %s", string(body))
-
 	var transaction *payments.Transaction
 	var wxCli *client.WeChatCommPay
 	wxCli = client.NewWeChatCommPay(*payCfg.TransClientConfig())
@@ -85,6 +77,7 @@ func (l *NotifyWechatLogic) NotifyWechat(request *http.Request) (resp *types.WeC
 	//修改数据库
 	orderInfo.NotifyAmount = int(*transaction.Amount.PayerTotal)
 	orderInfo.PayStatus = model.PmPayOrderTablePayStatusPaid
+	orderInfo.PayType = model.PmPayOrderTablePayTypeWechatPayUni
 	err = l.payOrderModel.UpdateNotify(orderInfo)
 	if err != nil {
 		err = fmt.Errorf("orderSn = %s, UpdateNotify，err:=%v", orderInfo.OrderSn, err)
