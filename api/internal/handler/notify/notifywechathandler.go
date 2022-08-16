@@ -18,7 +18,7 @@ func NotifyWechatHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 		}
 
 		l := notify.NewNotifyWechatLogic(r.Context(), svcCtx)
-		resp, err := l.NotifyWechat(&req)
+		resp, err := l.NotifyWechat(&req, r)
 		if err != nil {
 			httpx.Error(w, err)
 		} else {

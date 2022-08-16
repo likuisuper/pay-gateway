@@ -59,9 +59,22 @@ func (o *PmPayConfigWechatModel) GetOneByAppID(appID string) (appConfig *PmPayCo
 	var cfg PmPayConfigWechatTable
 	err = o.DB.Where(" `app_id` = ?", appID).First(&cfg).Error
 	if err != nil {
-		logx.Errorf("获取app配置信息失败，err:=%v,appID=%s", err, appID)
-		getPayConfigAlipayErr.CounterInc()
+		logx.Errorf("获取wechatPay配置信息失败，err:=%v,appID=%s", err, appID)
+		getPayConfigWechatErr.CounterInc()
 		return nil, err
 	}
 	return &cfg, nil
+}
+
+//获取微信配置列表
+func (o *PmPayConfigWechatModel) GetAllList() (wechatCfgList []*PmPayConfigWechatTable, err error) {
+	wechatCfgList = make([]*PmPayConfigWechatTable, 0)
+
+	err = o.DB.Find(&wechatCfgList).Error
+	if err != nil {
+		logx.Errorf("获取wechatPay配置信息失败，err:=%v,appID=%s", err, "all")
+		getPayConfigWechatErr.CounterInc()
+		return nil, err
+	}
+	return
 }

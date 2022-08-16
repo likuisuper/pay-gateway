@@ -2,7 +2,6 @@ package notify
 
 import (
 	"context"
-
 	"gitee.com/zhuyunkj/pay-gateway/api/internal/svc"
 	"gitee.com/zhuyunkj/pay-gateway/api/internal/types"
 
@@ -24,7 +23,6 @@ func NewNotifyBytedanceLogic(ctx context.Context, svcCtx *svc.ServiceContext) *N
 }
 
 func (l *NotifyBytedanceLogic) NotifyBytedance(req *types.ByteDanceReq) (resp *types.ByteDanceResp, err error) {
-	// todo: add your logic here and delete this line
 
 	return
 }

@@ -2,6 +2,14 @@ package notify
 
 import (
 	"context"
+	"fmt"
+	"gitee.com/zhuyunkj/pay-gateway/common/client"
+	"gitee.com/zhuyunkj/pay-gateway/common/define"
+	"gitee.com/zhuyunkj/pay-gateway/db/mysql/model"
+	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
+	"gitee.com/zhuyunkj/zhuyun-core/util"
+	"github.com/wechatpay-apiv3/wechatpay-go/services/payments"
+	"net/http"
 
 	"gitee.com/zhuyunkj/pay-gateway/api/internal/svc"
 	"gitee.com/zhuyunkj/pay-gateway/api/internal/types"
@@ -9,22 +17,76 @@ import (
 	"github.com/zeromicro/go-zero/core/logx"
 )
 
+var (
+	notifyOrderHasDispose = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "notifyOrderHasDispose", nil, "回调订单已处理", nil})}
+)
+
 type NotifyWechatLogic struct {
 	logx.Logger
 	ctx    context.Context
 	svcCtx *svc.ServiceContext
+
+	payOrderModel        *model.PmPayOrderModel
+	payConfigWechatModel *model.PmPayConfigWechatModel
 }
 
 func NewNotifyWechatLogic(ctx context.Context, svcCtx *svc.ServiceContext) *NotifyWechatLogic {
 	return &NotifyWechatLogic{
-		Logger: logx.WithContext(ctx),
-		ctx:    ctx,
-		svcCtx: svcCtx,
+		Logger:               logx.WithContext(ctx),
+		ctx:                  ctx,
+		svcCtx:               svcCtx,
+		payOrderModel:        model.NewPmPayOrderModel(define.DbPayGateway),
+		payConfigWechatModel: model.NewPmPayConfigWechatModel(define.DbPayGateway),
 	}
 }
 
-func (l *NotifyWechatLogic) NotifyWechat(req *types.EmptyReq) (resp *types.ResultResp, err error) {
-	// todo: add your logic here and delete this line
+func (l *NotifyWechatLogic) NotifyWechat(req *types.EmptyReq, r *http.Request) (resp *types.WeChatResp, err error) {
+	payCfgList, cfgErr := l.payConfigWechatModel.GetAllList()
+	if cfgErr != nil {
+		err = fmt.Errorf("pkgName= %s, 读取微信支付配置失败，err:=%v", "all", cfgErr)
+		util.CheckError(err.Error())
+		return
+	}
+
+	var transaction *payments.Transaction
+	for _, pkgCfg := range payCfgList {
+		wxCfg := client.NewWeChatCommPay(*pkgCfg.TransClientConfig())
+		transaction, err = wxCfg.Notify(r)
+		if err != nil {
+			continue
+		} else {
+			break
+		}
+	}
+	if err != nil {
+		err = fmt.Errorf("解析及验证内容失败！err=%v", err)
+		logx.Errorf(err.Error())
+		return
+	}
+	//获取订单信息
+	orderInfo, err := l.payOrderModel.GetOneByCode(*transaction.OutTradeNo)
+	if err != nil {
+		err = fmt.Errorf("获取订单失败！err=%v,order_code = %s", err, transaction.OutTradeNo)
+		util.CheckError(err.Error())
+		return
+	}
+	if orderInfo.PayStatus != model.PmPayOrderTablePayStatusNo {
+		notifyOrderHasDispose.CounterInc()
+		err = fmt.Errorf("订单已处理")
+		return
+	}
+
+	orderInfo.NotifyAmount = int(*transaction.Amount.PayerTotal)
+	orderInfo.PayStatus = model.PmPayOrderTablePayStatusPaid
+	err = l.payOrderModel.UpdateNotify(orderInfo)
+	if err != nil {
+		return
+	}
+
+	resp = &types.WeChatResp{
+		Code:    "SUCCESS",
+		Message: "",
+	}
 
 	return
 }

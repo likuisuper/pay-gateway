@@ -43,7 +43,7 @@ service payment {
         summary: "微信支付回调"
     )
     @handler notifyWechat
-    post /notify/wechat (EmptyReq) returns (ResultResp)
+    post /notify/wechat (EmptyReq) returns (WeChatResp)
 
     @doc(
         summary: "字节支付回调"

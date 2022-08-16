@@ -11,8 +11,9 @@ import (
 )
 
 var (
-	createPayOrderErr = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "createPayOrderErr", nil, "创建支付订单失败", nil})}
-	getPayOrderErr    = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "getPayOrderErr", nil, "获取支付订单失败", nil})}
+	createPayOrderErr    = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "createPayOrderErr", nil, "创建支付订单失败", nil})}
+	updateNofityOrderErr = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "updateNofityOrderErr", nil, "更新回调订单失败", nil})}
+	getPayOrderErr       = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "getPayOrderErr", nil, "获取支付订单失败", nil})}
 )
 
 const (
@@ -30,7 +31,7 @@ type PmPayOrderTable struct {
 	Subject      string    `gorm:"column:subject;NOT NULL" json:"subject"`                       // 订单标题
 	PayType      int       `gorm:"column:pay_type;default:0;NOT NULL" json:"pay_type"`           // 支付方式
 	NotifyUrl    string    `gorm:"column:notify_url;NOT NULL" json:"notify_url"`                 // 回调通知地址
-	PayStatus    int       `gorm:"column:pay_status;NOT NULL"`                                   // 支付状态 0未支付  1已支付
+	PayStatus    int       `gorm:"column:pay_status;NOT NULL" json:"pay_status"`                 // 支付状态 0未支付  1已支付
 	CreatedAt    time.Time `gorm:"column:created_at;type:datetime" json:"created_at"`
 	UpdatedAt    time.Time `gorm:"column:updated_at;type:datetime" json:"updated_at"`
 }
@@ -72,4 +73,13 @@ func (o *PmPayOrderModel) GetOneByCode(orderSn string) (info *PmPayOrderTable, e
 		return nil, err
 	}
 	return &orderInfo, nil
+}
+
+func (o *PmPayOrderModel) UpdateNotify(info *PmPayOrderTable) error {
+	err := o.DB.Model(&info).Where("order_sn = ?", info.OrderSn).Update("notify_amount", "pay_status").Error
+	if err != nil {
+		logx.Errorf("更新回调订单失败，err:=%v", err)
+		updateNofityOrderErr.CounterInc()
+	}
+	return err
 }
