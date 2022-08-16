@@ -300,8 +300,8 @@ func (l *WeChatCommPay) Notify(r *http.Request) (orderInfo *payments.Transaction
 		return nil, err
 	}
 	// 处理通知内容
-	logx.Infof("Wechat notifyReq=%v", notifyReq.Summary)
-	logx.Infof("Wechat content=%v", transaction)
+	logx.Slowf("Wechat notifyReq=%v", notifyReq.Summary)
+	logx.Slowf("Wechat content=%v", transaction)
 
 	return transaction, nil
 }
