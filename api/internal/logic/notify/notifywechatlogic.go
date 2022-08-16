@@ -10,7 +10,6 @@ import (
 	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
 	"gitee.com/zhuyunkj/zhuyun-core/util"
 	"github.com/wechatpay-apiv3/wechatpay-go/services/payments"
-	"io/ioutil"
 	"net/http"
 	"time"
 
@@ -54,13 +53,13 @@ func (l *NotifyWechatLogic) NotifyWechat(request *http.Request) (resp *types.WeC
 		return
 	}
 
-	body, err := ioutil.ReadAll(request.Body)
-	if err != nil {
-		err = fmt.Errorf("read request body err: %v", err)
-		return
-	}
-	_ = request.Body.Close()
-	logx.Slowf("NotifyWechat %s", string(body))
+	//body, err := ioutil.ReadAll(request.Body)
+	//if err != nil {
+	//	err = fmt.Errorf("read request body err: %v", err)
+	//	return
+	//}
+	//_ = request.Body.Close()
+	//logx.Slowf("NotifyWechat %s", string(body))
 
 	var transaction *payments.Transaction
 	var wxCli *client.WeChatCommPay
