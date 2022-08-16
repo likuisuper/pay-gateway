@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"gitee.com/zhuyunkj/pay-gateway/db"
 
 	"gitee.com/zhuyunkj/pay-gateway/api/internal/config"
 	"gitee.com/zhuyunkj/pay-gateway/api/internal/handler"
@@ -19,6 +20,8 @@ func main() {
 
 	var c config.Config
 	conf.MustLoad(*configFile, &c)
+	// 初始化数据库
+	db.DBInit(c.Mysql)
 
 	server := rest.MustNewServer(c.RestConf)
 	defer server.Stop()

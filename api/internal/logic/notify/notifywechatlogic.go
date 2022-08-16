@@ -10,6 +10,7 @@ import (
 	"gitee.com/zhuyunkj/zhuyun-core/util"
 	"github.com/wechatpay-apiv3/wechatpay-go/services/payments"
 	"net/http"
+	"time"
 
 	"gitee.com/zhuyunkj/pay-gateway/api/internal/svc"
 	"gitee.com/zhuyunkj/pay-gateway/api/internal/types"
@@ -49,9 +50,10 @@ func (l *NotifyWechatLogic) NotifyWechat(req *types.EmptyReq, r *http.Request) (
 	}
 
 	var transaction *payments.Transaction
+	var wxCli *client.WeChatCommPay
 	for _, pkgCfg := range payCfgList {
-		wxCfg := client.NewWeChatCommPay(*pkgCfg.TransClientConfig())
-		transaction, err = wxCfg.Notify(r)
+		wxCli = client.NewWeChatCommPay(*pkgCfg.TransClientConfig())
+		transaction, err = wxCli.Notify(r)
 		if err != nil {
 			continue
 		} else {
@@ -59,7 +61,7 @@ func (l *NotifyWechatLogic) NotifyWechat(req *types.EmptyReq, r *http.Request) (
 		}
 	}
 	if err != nil {
-		err = fmt.Errorf("解析及验证内容失败！err=%v", err)
+		err = fmt.Errorf("解析及验证内容失败！err=%v ", err)
 		logx.Errorf(err.Error())
 		return
 	}
@@ -75,13 +77,23 @@ func (l *NotifyWechatLogic) NotifyWechat(req *types.EmptyReq, r *http.Request) (
 		err = fmt.Errorf("订单已处理")
 		return
 	}
-
+	//修改数据库
 	orderInfo.NotifyAmount = int(*transaction.Amount.PayerTotal)
 	orderInfo.PayStatus = model.PmPayOrderTablePayStatusPaid
 	err = l.payOrderModel.UpdateNotify(orderInfo)
 	if err != nil {
 		return
 	}
+
+	//回调业务方
+	go func() {
+		defer func() {
+			if msg := recover(); msg != nil {
+				logx.Error("panic recover :", msg)
+			}
+		}()
+		_, _ = util.HttpPost(orderInfo.NotifyUrl, transaction, 5*time.Second)
+	}()
 
 	resp = &types.WeChatResp{
 		Code:    "SUCCESS",

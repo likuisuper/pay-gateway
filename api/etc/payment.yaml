@@ -5,7 +5,7 @@ Timeout: 0
 AppEnv: release
 Log:
   KeepDays: 10
-  Mode: console
+  Mode: file
   Path: logs
 Prometheus:
   Host: 0.0.0.0
