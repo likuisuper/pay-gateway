@@ -80,7 +80,7 @@ func (t *TikTokPay) CreateEcPayOrder(info *PayOrder) (result TikTokReply, err er
 		"app_id":       t.Config.AppId,
 		"out_order_no": info.OrderSn,
 		"total_amount": info.Amount,
-		"subject":      tikTokBody,
+		"subject":      info.Subject,
 		"body":         body,
 		"valid_time":   tikTokValidTime,
 		"cp_extra":     cpExtra,
@@ -88,6 +88,7 @@ func (t *TikTokPay) CreateEcPayOrder(info *PayOrder) (result TikTokReply, err er
 	}
 	data["sign"] = t.getSign(data)
 	res, err := util.HttpPost(tikTokCreateUri, data, 5*time.Second)
+	logx.Infof("tikTok请求创建订单 res:=%v", data)
 	logx.Info("tikTok请求创建订单返回 res:=%s", res)
 	if err != nil {
 		tikTokHttpRequestErr.CounterInc()
