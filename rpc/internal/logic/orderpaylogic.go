@@ -62,6 +62,7 @@ func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (out *pb.OrderPayResp, err 
 	orderInfo, err := l.payOrderModel.GetOneByCode(in.OrderSn)
 	if err != nil {
 		err = fmt.Errorf("获取订单信息错误 %w", err)
+		util.CheckError(err.Error())
 		return
 	}
 

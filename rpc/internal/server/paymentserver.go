@@ -27,3 +27,9 @@ func (s *PaymentServer) OrderPay(ctx context.Context, in *pb.OrderPayReq) (*pb.O
 	l := logic.NewOrderPayLogic(ctx, s.svcCtx)
 	return l.OrderPay(in)
 }
+
+// 关闭订单
+func (s *PaymentServer) ClosePayOrder(ctx context.Context, in *pb.ClosePayOrderReq) (*pb.Empty, error) {
+	l := logic.NewClosePayOrderLogic(ctx, s.svcCtx)
+	return l.ClosePayOrder(in)
+}

@@ -24,6 +24,8 @@ const _ = grpc.SupportPackageIsVersion7
 type PaymentClient interface {
 	//创建支付订单
 	OrderPay(ctx context.Context, in *OrderPayReq, opts ...grpc.CallOption) (*OrderPayResp, error)
+	//关闭订单
+	ClosePayOrder(ctx context.Context, in *ClosePayOrderReq, opts ...grpc.CallOption) (*Empty, error)
 }
 
 type paymentClient struct {
@@ -43,12 +45,23 @@ func (c *paymentClient) OrderPay(ctx context.Context, in *OrderPayReq, opts ...g
 	return out, nil
 }
 
+func (c *paymentClient) ClosePayOrder(ctx context.Context, in *ClosePayOrderReq, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, "/payment.Payment/ClosePayOrder", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PaymentServer is the server API for Payment service.
 // All implementations must embed UnimplementedPaymentServer
 // for forward compatibility
 type PaymentServer interface {
 	//创建支付订单
 	OrderPay(context.Context, *OrderPayReq) (*OrderPayResp, error)
+	//关闭订单
+	ClosePayOrder(context.Context, *ClosePayOrderReq) (*Empty, error)
 	mustEmbedUnimplementedPaymentServer()
 }
 
@@ -58,6 +71,9 @@ type UnimplementedPaymentServer struct {
 
 func (UnimplementedPaymentServer) OrderPay(context.Context, *OrderPayReq) (*OrderPayResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method OrderPay not implemented")
+}
+func (UnimplementedPaymentServer) ClosePayOrder(context.Context, *ClosePayOrderReq) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ClosePayOrder not implemented")
 }
 func (UnimplementedPaymentServer) mustEmbedUnimplementedPaymentServer() {}
 
@@ -90,6 +106,24 @@ func _Payment_OrderPay_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Payment_ClosePayOrder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ClosePayOrderReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PaymentServer).ClosePayOrder(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/payment.Payment/ClosePayOrder",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PaymentServer).ClosePayOrder(ctx, req.(*ClosePayOrderReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Payment_ServiceDesc is the grpc.ServiceDesc for Payment service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -100,6 +134,10 @@ var Payment_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "OrderPay",
 			Handler:    _Payment_OrderPay_Handler,
+		},
+		{
+			MethodName: "ClosePayOrder",
+			Handler:    _Payment_ClosePayOrder_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

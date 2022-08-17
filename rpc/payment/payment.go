@@ -13,6 +13,8 @@ import (
 )
 
 type (
+	ClosePayOrderReq = pb.ClosePayOrderReq
+	Empty            = pb.Empty
 	OrderPayReq      = pb.OrderPayReq
 	OrderPayResp     = pb.OrderPayResp
 	TiktokEcPayReply = pb.TiktokEcPayReply
@@ -21,6 +23,8 @@ type (
 	Payment interface {
 		// 创建支付订单
 		OrderPay(ctx context.Context, in *OrderPayReq, opts ...grpc.CallOption) (*OrderPayResp, error)
+		// 关闭订单
+		ClosePayOrder(ctx context.Context, in *ClosePayOrderReq, opts ...grpc.CallOption) (*Empty, error)
 	}
 
 	defaultPayment struct {
@@ -38,4 +42,10 @@ func NewPayment(cli zrpc.Client) Payment {
 func (m *defaultPayment) OrderPay(ctx context.Context, in *OrderPayReq, opts ...grpc.CallOption) (*OrderPayResp, error) {
 	client := pb.NewPaymentClient(m.cli.Conn())
 	return client.OrderPay(ctx, in, opts...)
+}
+
+// 关闭订单
+func (m *defaultPayment) ClosePayOrder(ctx context.Context, in *ClosePayOrderReq, opts ...grpc.CallOption) (*Empty, error) {
+	client := pb.NewPaymentClient(m.cli.Conn())
+	return client.ClosePayOrder(ctx, in, opts...)
 }

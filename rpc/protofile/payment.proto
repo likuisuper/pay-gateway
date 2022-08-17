@@ -50,7 +50,19 @@ message TiktokEcPayReply {
   string OrderToken = 2; //签名后的订单信息
 }
 
+//关闭微信订单
+message ClosePayOrderReq {
+  string OrderSn = 1; //商户订单号
+  PayType PayType = 2; //支付方式
+  string AppPkgName = 3; //应用包名
+}
+
+message Empty {}
+
 service Payment {
   //创建支付订单
   rpc OrderPay(OrderPayReq) returns(OrderPayResp);
+
+  //关闭订单
+  rpc ClosePayOrder(ClosePayOrderReq) returns(Empty);
 }

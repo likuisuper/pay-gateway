@@ -305,3 +305,26 @@ func (l *WeChatCommPay) Notify(r *http.Request) (orderInfo *payments.Transaction
 
 	return transaction, nil
 }
+
+//关闭订单
+type CloserReq struct {
+	Mchid string `json:"mchid"`
+}
+
+func (l *WeChatCommPay) CloseOrder(orderCode string) error {
+	client, err := l.getClient()
+	if err != nil {
+		logx.Errorf("关闭订单发生错误,err =%v", err)
+		return err
+	}
+	body := CloserReq{
+		Mchid: l.Config.MchId,
+	}
+	uri := fmt.Sprintf("https://api.mch.weixin.qq.com/v3/pay/transactions/out-trade-no/%s/close", orderCode)
+	result, err := client.Post(l.Ctx, uri, body)
+	if err != nil {
+		return err
+	}
+	logx.Slowf("关闭订单返回信息状态:，%d", result.Response.StatusCode)
+	return nil
+}
