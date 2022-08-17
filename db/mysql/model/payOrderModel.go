@@ -3,8 +3,10 @@ package model
 
 import (
 	"errors"
+	"fmt"
 	"gitee.com/zhuyunkj/pay-gateway/db"
 	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
+	"gitee.com/zhuyunkj/zhuyun-core/util"
 	"github.com/jinzhu/gorm"
 	"github.com/zeromicro/go-zero/core/logx"
 	"time"
@@ -37,6 +39,7 @@ type PmPayOrderTable struct {
 	PayType      int       `gorm:"column:pay_type;default:0;NOT NULL" json:"pay_type"`           // 支付方式  0支付宝wap支付  1微信小程序支付 2头条小程序支付
 	NotifyUrl    string    `gorm:"column:notify_url;NOT NULL" json:"notify_url"`                 // 回调通知地址
 	PayStatus    int       `gorm:"column:pay_status;NOT NULL" json:"pay_status"`                 // 支付状态 0未支付  1已支付
+	PayAppId     string    `gorm:"column:pay_app_id;NOT NULL" json:"pay_app_id"`                 //第三方支付的appid
 	CreatedAt    time.Time `gorm:"column:created_at;type:datetime" json:"created_at"`
 	UpdatedAt    time.Time `gorm:"column:updated_at;type:datetime" json:"updated_at"`
 }
@@ -87,4 +90,14 @@ func (o *PmPayOrderModel) UpdateNotify(info *PmPayOrderTable) error {
 		updateNofityOrderErr.CounterInc()
 	}
 	return err
+}
+
+func (o *PmPayOrderModel) UpdatePayAppID(orderSn string, payAppId string) (err error) {
+	err = o.DB.Model(&PmPayOrderTable{}).Update("pay_app_id", payAppId).Error
+	if err != nil {
+		err = fmt.Errorf("UpdatePayAppID Err: %v", err)
+		util.CheckError(err.Error())
+	}
+	return
+
 }

@@ -96,9 +96,11 @@ func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (out *pb.OrderPayResp, err 
 		Subject: orderInfo.Subject,
 	}
 
+	var payAppId string
 	switch out.PayType {
 	case pb.PayType_AlipayWap:
 		payCfg, cfgErr := l.payConfigAlipayModel.GetOneByAppID(pkgCfg.AlipayAppID)
+		payAppId = pkgCfg.AlipayAppID
 		if cfgErr != nil {
 			err = fmt.Errorf("pkgName= %s, 读取支付宝配置失败，err:=%v", in.AppPkgName, cfgErr)
 			util.CheckError(err.Error())
@@ -107,6 +109,7 @@ func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (out *pb.OrderPayResp, err 
 		out.AlipayWap, err = l.createAlipayWapOrder(in, payCfg.TransClientConfig())
 	case pb.PayType_WxUniApp:
 		payCfg, cfgErr := l.payConfigWechatModel.GetOneByAppID(pkgCfg.WechatPayAppID)
+		payAppId = pkgCfg.WechatPayAppID
 		if cfgErr != nil {
 			err = fmt.Errorf("pkgName= %s, 读取微信支付配置失败，err:=%v", in.AppPkgName, cfgErr)
 			util.CheckError(err.Error())
@@ -115,6 +118,7 @@ func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (out *pb.OrderPayResp, err 
 		out.WxUniApp, err = l.createWeChatUniOrder(in, payOrder, payCfg.TransClientConfig())
 	case pb.PayType_TiktokEc:
 		payCfg, cfgErr := l.payConfigTiktokModel.GetOneByAppID(pkgCfg.TiktokPayAppID)
+		payAppId = pkgCfg.TiktokPayAppID
 		if cfgErr != nil {
 			err = fmt.Errorf("pkgName= %s, 读取字节支付配置失败，err:=%v", in.AppPkgName, cfgErr)
 			util.CheckError(err.Error())
@@ -122,6 +126,8 @@ func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (out *pb.OrderPayResp, err 
 		}
 		out.TikTokEc, err = l.createTikTokEcOrder(in, payOrder, payCfg.TransClientConfig())
 	}
+
+	err = l.payOrderModel.UpdatePayAppID(orderInfo.OrderSn, payAppId)
 
 	return
 }
