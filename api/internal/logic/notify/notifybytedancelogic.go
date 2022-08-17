@@ -86,6 +86,7 @@ func (l *NotifyBytedanceLogic) NotifyBytedance(req *types.ByteDanceReq) (resp *t
 	//修改数据库
 	orderInfo.NotifyAmount = order.TotalAmount
 	orderInfo.PayStatus = model.PmPayOrderTablePayStatusPaid
+	orderInfo.PayType = model.PmPayOrderTablePayTypeTiktokPayEc
 	err = l.payOrderModel.UpdateNotify(orderInfo)
 	if err != nil {
 		err = fmt.Errorf("orderSn = %s, UpdateNotify，err:=%v", orderInfo.OrderSn, err)
