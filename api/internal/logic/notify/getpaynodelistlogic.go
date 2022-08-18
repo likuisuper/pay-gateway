@@ -5,6 +5,7 @@ import (
 	"gitee.com/zhuyunkj/zhuyun-core/util"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"google.golang.org/grpc/codes"
+	"net/http"
 	"strconv"
 	"strings"
 	"time"
@@ -30,7 +31,8 @@ func NewGetPayNodeListLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Ge
 	}
 }
 
-func (l *GetPayNodeListLogic) GetPayNodeList(req *types.EmptyReq) (resp *types.ResultResp, err error) {
+func (l *GetPayNodeListLogic) GetPayNodeList(req *types.EmptyReq, request *http.Request) (resp *types.ResultResp, err error) {
+	logx.Info("GetPayNodeList", request.Header.Get("X-Forwarded-For"))
 
 	config := clientv3.Config{
 		Endpoints:   l.svcCtx.Config.Etcd.Host,

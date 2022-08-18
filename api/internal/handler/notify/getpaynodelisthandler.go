@@ -18,7 +18,7 @@ func GetPayNodeListHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 		}
 
 		l := notify.NewGetPayNodeListLogic(r.Context(), svcCtx)
-		resp, err := l.GetPayNodeList(&req)
+		resp, err := l.GetPayNodeList(&req, r)
 		if err != nil {
 			httpx.Error(w, err)
 		} else {
