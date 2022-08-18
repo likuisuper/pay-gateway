@@ -28,17 +28,20 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 	)
 
 	server.AddRoutes(
-		[]rest.Route{
-			{
-				Method:  http.MethodPost,
-				Path:    "/internal/crt/upload",
-				Handler: inter.CrtUploadHandler(serverCtx),
-			},
-			{
-				Method:  http.MethodPost,
-				Path:    "/internal/getPayNodeList",
-				Handler: inter.GetPayNodeListHandler(serverCtx),
-			},
-		},
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.Inter},
+			[]rest.Route{
+				{
+					Method:  http.MethodPost,
+					Path:    "/internal/crt/upload",
+					Handler: inter.CrtUploadHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPost,
+					Path:    "/internal/getPayNodeList",
+					Handler: inter.GetPayNodeListHandler(serverCtx),
+				},
+			}...,
+		),
 	)
 }
