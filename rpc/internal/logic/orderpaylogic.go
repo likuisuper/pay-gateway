@@ -11,6 +11,7 @@ import (
 	"gitee.com/zhuyunkj/pay-gateway/rpc/pb/pb"
 	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
 	"gitee.com/zhuyunkj/zhuyun-core/util"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/smartwalle/alipay/v3"
 	"github.com/zeromicro/go-zero/core/logx"
 	"strconv"
@@ -129,6 +130,8 @@ func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (out *pb.OrderPayResp, err 
 		out.WxUniApp, err = l.createWeChatUniOrder(in, payOrder, payCfg.TransClientConfig())
 	case pb.PayType_TiktokEc:
 		payCfg, cfgErr := l.payConfigTiktokModel.GetOneByAppID(pkgCfg.TiktokPayAppID)
+		jsonStr, _ := jsoniter.MarshalToString(payCfg)
+		logx.Slow("payConfigTiktokModel ", jsonStr)
 		if cfgErr != nil {
 			err = fmt.Errorf("pkgName= %s, 读取字节支付配置失败，err:=%v", in.AppPkgName, cfgErr)
 			util.CheckError(err.Error())
