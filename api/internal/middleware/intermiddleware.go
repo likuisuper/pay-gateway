@@ -21,6 +21,7 @@ func (m *InterMiddleware) Handle(next http.HandlerFunc) http.HandlerFunc {
 		allow := m.isBelong(ip, allowCidr)
 		if allow {
 			next(w, r)
+			return
 		}
 		err := errors.New("not allow")
 		httpx.Error(w, err)
