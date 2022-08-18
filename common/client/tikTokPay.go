@@ -8,6 +8,7 @@ import (
 	"fmt"
 	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
 	"gitee.com/zhuyunkj/zhuyun-core/util"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/zeromicro/go-zero/core/logx"
 	"sort"
 	"strconv"
@@ -88,7 +89,8 @@ func (t *TikTokPay) CreateEcPayOrder(info *PayOrder) (result TikTokReply, err er
 	}
 	data["sign"] = t.getSign(data)
 	res, err := util.HttpPost(tikTokCreateUri, data, 5*time.Second)
-	logx.Infof("tikTok请求创建订单 res:=%v", data)
+	dataStr, _ := jsoniter.Marshal(data)
+	logx.Infof("tikTok请求创建订单 res:=%s", dataStr)
 	logx.Info("tikTok请求创建订单返回 res:=%s", res)
 	if err != nil {
 		tikTokHttpRequestErr.CounterInc()
