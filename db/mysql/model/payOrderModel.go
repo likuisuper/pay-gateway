@@ -23,7 +23,6 @@ const (
 	PmPayOrderTablePayStatusNo   = 0
 	PmPayOrderTablePayStatusPaid = 1
 	//支付方式
-	PmPayOrderTablePayTypeAlipayWap    = 0
 	PmPayOrderTablePayTypeWechatPayUni = 1
 	PmPayOrderTablePayTypeTiktokPayEc  = 2
 )
@@ -36,7 +35,7 @@ type PmPayOrderTable struct {
 	Amount       int       `gorm:"column:amount;default:0;NOT NULL" json:"amount"`               // 订单金额（分）
 	NotifyAmount int       `gorm:"column:notify_amount;default:0;NOT NULL" json:"notify_amount"` // 回调金额（分）
 	Subject      string    `gorm:"column:subject;NOT NULL" json:"subject"`                       // 订单标题
-	PayType      int       `gorm:"column:pay_type;default:0;NOT NULL" json:"pay_type"`           // 支付方式  0支付宝wap支付  1微信小程序支付 2头条小程序支付
+	PayType      int       `gorm:"column:pay_type;default:0;NOT NULL" json:"pay_type"`           // 支付方式  1微信小程序支付 2头条小程序支付
 	NotifyUrl    string    `gorm:"column:notify_url;NOT NULL" json:"notify_url"`                 // 回调通知地址
 	PayStatus    int       `gorm:"column:pay_status;NOT NULL" json:"pay_status"`                 // 支付状态 0未支付  1已支付
 	PayAppId     string    `gorm:"column:pay_app_id;NOT NULL" json:"pay_app_id"`                 //第三方支付的appid
