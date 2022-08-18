@@ -1,4 +1,4 @@
-package notify
+package inter
 
 import (
 	"context"
@@ -32,7 +32,6 @@ func NewGetPayNodeListLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Ge
 }
 
 func (l *GetPayNodeListLogic) GetPayNodeList(req *types.EmptyReq, request *http.Request) (resp *types.ResultResp, err error) {
-	logx.Info("GetPayNodeList", request.Header.Get("X-Forwarded-For"))
 
 	config := clientv3.Config{
 		Endpoints:   l.svcCtx.Config.Etcd.Host,

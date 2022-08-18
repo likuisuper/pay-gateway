@@ -4,6 +4,7 @@ package handler
 import (
 	"net/http"
 
+	inter "gitee.com/zhuyunkj/pay-gateway/api/internal/handler/inter"
 	notify "gitee.com/zhuyunkj/pay-gateway/api/internal/handler/notify"
 	"gitee.com/zhuyunkj/pay-gateway/api/internal/svc"
 
@@ -23,15 +24,20 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 				Path:    "/notify/bytedance",
 				Handler: notify.NotifyBytedanceHandler(serverCtx),
 			},
+		},
+	)
+
+	server.AddRoutes(
+		[]rest.Route{
 			{
 				Method:  http.MethodPost,
 				Path:    "/internal/crt/upload",
-				Handler: notify.CrtUploadHandler(serverCtx),
+				Handler: inter.CrtUploadHandler(serverCtx),
 			},
 			{
 				Method:  http.MethodPost,
 				Path:    "/internal/getPayNodeList",
-				Handler: notify.GetPayNodeListHandler(serverCtx),
+				Handler: inter.GetPayNodeListHandler(serverCtx),
 			},
 		},
 	)

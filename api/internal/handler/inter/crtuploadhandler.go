@@ -1,9 +1,9 @@
-package notify
+package inter
 
 import (
+	"gitee.com/zhuyunkj/pay-gateway/api/internal/logic/inter"
 	"net/http"
 
-	"gitee.com/zhuyunkj/pay-gateway/api/internal/logic/notify"
 	"gitee.com/zhuyunkj/pay-gateway/api/internal/svc"
 	"gitee.com/zhuyunkj/pay-gateway/api/internal/types"
 	"github.com/zeromicro/go-zero/rest/httpx"
@@ -17,7 +17,7 @@ func CrtUploadHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 			return
 		}
 
-		l := notify.NewCrtUploadLogic(r.Context(), svcCtx)
+		l := inter.NewCrtUploadLogic(r.Context(), svcCtx)
 		resp, err := l.CrtUpload(&req, r)
 		if err != nil {
 			httpx.Error(w, err)
