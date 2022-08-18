@@ -24,6 +24,7 @@ func (m *InterMiddleware) Handle(next http.HandlerFunc) http.HandlerFunc {
 		}
 		err := errors.New("not allow")
 		httpx.Error(w, err)
+		return
 	}
 }
 
