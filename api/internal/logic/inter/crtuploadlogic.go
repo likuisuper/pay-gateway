@@ -62,6 +62,7 @@ func (l *CrtUploadLogic) CrtUpload(req *types.CrtUploadReq, r *http.Request) (re
 
 	if wxPkInfo != nil && req.WeChatPayPrivateKey != "" {
 		err = l.writeCrtFile(wxPk, req.WeChatPayPrivateKey)
+		logx.Errorf("writeCrtFile err: %v", err)
 		if err != nil {
 			return
 		}
