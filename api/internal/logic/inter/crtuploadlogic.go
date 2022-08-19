@@ -41,6 +41,7 @@ func (l *CrtUploadLogic) CrtUpload(req *types.CrtUploadReq, r *http.Request) (re
 
 	if acpkInfo != nil && req.AlipayAppCertPublicKeyPath != "" {
 		err = l.writeCrtFile(acpk, req.AlipayAppCertPublicKeyPath)
+		logx.Errorf("writeCrtFile AlipayAppCertPublicKeyPath err: %v", err)
 		if err != nil {
 			return
 		}
@@ -48,6 +49,7 @@ func (l *CrtUploadLogic) CrtUpload(req *types.CrtUploadReq, r *http.Request) (re
 
 	if pkInfo != nil && req.AlipayPublicKeyPath != "" {
 		err = l.writeCrtFile(pk, req.AlipayPublicKeyPath)
+		logx.Errorf("writeCrtFile AlipayPublicKeyPath err: %v", err)
 		if err != nil {
 			return
 		}
@@ -55,6 +57,7 @@ func (l *CrtUploadLogic) CrtUpload(req *types.CrtUploadReq, r *http.Request) (re
 
 	if prCertInfo != nil && req.AlipayPayRootCertPath != "" {
 		err = l.writeCrtFile(prCert, req.AlipayPayRootCertPath)
+		logx.Errorf("writeCrtFile AlipayPayRootCertPath err: %v", err)
 		if err != nil {
 			return
 		}
@@ -62,7 +65,7 @@ func (l *CrtUploadLogic) CrtUpload(req *types.CrtUploadReq, r *http.Request) (re
 
 	if wxPkInfo != nil && req.WeChatPayPrivateKey != "" {
 		err = l.writeCrtFile(wxPk, req.WeChatPayPrivateKey)
-		logx.Errorf("writeCrtFile err: %v", err)
+		logx.Errorf("writeCrtFile WeChatPayPrivateKey err: %v", err)
 		if err != nil {
 			return
 		}
