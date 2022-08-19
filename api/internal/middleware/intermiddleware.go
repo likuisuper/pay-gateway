@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"errors"
+	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/rest/httpx"
 	"net/http"
 	"strings"
@@ -24,6 +25,7 @@ func (m *InterMiddleware) Handle(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 		err := errors.New("not allow")
+		logx.Errorf("InterMiddleware err: %v", err)
 		httpx.Error(w, err)
 		return
 	}
