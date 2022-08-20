@@ -45,10 +45,8 @@ type TikTokPay struct {
 var tikTokPay *TikTokPay
 
 func NewTikTokPay(config TikTokPayConfig) *TikTokPay {
-	if tikTokPay == nil {
-		tikTokPay = &TikTokPay{
-			Config: config,
-		}
+	tikTokPay = &TikTokPay{
+		Config: config,
 	}
 	return tikTokPay
 }
