@@ -17,7 +17,8 @@ func (m *InterMiddleware) Handle(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		ip := r.Header.Get("X-Forwarded-For")
-		logx.Info("InterMiddleware ip: %s", ip)
+		logx.Info("InterMiddleware X-Forwarded-For: %s", ip)
+		logx.Info("InterMiddleware remote-addr: %s", r.RemoteAddr)
 
 		//allowCidr := "172.30.0.0/16"
 		//ip := r.Header.Get("X-Forwarded-For")
