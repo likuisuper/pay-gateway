@@ -91,6 +91,8 @@ func (t *TikTokPay) CreateEcPayOrder(info *PayOrder) (result TikTokReply, err er
 	res, err := util.HttpPost(tikTokCreateUri, data, 5*time.Second)
 	dataStr, _ := jsoniter.MarshalToString(data)
 	logx.Slow("tikTok请求创建订单 ", dataStr)
+	dataStr, _ = jsoniter.MarshalToString(t.Config)
+	logx.Slow("tiktok配置 ", dataStr)
 	logx.Slow("tikTok请求创建订单返回 ", res)
 	if err != nil {
 		tikTokHttpRequestErr.CounterInc()
