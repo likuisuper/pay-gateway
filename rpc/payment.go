@@ -8,6 +8,7 @@ import (
 	"gitee.com/zhuyunkj/pay-gateway/rpc/internal/server"
 	"gitee.com/zhuyunkj/pay-gateway/rpc/internal/svc"
 	"gitee.com/zhuyunkj/pay-gateway/rpc/pb/pb"
+	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
 
 	"github.com/zeromicro/go-zero/core/conf"
 	"github.com/zeromicro/go-zero/core/service"
@@ -19,6 +20,8 @@ import (
 var configFile = flag.String("f", "etc/payment.yaml", "the config file")
 
 func main() {
+	kv_m.SetAllMonitorFixLabel("business", "payment.rpc")
+	kv_m.InitKvMonitor()
 	flag.Parse()
 
 	var c config.Config
