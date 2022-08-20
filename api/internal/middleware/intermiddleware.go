@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"github.com/zeromicro/go-zero/core/logx"
 	"net/http"
 	"strings"
 )
@@ -14,6 +15,10 @@ func NewInterMiddleware() *InterMiddleware {
 
 func (m *InterMiddleware) Handle(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+
+		ip := r.Header.Get("X-Forwarded-For")
+		logx.Info("InterMiddleware ip: %s", ip)
+
 		//allowCidr := "172.30.0.0/16"
 		//ip := r.Header.Get("X-Forwarded-For")
 		//allow := m.isBelong(ip, allowCidr)
