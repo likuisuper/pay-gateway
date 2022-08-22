@@ -2,7 +2,6 @@ package logic
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"gitee.com/zhuyunkj/pay-gateway/common/client"
 	"gitee.com/zhuyunkj/pay-gateway/common/define"
@@ -47,8 +46,8 @@ func (l *ClosePayOrderLogic) ClosePayOrder(in *pb.ClosePayOrderReq) (resp *pb.Em
 	//读取应用配置
 	pkgCfg, err := l.appConfigModel.GetOneByPkgName(in.AppPkgName)
 	if err != nil {
-		util.CheckError("pkgName= %s, 读取应用配置失败，err:=%v", in.AppPkgName, err)
-		err = errors.New("读取应用配置失败")
+		err = fmt.Errorf("读取应用配置失败 pkgName= %s, err:=%v", in.AppPkgName, err)
+		util.CheckError(err.Error())
 		return
 	}
 
@@ -56,11 +55,16 @@ func (l *ClosePayOrderLogic) ClosePayOrder(in *pb.ClosePayOrderReq) (resp *pb.Em
 	case pb.PayType_WxUniApp:
 		payCfg, cfgErr := l.payConfigWechatModel.GetOneByAppID(pkgCfg.WechatPayAppID)
 		if cfgErr != nil {
-			err = fmt.Errorf("pkgName= %s, 读取微信支付配置失败，err:=%v", in.AppPkgName, cfgErr)
+			err = fmt.Errorf("读取微信支付配置失败 pkgName= %s, err:=%v", in.AppPkgName, cfgErr)
 			util.CheckError(err.Error())
 			return
 		}
 		err = l.wxClosePayOrder(in, payCfg.TransClientConfig())
+		if err != nil {
+			err = fmt.Errorf("关闭微信订单失败, orderSn=%s, err=%v", in.OrderSn, err)
+			util.CheckError(err.Error())
+			return
+		}
 	}
 
 	return
