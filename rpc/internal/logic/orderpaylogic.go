@@ -21,6 +21,8 @@ var (
 	alipayWapPayFailNum = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "alipayWapPayFailNum", nil, "支付宝下单失败", nil})}
 	wechatUniPayFailNum = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "wechatUniPayFailNum", nil, "微信支付下单失败", nil})}
 	tiktokEcPayFailNum  = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "tiktokEcPayFailNum", nil, "字节支付下单失败", nil})}
+
+	orderTableIOFailNum = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "orderTableIOFailNum", nil, "订单io失败", nil})}
 )
 
 type OrderPayLogic struct {
@@ -53,8 +55,9 @@ func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (out *pb.OrderPayResp, err 
 	//读取应用配置
 	pkgCfg, err := l.appConfigModel.GetOneByPkgName(in.AppPkgName)
 	if err != nil {
-		util.CheckError("pkgName= %s, 读取应用配置失败，err:=%v", in.AppPkgName, err)
-		err = errors.New("读取应用配置失败")
+		//util.CheckError("pkgName= %s, 读取应用配置失败，err:=%v", in.AppPkgName, err)
+		err = fmt.Errorf("pkgName= %s, 读取应用配置失败，err:=%v", in.AppPkgName, err)
+		util.CheckError(err.Error())
 		return
 	}
 
@@ -62,7 +65,8 @@ func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (out *pb.OrderPayResp, err 
 	orderInfo, err := l.payOrderModel.GetOneByCode(in.OrderSn)
 	if err != nil {
 		err = fmt.Errorf("获取订单信息错误 %w", err)
-		util.CheckError(err.Error())
+		logx.Error(err)
+		orderTableIOFailNum.CounterInc()
 		return
 	}
 
@@ -78,11 +82,14 @@ func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (out *pb.OrderPayResp, err 
 		err = l.payOrderModel.Create(orderInfo)
 		if err != nil {
 			err = fmt.Errorf("创建支付订单失败 %w", err)
+			logx.Error(err)
+			orderTableIOFailNum.CounterInc()
 			return
 		}
 	} else {
 		if orderInfo.PayStatus != model.PmPayOrderTablePayStatusNo {
 			err = errors.New("订单不是未支付状态")
+			util.CheckError(err.Error())
 			return
 		}
 	}
