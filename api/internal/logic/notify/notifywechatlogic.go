@@ -9,6 +9,7 @@ import (
 	"gitee.com/zhuyunkj/pay-gateway/db/mysql/model"
 	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
 	"gitee.com/zhuyunkj/zhuyun-core/util"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/wechatpay-apiv3/wechatpay-go/services/payments"
 	"net/http"
 	"time"
@@ -62,6 +63,13 @@ func (l *NotifyWechatLogic) NotifyWechat(request *http.Request) (resp *types.WeC
 		logx.Errorf(err.Error())
 		return
 	}
+
+	if *transaction.TradeState != "SUCCESS" {
+		jsonStr, _ := jsoniter.MarshalToString(transaction)
+		logx.Slowf("支付回调异常: %s", jsonStr)
+		return
+	}
+
 	//获取订单信息
 	orderInfo, err := l.payOrderModel.GetOneByCode(*transaction.OutTradeNo)
 	if err != nil {
