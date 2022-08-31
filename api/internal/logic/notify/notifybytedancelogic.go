@@ -12,6 +12,7 @@ import (
 	"gitee.com/zhuyunkj/pay-gateway/common/exception"
 	"gitee.com/zhuyunkj/pay-gateway/db/mysql/model"
 	"gitee.com/zhuyunkj/zhuyun-core/util"
+	jsoniter "github.com/json-iterator/go"
 	"time"
 
 	"github.com/zeromicro/go-zero/core/logx"
@@ -69,6 +70,12 @@ func (l *NotifyBytedanceLogic) NotifyBytedance(req *types.ByteDanceReq) (resp *t
 			ErrTips: "验签未通过，或者解密失败",
 		}
 		return resp, nil
+	}
+
+	if order.Status != "SUCCESS" {
+		jsonStr, _ := jsoniter.MarshalToString(cliReq)
+		logx.Slowf("bytedance支付回调异常: %s", jsonStr)
+		return
 	}
 
 	//获取订单信息

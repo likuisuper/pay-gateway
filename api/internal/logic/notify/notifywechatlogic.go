@@ -66,7 +66,7 @@ func (l *NotifyWechatLogic) NotifyWechat(request *http.Request) (resp *types.WeC
 
 	if *transaction.TradeState != "SUCCESS" {
 		jsonStr, _ := jsoniter.MarshalToString(transaction)
-		logx.Slowf("支付回调异常: %s", jsonStr)
+		logx.Slowf("wechat支付回调异常: %s", jsonStr)
 		return
 	}
 
