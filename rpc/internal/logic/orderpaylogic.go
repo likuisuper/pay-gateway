@@ -21,6 +21,7 @@ var (
 	alipayWapPayFailNum = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "alipayWapPayFailNum", nil, "支付宝下单失败", nil})}
 	wechatUniPayFailNum = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "wechatUniPayFailNum", nil, "微信支付下单失败", nil})}
 	tiktokEcPayFailNum  = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "tiktokEcPayFailNum", nil, "字节支付下单失败", nil})}
+	alipayWebPayFailNum = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "alipayWebPayFailNum", nil, "支付宝下单失败", nil})}
 
 	orderTableIOFailNum = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "orderTableIOFailNum", nil, "订单io失败", nil})}
 )
@@ -107,6 +108,8 @@ func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (out *pb.OrderPayResp, err 
 	switch in.PayType {
 	case pb.PayType_AlipayWap:
 		payAppId = pkgCfg.AlipayAppID
+	case pb.PayType_AlipayWeb:
+		payAppId = pkgCfg.AlipayAppID
 	case pb.PayType_WxUniApp:
 		payAppId = pkgCfg.WechatPayAppID
 	case pb.PayType_TiktokEc:
@@ -126,6 +129,14 @@ func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (out *pb.OrderPayResp, err 
 			return
 		}
 		out.AlipayWap, err = l.createAlipayWapOrder(in, payCfg.TransClientConfig())
+	case pb.PayType_AlipayWeb:
+		payCfg, cfgErr := l.payConfigAlipayModel.GetOneByAppID(pkgCfg.AlipayAppID)
+		if cfgErr != nil {
+			err = fmt.Errorf("pkgName= %s, 读取支付宝配置失败，err:=%v", in.AppPkgName, cfgErr)
+			util.CheckError(err.Error())
+			return
+		}
+		out.AlipayWeb, err = l.createAlipayWebOrder(in, payCfg.TransClientConfig())
 	case pb.PayType_WxUniApp:
 		payCfg, cfgErr := l.payConfigWechatModel.GetOneByAppID(pkgCfg.WechatPayAppID)
 		if cfgErr != nil {
@@ -169,6 +180,36 @@ func (l *OrderPayLogic) createAlipayWapOrder(in *pb.OrderPayReq, payConf *client
 	res, err := payClient.TradeWapPay(p)
 	if err != nil {
 		alipayWapPayFailNum.CounterInc()
+		util.CheckError("pkgName= %s, alipayWapPay，err:=%v", in.AppPkgName, err)
+		return
+	}
+	payUrl = res.String()
+
+	return
+}
+
+//支付宝web支付
+func (l *OrderPayLogic) createAlipayWebOrder(in *pb.OrderPayReq, payConf *client.AliPayConfig) (payUrl string, err error) {
+	// 将 key 的验证调整到初始化阶段
+	payClient, err := client.GetAlipayClient(*payConf)
+	if err != nil {
+		util.CheckError("pkgName= %s, 初使化支付错误，err:=%v", in.AppPkgName, err)
+		return
+	}
+	//发起支付请求
+	var amount float64 = float64(in.Amount) / 100
+	sendAmount := strconv.FormatFloat(amount, 'f', 2, 32)
+	var p = alipay.TradePagePay{}
+	p.NotifyURL = in.NotifyURL
+	p.ReturnURL = in.ReturnURL
+	p.Subject = in.Subject
+	p.OutTradeNo = in.OrderSn
+	p.TotalAmount = sendAmount
+	p.ProductCode = "FAST_INSTANT_TRADE_PAY"
+
+	res, err := payClient.TradePagePay(p)
+	if err != nil {
+		alipayWebPayFailNum.CounterInc()
 		util.CheckError("pkgName= %s, alipayWapPay，err:=%v", in.AppPkgName, err)
 		return
 	}

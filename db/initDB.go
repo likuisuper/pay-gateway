@@ -4,8 +4,8 @@ import (
 	"fmt"
 	redisdb "gitee.com/zhuyunkj/zhuyun-core/cache"
 	mysql "gitee.com/zhuyunkj/zhuyun-core/db"
-	"github.com/jinzhu/gorm"
 	"github.com/zeromicro/go-zero/core/logx"
+	"gorm.io/gorm"
 	"os"
 
 	"strings"

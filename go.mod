@@ -3,7 +3,7 @@ module gitee.com/zhuyunkj/pay-gateway
 go 1.16
 
 require (
-	gitee.com/zhuyunkj/zhuyun-core v1.3.0
+	gitee.com/zhuyunkj/zhuyun-core v1.5.12
 	github.com/jinzhu/gorm v1.9.16
 	github.com/json-iterator/go v1.1.12
 	github.com/smartwalle/alipay/v3 v3.1.7
@@ -12,4 +12,5 @@ require (
 	go.etcd.io/etcd/client/v3 v3.5.4
 	google.golang.org/grpc v1.48.0
 	google.golang.org/protobuf v1.28.1
+	gorm.io/gorm v1.23.6
 )

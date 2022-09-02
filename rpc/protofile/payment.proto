@@ -21,6 +21,8 @@ enum PayType {
   AlipayWap = 0; //支付宝wap支付
   WxUniApp = 1; //微信小程序支付
   TiktokEc = 2; //头条小程序支付
+  AlipayWeb = 3; //支付宝web支付
+  WxWeb = 4; //微信web支付
 }
 
 //创建支付订单返回
@@ -31,6 +33,7 @@ message OrderPayResp {
   string AlipayWap = 3; //支付宝wap支付
   WxUniAppPayReply WxUniApp = 4; //微信小程序支付
   TiktokEcPayReply TikTokEc = 5; //抖音小程序支付
+  string AlipayWeb = 7; //支付宝web支付
 }
 
 //微信uniapp支付返回
