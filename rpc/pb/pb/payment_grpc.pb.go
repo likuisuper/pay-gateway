@@ -26,6 +26,8 @@ type PaymentClient interface {
 	OrderPay(ctx context.Context, in *OrderPayReq, opts ...grpc.CallOption) (*OrderPayResp, error)
 	//关闭订单
 	ClosePayOrder(ctx context.Context, in *ClosePayOrderReq, opts ...grpc.CallOption) (*Empty, error)
+	//支付宝转出
+	AlipayFundTransUniTransfer(ctx context.Context, in *AlipayFundTransUniTransferReq, opts ...grpc.CallOption) (*Empty, error)
 }
 
 type paymentClient struct {
@@ -54,6 +56,15 @@ func (c *paymentClient) ClosePayOrder(ctx context.Context, in *ClosePayOrderReq,
 	return out, nil
 }
 
+func (c *paymentClient) AlipayFundTransUniTransfer(ctx context.Context, in *AlipayFundTransUniTransferReq, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, "/payment.Payment/AlipayFundTransUniTransfer", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PaymentServer is the server API for Payment service.
 // All implementations must embed UnimplementedPaymentServer
 // for forward compatibility
@@ -62,6 +73,8 @@ type PaymentServer interface {
 	OrderPay(context.Context, *OrderPayReq) (*OrderPayResp, error)
 	//关闭订单
 	ClosePayOrder(context.Context, *ClosePayOrderReq) (*Empty, error)
+	//支付宝转出
+	AlipayFundTransUniTransfer(context.Context, *AlipayFundTransUniTransferReq) (*Empty, error)
 	mustEmbedUnimplementedPaymentServer()
 }
 
@@ -74,6 +87,9 @@ func (UnimplementedPaymentServer) OrderPay(context.Context, *OrderPayReq) (*Orde
 }
 func (UnimplementedPaymentServer) ClosePayOrder(context.Context, *ClosePayOrderReq) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ClosePayOrder not implemented")
+}
+func (UnimplementedPaymentServer) AlipayFundTransUniTransfer(context.Context, *AlipayFundTransUniTransferReq) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AlipayFundTransUniTransfer not implemented")
 }
 func (UnimplementedPaymentServer) mustEmbedUnimplementedPaymentServer() {}
 
@@ -124,6 +140,24 @@ func _Payment_ClosePayOrder_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Payment_AlipayFundTransUniTransfer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AlipayFundTransUniTransferReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PaymentServer).AlipayFundTransUniTransfer(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/payment.Payment/AlipayFundTransUniTransfer",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PaymentServer).AlipayFundTransUniTransfer(ctx, req.(*AlipayFundTransUniTransferReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Payment_ServiceDesc is the grpc.ServiceDesc for Payment service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -138,6 +172,10 @@ var Payment_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ClosePayOrder",
 			Handler:    _Payment_ClosePayOrder_Handler,
+		},
+		{
+			MethodName: "AlipayFundTransUniTransfer",
+			Handler:    _Payment_AlipayFundTransUniTransfer_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
