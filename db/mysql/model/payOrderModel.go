@@ -92,7 +92,7 @@ func (o *PmPayOrderModel) UpdateNotify(info *PmPayOrderTable) error {
 }
 
 func (o *PmPayOrderModel) UpdatePayAppID(orderSn string, payAppId string) (err error) {
-	err = o.DB.Model(&PmPayOrderTable{}).Where("orderSn = ?", orderSn).Update("pay_app_id", payAppId).Error
+	err = o.DB.Model(&PmPayOrderTable{}).Where("order_sn = ?", orderSn).Update("pay_app_id", payAppId).Error
 	if err != nil {
 		err = fmt.Errorf("UpdatePayAppID Err: %v", err)
 		util.CheckError(err.Error())
