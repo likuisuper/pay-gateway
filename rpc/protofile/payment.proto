@@ -34,6 +34,7 @@ message OrderPayResp {
   WxUniAppPayReply WxUniApp = 4; //微信小程序支付
   TiktokEcPayReply TikTokEc = 5; //抖音小程序支付
   string AlipayWeb = 7; //支付宝web支付
+    WxNativePayReply WxNative = 8; //微信web支付
 }
 
 //微信uniapp支付返回
@@ -45,6 +46,11 @@ message WxUniAppPayReply {
   string SignType = 5; //签名方式
   string PaySign = 6; //支付签名
   string OrderSn = 7; //商户订单号
+}
+
+message WxNativePayReply {
+  string CodeUrl = 1; //二维码链接
+  string CodeBase64 = 2; //二维码的base64
 }
 
 //抖音小程序支付返回

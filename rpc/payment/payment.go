@@ -20,6 +20,7 @@ type (
 	OrderPayResp                  = pb.OrderPayResp
 	PayeeInfo                     = pb.PayeeInfo
 	TiktokEcPayReply              = pb.TiktokEcPayReply
+	WxNativePayReply              = pb.WxNativePayReply
 	WxUniAppPayReply              = pb.WxUniAppPayReply
 
 	Payment interface {
