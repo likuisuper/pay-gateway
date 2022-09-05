@@ -170,7 +170,7 @@ func (l *OrderPayLogic) createAlipayWapOrder(in *pb.OrderPayReq, payConf *client
 	var amount float64 = float64(in.Amount) / 100
 	sendAmount := strconv.FormatFloat(amount, 'f', 2, 32)
 	var p = alipay.TradeWapPay{}
-	p.NotifyURL = in.NotifyURL
+	p.NotifyURL = payConf.NotifyUrl
 	p.ReturnURL = in.ReturnURL
 	p.Subject = in.Subject
 	p.OutTradeNo = in.OrderSn
@@ -200,7 +200,7 @@ func (l *OrderPayLogic) createAlipayWebOrder(in *pb.OrderPayReq, payConf *client
 	var amount float64 = float64(in.Amount) / 100
 	sendAmount := strconv.FormatFloat(amount, 'f', 2, 32)
 	var p = alipay.TradePagePay{}
-	p.NotifyURL = in.NotifyURL
+	p.NotifyURL = payConf.NotifyUrl
 	p.ReturnURL = in.ReturnURL
 	p.Subject = in.Subject
 	p.OutTradeNo = in.OrderSn
