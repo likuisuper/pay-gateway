@@ -2,3 +2,4 @@
 *.crt
 *.pem
 *.log
+**/.DS_Store
