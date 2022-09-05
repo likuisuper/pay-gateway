@@ -13,6 +13,7 @@ import (
 	"github.com/wechatpay-apiv3/wechatpay-go/core/option"
 	"github.com/wechatpay-apiv3/wechatpay-go/services/payments"
 	"github.com/wechatpay-apiv3/wechatpay-go/services/payments/jsapi"
+	"github.com/wechatpay-apiv3/wechatpay-go/services/payments/native"
 	"github.com/wechatpay-apiv3/wechatpay-go/utils"
 	"github.com/zeromicro/go-zero/core/logx"
 	"math/rand"
@@ -198,7 +199,39 @@ func (l *WeChatCommPay) getClient() (uniAppResp *core.Client, err error) {
 	return client, nil
 }
 
-//发起微信支付请求V3请求
+//支付请求v3  web
+func (l *WeChatCommPay) WechatPayV3Native(info *PayOrder) (resp *native.PrepayResponse, err error) {
+	attach := fmt.Sprintf(`{"order_sn":"%s","type":%d,"value":%d}`, info.OrderSn, info.Amount)
+	client, err := l.getClient()
+	if err != nil {
+		logx.Errorf("请求微信支付发生错误,err =%v", err)
+		return
+	}
+	body := info.Subject
+	svc := native.NativeApiService{Client: client}
+	resp, result, err := svc.Prepay(l.Ctx,
+		native.PrepayRequest{
+			Appid:       core.String(l.Config.AppId),
+			Mchid:       core.String(l.Config.MchId),
+			Description: core.String(body),
+			OutTradeNo:  core.String(info.OrderSn),
+			Attach:      core.String(attach),
+			NotifyUrl:   core.String(l.Config.NotifyUrl),
+			Amount: &native.Amount{
+				Total: core.Int64(int64(info.Amount)),
+			},
+		},
+	)
+	if err != nil {
+		weChatHttpRequestErr.CounterInc()
+		logx.Errorf("请求微信支付发生错误,err =%v", err)
+		return
+	}
+	logx.Infof("请求微信支付成功！result = %v", result)
+	return
+}
+
+//发起微信支付请求V3请求  jsapi
 func (l *WeChatCommPay) WechatPayV3(info *PayOrder, openId string) (uniAppResp *UniAppResp, err error) {
 	attach := fmt.Sprintf(`{"order_sn":"%s","type":%d,"value":%d}`, info.OrderSn, info.Amount)
 	client, err := l.getClient()

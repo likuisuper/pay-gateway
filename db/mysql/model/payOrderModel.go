@@ -7,8 +7,8 @@ import (
 	"gitee.com/zhuyunkj/pay-gateway/db"
 	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
 	"gitee.com/zhuyunkj/zhuyun-core/util"
-	"github.com/jinzhu/gorm"
 	"github.com/zeromicro/go-zero/core/logx"
+	"gorm.io/gorm"
 	"time"
 )
 
@@ -85,7 +85,7 @@ func (o *PmPayOrderModel) GetOneByCode(orderSn string) (info *PmPayOrderTable, e
 func (o *PmPayOrderModel) UpdateNotify(info *PmPayOrderTable) error {
 	err := o.DB.Save(&info).Error
 	if err != nil {
-		logx.Errorf("更新回调订单失败，err:=%v", err)
+		logx.Errorf("更新回调订单失败，err=%v", err)
 		updateNofityOrderErr.CounterInc()
 	}
 	return err

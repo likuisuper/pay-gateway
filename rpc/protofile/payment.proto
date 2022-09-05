@@ -21,6 +21,8 @@ enum PayType {
   AlipayWap = 0; //支付宝wap支付
   WxUniApp = 1; //微信小程序支付
   TiktokEc = 2; //头条小程序支付
+  AlipayWeb = 3; //支付宝web支付
+  WxWeb = 4; //微信web支付
 }
 
 //创建支付订单返回
@@ -31,6 +33,8 @@ message OrderPayResp {
   string AlipayWap = 3; //支付宝wap支付
   WxUniAppPayReply WxUniApp = 4; //微信小程序支付
   TiktokEcPayReply TikTokEc = 5; //抖音小程序支付
+  string AlipayWeb = 7; //支付宝web支付
+    WxNativePayReply WxNative = 8; //微信web支付
 }
 
 //微信uniapp支付返回
@@ -42,6 +46,11 @@ message WxUniAppPayReply {
   string SignType = 5; //签名方式
   string PaySign = 6; //支付签名
   string OrderSn = 7; //商户订单号
+}
+
+message WxNativePayReply {
+  string CodeUrl = 1; //二维码链接
+  string CodeBase64 = 2; //二维码的base64
 }
 
 //抖音小程序支付返回
@@ -59,10 +68,36 @@ message ClosePayOrderReq {
 
 message Empty {}
 
+//============== 转出 ==============================================================================
+
+message AlipayFundTransUniTransferReq {
+  string OrderSn = 1;  //商户唯一订单号
+  string TransAmount = 2; // 订单总金额，单位为元，精确到小数点后两位，STD_RED_PACKET 产品取值范围[0.01,100000000]； TRANS_ACCOUNT_NO_PWD产品取值范围[0.1,100000000]
+  string ProductCode = 3; //业务产品码， 收发现金红包固定为：STD_RED_PACKET； 单笔无密转账到支付宝账户固定为：TRANS_ACCOUNT_NO_PWD； 单笔无密转账到银行卡固定为：TRANS_BANKCARD_NO_PWD
+  string OrderTitle = 4; //转账业务的标题，用于在支付宝用户的账单里显示
+  PayeeInfo payeeInfo = 5; //支付
+  string BizScene = 6; //描述特定的业务场景，可传的参数如下： PERSONAL_COLLECTION：C2C现金红包-领红包； DIRECT_TRANSFER：B2C现金红包、单笔无密转账到支付宝/银行卡
+  string BusinessParams = 7; //转账业务请求的扩展参数，支持传入的扩展参数如下： 1、sub_biz_scene 子业务场景，红包业务必传，取值REDPACKET，C2C现金红包、B2C现金红包均需传入； 2、withdraw_timeliness为转账到银行卡的预期到账时间，可选（不传入则默认为T1），取值T0表示预期T+0到账，取值T1表示预期T+1到账，因到账时效受银行机构处理影响，支付宝无法保证一定是T0或者T1到账；
+  string Remark = 8; //业务备注
+
+  string AppPkgName = 9; //应用包名
+}
+
+message PayeeInfo {
+  string Identity = 1; //参与方的唯一标识
+  string IdentityType = 2; //参与方的标识类型，目前支持如下类型： 1、ALIPAY_USER_ID 支付宝的会员ID 2、ALIPAY_LOGON_ID：支付宝登录号，支持邮箱和手机号格式
+  string Name = 3; //参与方真实姓名，如果非空，将校验收款支付宝账号姓名一致性。当identity_type=ALIPAY_LOGON_ID时，本字段必填。
+}
+
+//============== service ==============================================================================
+
 service Payment {
   //创建支付订单
   rpc OrderPay(OrderPayReq) returns(OrderPayResp);
 
   //关闭订单
   rpc ClosePayOrder(ClosePayOrderReq) returns(Empty);
+
+  //支付宝转出
+  rpc AlipayFundTransUniTransfer(AlipayFundTransUniTransferReq) returns(Empty);
 }
