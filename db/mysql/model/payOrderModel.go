@@ -25,6 +25,7 @@ const (
 	//支付方式
 	PmPayOrderTablePayTypeWechatPayUni = 1
 	PmPayOrderTablePayTypeTiktokPayEc  = 2
+	PmPayOrderTablePayTypeAlipay       = 3
 )
 
 // 支付订单
