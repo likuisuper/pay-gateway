@@ -14,6 +14,7 @@ import (
 	"gitee.com/zhuyunkj/zhuyun-core/util"
 	"github.com/smartwalle/alipay/v3"
 	"github.com/zeromicro/go-zero/core/logx"
+	"github.com/zeromicro/go-zero/rest/httpx"
 	"net/http"
 	"net/url"
 	"time"
@@ -125,6 +126,7 @@ func (l *NotifyAlipayLogic) NotifyAlipay(r *http.Request, w http.ResponseWriter)
 		_, _ = util.HttpPost(orderInfo.NotifyUrl, dataMap, 5*time.Second)
 	}()
 
+	httpx.OkJson(w, "success")
 	return
 }
 
