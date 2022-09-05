@@ -2,8 +2,8 @@ package model
 
 import (
 	"gitee.com/zhuyunkj/pay-gateway/db"
-	"github.com/jinzhu/gorm"
 	"github.com/zeromicro/go-zero/core/logx"
+	"gorm.io/gorm"
 	"time"
 )
 
