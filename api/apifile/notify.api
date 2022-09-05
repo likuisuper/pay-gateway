@@ -41,4 +41,10 @@ service payment {
     @handler notifyBytedance
     post /notify/bytedance (ByteDanceReq) returns (ByteDanceResp)
 
+    @doc(
+        summary: "支付宝支付回调"
+    )
+    @handler notifyAlipay
+    post /notify/alipay (EmptyReq) returns (EmptyReq)
+
 }
