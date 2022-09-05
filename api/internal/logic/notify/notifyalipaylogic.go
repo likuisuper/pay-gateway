@@ -5,7 +5,6 @@ import (
 	"gitee.com/zhuyunkj/pay-gateway/common/define"
 	"gitee.com/zhuyunkj/pay-gateway/db/mysql/model"
 	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
-	"io/ioutil"
 	"net/http"
 
 	"gitee.com/zhuyunkj/pay-gateway/api/internal/svc"
@@ -39,13 +38,13 @@ func NewNotifyAlipayLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Noti
 }
 
 func (l *NotifyAlipayLogic) NotifyAlipay(r *http.Request, w http.ResponseWriter) (resp *types.EmptyReq, err error) {
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		logx.Errorf("NotifyAlipay err: %v", err)
-		notifyAlipayErrNum.CounterInc()
-		return
-	}
-	logx.Slowf("NotifyAlipay body: %s", string(data))
+	//data, err := ioutil.ReadAll(r.Body)
+	//if err != nil {
+	//	logx.Errorf("NotifyAlipay err: %v", err)
+	//	notifyAlipayErrNum.CounterInc()
+	//	return
+	//}
+	//logx.Slowf("NotifyAlipay body: %s", string(data))
 
 	//appId := jsoniter.Get(data, "app_id").ToString()
 	//payCfg, err := l.payConfigAlipayModel.GetOneByAppID(appId)
@@ -61,6 +60,15 @@ func (l *NotifyAlipayLogic) NotifyAlipay(r *http.Request, w http.ResponseWriter)
 	//	return
 	//}
 	//payClient.VerifySign()
+
+	err = r.ParseForm()
+	if err != nil {
+		logx.Errorf("NotifyAlipay err: %v", err)
+		notifyAlipayErrNum.CounterInc()
+		return
+	}
+	appId := r.Form.Get("app_id")
+	logx.Slowf(appId)
 
 	return
 }
