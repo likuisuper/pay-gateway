@@ -16,6 +16,7 @@ type AliPayConfig struct {
 	PublicKey        string
 	AppCertPublicKey string
 	PayRootCert      string
+	NotifyUrl        string
 	IsProduction     bool
 }
 

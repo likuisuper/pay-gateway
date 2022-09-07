@@ -5,8 +5,8 @@ import (
 	"gitee.com/zhuyunkj/pay-gateway/common/client"
 	"gitee.com/zhuyunkj/pay-gateway/db"
 	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
-	"github.com/jinzhu/gorm"
 	"github.com/zeromicro/go-zero/core/logx"
+	"gorm.io/gorm"
 	"time"
 )
 

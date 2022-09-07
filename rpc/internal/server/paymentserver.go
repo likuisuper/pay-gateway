@@ -33,3 +33,9 @@ func (s *PaymentServer) ClosePayOrder(ctx context.Context, in *pb.ClosePayOrderR
 	l := logic.NewClosePayOrderLogic(ctx, s.svcCtx)
 	return l.ClosePayOrder(in)
 }
+
+// 支付宝转出
+func (s *PaymentServer) AlipayFundTransUniTransfer(ctx context.Context, in *pb.AlipayFundTransUniTransferReq) (*pb.Empty, error) {
+	l := logic.NewAlipayFundTransUniTransferLogic(ctx, s.svcCtx)
+	return l.AlipayFundTransUniTransfer(in)
+}

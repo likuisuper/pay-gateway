@@ -5,8 +5,8 @@ import (
 	"gitee.com/zhuyunkj/pay-gateway/common/client"
 	"gitee.com/zhuyunkj/pay-gateway/db"
 	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
-	"github.com/jinzhu/gorm"
 	"github.com/zeromicro/go-zero/core/logx"
+	"gorm.io/gorm"
 	"time"
 )
 
@@ -24,6 +24,7 @@ type PmPayConfigAlipayTable struct {
 	PayRootCert      string    `gorm:"column:pay_root_cert;NOT NULL" json:"pay_root_cert"`             // 根证书
 	IsProduction     int       `gorm:"column:is_production;default:0;NOT NULL" json:"is_production"`   // 是否生产 0否 1是
 	Remark           string    `gorm:"column:remark;NOT NULL" json:"remark"`                           // 备注信息
+	NotifyUrl        string    `gorm:"column:notify_url;NOT NULL" json:"notify_url"`                   // 回调地址
 	CreatedAt        time.Time `gorm:"column:created_at" json:"created_at"`
 	UpdatedAt        time.Time `gorm:"column:updated_at" json:"updated_at"`
 }
@@ -39,6 +40,7 @@ func (m *PmPayConfigAlipayTable) TransClientConfig() (clientCfg *client.AliPayCo
 		PublicKey:        m.PublicKey,
 		AppCertPublicKey: m.AppCertPublicKey,
 		PayRootCert:      m.PayRootCert,
+		NotifyUrl:        m.NotifyUrl,
 	}
 	if m.IsProduction == 1 {
 		clientCfg.IsProduction = true
