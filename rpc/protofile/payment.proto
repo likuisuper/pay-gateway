@@ -34,7 +34,7 @@ message OrderPayResp {
   WxUniAppPayReply WxUniApp = 4; //微信小程序支付
   TiktokEcPayReply TikTokEc = 5; //抖音小程序支付
   string AlipayWeb = 7; //支付宝web支付
-    WxNativePayReply WxNative = 8; //微信web支付
+  WxNativePayReply WxNative = 8; //微信web支付
 }
 
 //微信uniapp支付返回
@@ -68,6 +68,21 @@ message ClosePayOrderReq {
 
 message Empty {}
 
+//查询订单状态req
+message OrderStatusReq {
+  string OrderSn = 1; //商户订单号
+  PayType PayType = 2; //支付方式
+  string AppPkgName = 3; //应用包名
+}
+
+//查询订单状态resp
+message OrderStatusResp {
+  string OrderSn = 1; //商户订单号
+  int64 Status = 2; //支付状态 1支付成功  0其他
+  int64 PayAmount = 3; //支付金额 单位分
+  string ThirdRespJson = 4; //第三方支付请求返回json
+}
+
 //============== 转出 ==============================================================================
 
 message AlipayFundTransUniTransferReq {
@@ -100,4 +115,7 @@ service Payment {
 
   //支付宝转出
   rpc AlipayFundTransUniTransfer(AlipayFundTransUniTransferReq) returns(Empty);
+
+  //查询订单
+  rpc OrderStatus(OrderStatusReq) returns (OrderStatusResp);
 }

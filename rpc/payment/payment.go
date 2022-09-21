@@ -18,6 +18,8 @@ type (
 	Empty                         = pb.Empty
 	OrderPayReq                   = pb.OrderPayReq
 	OrderPayResp                  = pb.OrderPayResp
+	OrderStatusReq                = pb.OrderStatusReq
+	OrderStatusResp               = pb.OrderStatusResp
 	PayeeInfo                     = pb.PayeeInfo
 	TiktokEcPayReply              = pb.TiktokEcPayReply
 	WxNativePayReply              = pb.WxNativePayReply
@@ -30,6 +32,8 @@ type (
 		ClosePayOrder(ctx context.Context, in *ClosePayOrderReq, opts ...grpc.CallOption) (*Empty, error)
 		// 支付宝转出
 		AlipayFundTransUniTransfer(ctx context.Context, in *AlipayFundTransUniTransferReq, opts ...grpc.CallOption) (*Empty, error)
+		// 查询订单
+		OrderStatus(ctx context.Context, in *OrderStatusReq, opts ...grpc.CallOption) (*OrderStatusResp, error)
 	}
 
 	defaultPayment struct {
@@ -59,4 +63,10 @@ func (m *defaultPayment) ClosePayOrder(ctx context.Context, in *ClosePayOrderReq
 func (m *defaultPayment) AlipayFundTransUniTransfer(ctx context.Context, in *AlipayFundTransUniTransferReq, opts ...grpc.CallOption) (*Empty, error) {
 	client := pb.NewPaymentClient(m.cli.Conn())
 	return client.AlipayFundTransUniTransfer(ctx, in, opts...)
+}
+
+// 查询订单
+func (m *defaultPayment) OrderStatus(ctx context.Context, in *OrderStatusReq, opts ...grpc.CallOption) (*OrderStatusResp, error) {
+	client := pb.NewPaymentClient(m.cli.Conn())
+	return client.OrderStatus(ctx, in, opts...)
 }

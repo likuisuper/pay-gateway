@@ -39,3 +39,9 @@ func (s *PaymentServer) AlipayFundTransUniTransfer(ctx context.Context, in *pb.A
 	l := logic.NewAlipayFundTransUniTransferLogic(ctx, s.svcCtx)
 	return l.AlipayFundTransUniTransfer(in)
 }
+
+// 查询订单
+func (s *PaymentServer) OrderStatus(ctx context.Context, in *pb.OrderStatusReq) (*pb.OrderStatusResp, error) {
+	l := logic.NewOrderStatusLogic(ctx, s.svcCtx)
+	return l.OrderStatus(in)
+}
