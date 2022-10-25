@@ -3,12 +3,12 @@ package main
 import (
 	"flag"
 	"fmt"
-	"gitee.com/huanggaopan/zero-contrib/zrpc/registry/nacos"
 	"gitee.com/zhuyunkj/pay-gateway/db"
 	"gitee.com/zhuyunkj/pay-gateway/rpc/internal/config"
 	"gitee.com/zhuyunkj/pay-gateway/rpc/internal/server"
 	"gitee.com/zhuyunkj/pay-gateway/rpc/internal/svc"
 	"gitee.com/zhuyunkj/pay-gateway/rpc/pb/pb"
+	"gitee.com/zhuyunkj/zero-contrib/nacos"
 	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
 	"github.com/nacos-group/nacos-sdk-go/v2/common/constant"
 	"github.com/zeromicro/go-zero/core/logx"

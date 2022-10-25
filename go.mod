@@ -3,7 +3,7 @@ module gitee.com/zhuyunkj/pay-gateway
 go 1.16
 
 require (
-	gitee.com/huanggaopan/zero-contrib/zrpc/registry/nacos v0.0.0-20220824120933-45a531d2e352
+	gitee.com/zhuyunkj/zero-contrib v1.3.2
 	gitee.com/zhuyunkj/zhuyun-core v1.5.12
 	github.com/json-iterator/go v1.1.12
 	github.com/nacos-group/nacos-sdk-go/v2 v2.1.0
@@ -12,7 +12,7 @@ require (
 	github.com/wechatpay-apiv3/wechatpay-go v0.2.14
 	github.com/zeromicro/go-zero v1.4.0
 	go.etcd.io/etcd/client/v3 v3.5.4
-	google.golang.org/grpc v1.48.0
+	google.golang.org/grpc v1.49.0
 	google.golang.org/protobuf v1.28.1
 	gorm.io/gorm v1.23.6
 )
