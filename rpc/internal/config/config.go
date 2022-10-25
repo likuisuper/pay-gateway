@@ -8,6 +8,7 @@ import (
 type Config struct {
 	zrpc.RpcServerConf
 	Mysql []*db.DbConfig `json:"Mysql"`
+	Nacos NacosConfig
 }
 
 // mysql配置
@@ -37,10 +38,22 @@ type RedisConfig struct {
 	Passwd      string
 }
 
-//// 应用包名  对应的配置
-//type AppRelConfig struct {
-//	AppPkgName     string //应用包名
-//	AlipayAppId    string //对应的支付宝appid
-//	WechatPayAppId string //对应的微信支付appid
-//	TikTokPayAppId string //对应的字节支付appid
-//}
+// nacos配置
+type NacosConfig struct {
+	NacosService        []NacosService
+	ListenOn            string
+	NamespaceId         string
+	TimeoutMs           uint64
+	NotLoadCacheAtStart bool
+	LogDir              string
+	CacheDir            string
+	Username            string
+	Password            string
+	LogLevel            string
+	MaxAge              int
+}
+
+type NacosService struct {
+	Ip   string
+	Port uint64
+}

@@ -26,4 +26,19 @@ Mysql:
     ConnTimeout: 5000 # 单位ms
     ReadTimeout: 20000
     WriteTimeout: 5000
+#nacos配置
+Nacos:
+  ListenOn: 127.0.0.1:8081
+  NamespaceId: public
+  TimeoutMs: 5000
+  NotLoadCacheAtStart: true
+  LogDir: "./logs/nacos2/log"
+  CacheDir: "./logs/nacos2/cache"
+  Username: nacos
+  Password: "zykj@2021"
+  LogLevel: debug
+  MaxAge: 10
+  NacosService:
+    - Ip: 120.79.85.139
+      Port: 8848
 
