@@ -104,6 +104,18 @@ message PayeeInfo {
   string Name = 3; //参与方真实姓名，如果非空，将校验收款支付宝账号姓名一致性。当identity_type=ALIPAY_LOGON_ID时，本字段必填。
 }
 
+message AlipayCheckAccountReq {
+  string Name = 1;
+  string Account = 2;
+  string AppPkgName = 3;
+  int64 UserId = 4;
+}
+
+message AlipayCheckAccountResp {
+  int64 Status = 1;
+  string Desc = 2;
+}
+
 //============== service ==============================================================================
 
 service Payment {
@@ -118,4 +130,7 @@ service Payment {
 
   //查询订单
   rpc OrderStatus(OrderStatusReq) returns (OrderStatusResp);
+
+  //支付宝转出账号校验
+  rpc AlipayCheckAccount(AlipayCheckAccountReq) returns (AlipayCheckAccountResp);
 }

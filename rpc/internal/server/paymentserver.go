@@ -45,3 +45,9 @@ func (s *PaymentServer) OrderStatus(ctx context.Context, in *pb.OrderStatusReq) 
 	l := logic.NewOrderStatusLogic(ctx, s.svcCtx)
 	return l.OrderStatus(in)
 }
+
+// 支付宝转出账号校验
+func (s *PaymentServer) AlipayCheckAccount(ctx context.Context, in *pb.AlipayCheckAccountReq) (*pb.AlipayCheckAccountResp, error) {
+	l := logic.NewAlipayCheckAccountLogic(ctx, s.svcCtx)
+	return l.AlipayCheckAccount(in)
+}

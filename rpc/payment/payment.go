@@ -13,6 +13,8 @@ import (
 )
 
 type (
+	AlipayCheckAccountReq         = pb.AlipayCheckAccountReq
+	AlipayCheckAccountResp        = pb.AlipayCheckAccountResp
 	AlipayFundTransUniTransferReq = pb.AlipayFundTransUniTransferReq
 	ClosePayOrderReq              = pb.ClosePayOrderReq
 	Empty                         = pb.Empty
@@ -34,6 +36,8 @@ type (
 		AlipayFundTransUniTransfer(ctx context.Context, in *AlipayFundTransUniTransferReq, opts ...grpc.CallOption) (*Empty, error)
 		// 查询订单
 		OrderStatus(ctx context.Context, in *OrderStatusReq, opts ...grpc.CallOption) (*OrderStatusResp, error)
+		// 支付宝转出账号校验
+		AlipayCheckAccount(ctx context.Context, in *AlipayCheckAccountReq, opts ...grpc.CallOption) (*AlipayCheckAccountResp, error)
 	}
 
 	defaultPayment struct {
@@ -69,4 +73,10 @@ func (m *defaultPayment) AlipayFundTransUniTransfer(ctx context.Context, in *Ali
 func (m *defaultPayment) OrderStatus(ctx context.Context, in *OrderStatusReq, opts ...grpc.CallOption) (*OrderStatusResp, error) {
 	client := pb.NewPaymentClient(m.cli.Conn())
 	return client.OrderStatus(ctx, in, opts...)
+}
+
+// 支付宝转出账号校验
+func (m *defaultPayment) AlipayCheckAccount(ctx context.Context, in *AlipayCheckAccountReq, opts ...grpc.CallOption) (*AlipayCheckAccountResp, error) {
+	client := pb.NewPaymentClient(m.cli.Conn())
+	return client.AlipayCheckAccount(ctx, in, opts...)
 }

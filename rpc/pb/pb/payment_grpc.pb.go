@@ -30,6 +30,8 @@ type PaymentClient interface {
 	AlipayFundTransUniTransfer(ctx context.Context, in *AlipayFundTransUniTransferReq, opts ...grpc.CallOption) (*Empty, error)
 	//查询订单
 	OrderStatus(ctx context.Context, in *OrderStatusReq, opts ...grpc.CallOption) (*OrderStatusResp, error)
+	//支付宝转出账号校验
+	AlipayCheckAccount(ctx context.Context, in *AlipayCheckAccountReq, opts ...grpc.CallOption) (*AlipayCheckAccountResp, error)
 }
 
 type paymentClient struct {
@@ -76,6 +78,15 @@ func (c *paymentClient) OrderStatus(ctx context.Context, in *OrderStatusReq, opt
 	return out, nil
 }
 
+func (c *paymentClient) AlipayCheckAccount(ctx context.Context, in *AlipayCheckAccountReq, opts ...grpc.CallOption) (*AlipayCheckAccountResp, error) {
+	out := new(AlipayCheckAccountResp)
+	err := c.cc.Invoke(ctx, "/payment.Payment/AlipayCheckAccount", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PaymentServer is the server API for Payment service.
 // All implementations must embed UnimplementedPaymentServer
 // for forward compatibility
@@ -88,6 +99,8 @@ type PaymentServer interface {
 	AlipayFundTransUniTransfer(context.Context, *AlipayFundTransUniTransferReq) (*Empty, error)
 	//查询订单
 	OrderStatus(context.Context, *OrderStatusReq) (*OrderStatusResp, error)
+	//支付宝转出账号校验
+	AlipayCheckAccount(context.Context, *AlipayCheckAccountReq) (*AlipayCheckAccountResp, error)
 	mustEmbedUnimplementedPaymentServer()
 }
 
@@ -106,6 +119,9 @@ func (UnimplementedPaymentServer) AlipayFundTransUniTransfer(context.Context, *A
 }
 func (UnimplementedPaymentServer) OrderStatus(context.Context, *OrderStatusReq) (*OrderStatusResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method OrderStatus not implemented")
+}
+func (UnimplementedPaymentServer) AlipayCheckAccount(context.Context, *AlipayCheckAccountReq) (*AlipayCheckAccountResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AlipayCheckAccount not implemented")
 }
 func (UnimplementedPaymentServer) mustEmbedUnimplementedPaymentServer() {}
 
@@ -192,6 +208,24 @@ func _Payment_OrderStatus_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Payment_AlipayCheckAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AlipayCheckAccountReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PaymentServer).AlipayCheckAccount(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/payment.Payment/AlipayCheckAccount",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PaymentServer).AlipayCheckAccount(ctx, req.(*AlipayCheckAccountReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Payment_ServiceDesc is the grpc.ServiceDesc for Payment service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -214,6 +248,10 @@ var Payment_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "OrderStatus",
 			Handler:    _Payment_OrderStatus_Handler,
+		},
+		{
+			MethodName: "AlipayCheckAccount",
+			Handler:    _Payment_AlipayCheckAccount_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
