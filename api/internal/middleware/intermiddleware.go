@@ -28,7 +28,7 @@ func (m *InterMiddleware) Handle(next http.HandlerFunc) http.HandlerFunc {
 
 		allowCidr := "172.30.0.0/16"
 		allow := m.isBelong(ip, allowCidr)
-		allow = true
+		//allow = true
 		if allow {
 			next(w, r)
 			return
