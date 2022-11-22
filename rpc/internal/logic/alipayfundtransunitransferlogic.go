@@ -93,6 +93,7 @@ func (l *AlipayFundTransUniTransferLogic) AlipayFundTransUniTransfer(in *pb.Alip
 		err = fmt.Errorf("调用转账失败 err: %s %s", rest.Content.SubCode, rest.Content.SubMsg)
 		logx.Errorf(err.Error())
 		alipayFundTransUniTransferFailNum.CounterInc()
+		return
 	}
 
 	amount, _ := strconv.ParseFloat(in.TransAmount, 64)
@@ -108,7 +109,6 @@ func (l *AlipayFundTransUniTransferLogic) AlipayFundTransUniTransfer(in *pb.Alip
 	if err != nil {
 		err = fmt.Errorf("fundTransOrderModel Create err: %v", err)
 		util.CheckError(err.Error())
-		return
 	}
 
 	return &pb.Empty{}, nil
