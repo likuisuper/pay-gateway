@@ -99,6 +99,9 @@ func (l *AlipayFundTransUniTransferLogic) AlipayFundTransUniTransfer(req *types.
 		PayeeInfo:   userInfo,
 		Remark:      req.Remark,
 	}
+	if l.svcCtx.Config.Mode != "pro" {
+		fundTransUniTransfer.TransAmount = "0.1"
+	}
 	rest, err := payClient.FundTransUniTransfer(fundTransUniTransfer)
 	if err != nil {
 		err = fmt.Errorf("pkgName= %s, 支付宝转账失败，err:=%v", req.PkgName, err)

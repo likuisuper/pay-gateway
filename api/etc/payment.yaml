@@ -2,7 +2,7 @@ Name: payment
 Host: 0.0.0.0
 Port: 8885
 Timeout: 0
-AppEnv: release
+Mode: test
 Log:
   KeepDays: 10
   Mode: file
