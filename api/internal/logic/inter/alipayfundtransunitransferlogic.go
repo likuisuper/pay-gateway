@@ -115,20 +115,20 @@ func (l *AlipayFundTransUniTransferLogic) AlipayFundTransUniTransfer(req *types.
 		return &res, nil
 	}
 
-	amount, _ := strconv.ParseFloat(req.TransAmount, 64)
-	orderInfo := &model.PmFundTransOrderTable{
-		OrderSn:    req.OrderNo,
-		AppPkgName: req.PkgName,
-		Amount:     int(amount * 100),
-		AliName:    req.PayName,
-		AliAccount: req.PayAccount,
-		PayAppId:   payCfg.AppID,
-	}
-	err = l.fundTransOrderModel.Create(orderInfo)
-	if err != nil {
-		err = fmt.Errorf("fundTransOrderModel Create err: %v", err)
-		util.CheckError(err.Error())
-	}
+	//amount, _ := strconv.ParseFloat(req.TransAmount, 64)
+	//orderInfo := &model.PmFundTransOrderTable{
+	//	OrderSn:    req.OrderNo,
+	//	AppPkgName: req.PkgName,
+	//	Amount:     int(amount * 100),
+	//	AliName:    req.PayName,
+	//	AliAccount: req.PayAccount,
+	//	PayAppId:   payCfg.AppID,
+	//}
+	//err = l.fundTransOrderModel.Create(orderInfo)
+	//if err != nil {
+	//	err = fmt.Errorf("fundTransOrderModel Create err: %v", err)
+	//	util.CheckError(err.Error())
+	//}
 
 	res := response.MakeResult(code.CODE_OK, "", nil)
 	return &res, nil
