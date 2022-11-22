@@ -128,8 +128,6 @@ func (l *AlipayFundTransUniTransferLogic) AlipayFundTransUniTransfer(req *types.
 	if err != nil {
 		err = fmt.Errorf("fundTransOrderModel Create err: %v", err)
 		util.CheckError(err.Error())
-		res := response.MakeResult(code.CODE_ERROR, err.Error(), nil)
-		return &res, nil
 	}
 
 	res := response.MakeResult(code.CODE_OK, "", nil)
