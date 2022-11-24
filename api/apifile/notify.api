@@ -25,6 +25,13 @@ type (
     }
 )
 
+type (
+    KsResp {
+        Result int `json:"result"`  //1-成功，其他-失败。失败小程序平台会尝试重推此消息
+        MessageId string `json:"message_id"` //当前消息的message_id
+    }
+)
+
 @server(
     group: notify
 )
@@ -47,4 +54,9 @@ service payment {
     @handler notifyAlipay
     post /notify/alipay (EmptyReq) returns (EmptyReq)
 
+    @doc(
+        summary: "快手支付回调"
+    )
+    @handler notifyKspay
+    post /notify/kspay (EmptyReq) returns (EmptyReq)
 }

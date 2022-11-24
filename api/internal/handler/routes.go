@@ -29,6 +29,11 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 				Path:    "/notify/alipay",
 				Handler: notify.NotifyAlipayHandler(serverCtx),
 			},
+			{
+				Method:  http.MethodPost,
+				Path:    "/notify/kspay",
+				Handler: notify.NotifyKspayHandler(serverCtx),
+			},
 		},
 	)
 
