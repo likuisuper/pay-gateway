@@ -18,6 +18,7 @@ type (
 	AlipayFundTransUniTransferReq = pb.AlipayFundTransUniTransferReq
 	ClosePayOrderReq              = pb.ClosePayOrderReq
 	Empty                         = pb.Empty
+	KsUniAppReply                 = pb.KsUniAppReply
 	OrderPayReq                   = pb.OrderPayReq
 	OrderPayResp                  = pb.OrderPayResp
 	OrderStatusReq                = pb.OrderStatusReq

@@ -201,7 +201,7 @@ func (l *WeChatCommPay) getClient() (uniAppResp *core.Client, err error) {
 
 //支付请求v3  web
 func (l *WeChatCommPay) WechatPayV3Native(info *PayOrder) (resp *native.PrepayResponse, err error) {
-	attach := fmt.Sprintf(`{"order_sn":"%s","type":%d,"value":%d}`, info.OrderSn, info.Amount)
+	attach := fmt.Sprintf(`{"order_sn":"%s","value":%d}`, info.OrderSn, info.Amount)
 	client, err := l.getClient()
 	if err != nil {
 		logx.Errorf("请求微信支付发生错误,err =%v", err)
@@ -233,7 +233,7 @@ func (l *WeChatCommPay) WechatPayV3Native(info *PayOrder) (resp *native.PrepayRe
 
 //发起微信支付请求V3请求  jsapi
 func (l *WeChatCommPay) WechatPayV3(info *PayOrder, openId string) (uniAppResp *UniAppResp, err error) {
-	attach := fmt.Sprintf(`{"order_sn":"%s","type":%d,"value":%d}`, info.OrderSn, info.Amount)
+	attach := fmt.Sprintf(`{"order_sn":"%s","value":%d}`, info.OrderSn, info.Amount)
 	client, err := l.getClient()
 	if err != nil {
 		logx.Errorf("请求微信支付发生错误,err =%v", err)

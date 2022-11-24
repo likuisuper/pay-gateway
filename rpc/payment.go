@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"gitee.com/zhuyunkj/pay-gateway/common/global"
 	"gitee.com/zhuyunkj/pay-gateway/db"
 	"gitee.com/zhuyunkj/pay-gateway/rpc/internal/config"
 	"gitee.com/zhuyunkj/pay-gateway/rpc/internal/server"
@@ -69,6 +70,8 @@ func main() {
 	if err != nil {
 		logx.Errorf("nacosService err:%v", err)
 	}
+
+	global.InitMemoryCacheInstance(3)
 
 	fmt.Printf("Starting rpc server at %s...\n", c.ListenOn)
 	s.Start()

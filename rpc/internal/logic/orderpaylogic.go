@@ -293,3 +293,8 @@ func (l *OrderPayLogic) createTikTokEcOrder(in *pb.OrderPayReq, info *client.Pay
 	}
 	return
 }
+
+//快手小程序支付
+func (l *OrderPayLogic) createKsOrder() {
+
+}
