@@ -26,6 +26,7 @@ const (
 	ksAccessToken            = "https://open.kuaishou.com/oauth2/access_token"                                 //获取accessToken
 	KsCreateOrderWithChannel = "https://open.kuaishou.com/openapi/mp/developer/epay/create_order_with_channel" //预下单接口（无收银台版）
 	KsCancelChannel          = "https://open.kuaishou.com/openapi/mp/developer/epay/cancel_channel"            //取消支付方式
+	KsQueryOrder             = "https://open.kuaishou.com/openapi/mp/developer/epay/query_order"               //查询订单
 )
 
 type KsPayConfig struct {
@@ -52,9 +53,20 @@ type KsProvider struct {
 	ProviderChannelType string `json:"provider_channel_type"` //支付方式子类型，枚举值，目前只支持"NORMAL"
 }
 
-type CreateOrderWithChannelResp struct {
+type KsCreateOrderWithChannelResp struct {
 	OrderNo        string `json:"order_no"`         //订单号
 	OrderInfoToken string `json:"order_info_token"` //token
+}
+
+type KsQueryOrderResp struct {
+	TotalAmount     int    `json:"total_amount"`     //预下单用户支付金额
+	PayStatus       string `json:"pay_status"`       // PROCESSING-处理中|SUCCESS-成功|FAILED-失败|TIMEOUT-超时
+	PayChannel      string `json:"pay_channel"`      // WECHAT-微信 | ALIPAY-支付宝
+	OutOrderNo      string `json:"out_order_no"`     //开发者下单单号
+	KsOrderNo       string `json:"ks_order_no"`      //快手小程序平台订单号
+	ExtraInfo       string `json:"extra_info"`       //订单来源信息，历史订单为""
+	EnablePromotion bool   `json:"enable_promotion"` //是否参与分销，true:分销，false:非分销
+	PromotionAmount int    `json:"promotion_amount"` //预计分销金额，单位：分
 }
 
 //快手支付
@@ -114,7 +126,7 @@ func (p *KsPay) GetAccessTokenWithCache() (accessToken string, err error) {
 }
 
 //预下单接口(无收银台版)
-func (p *KsPay) CreateOrderWithChannel(info *PayOrder, openId string) (respData *CreateOrderWithChannelResp, err error) {
+func (p *KsPay) CreateOrderWithChannel(info *PayOrder, openId string) (respData *KsCreateOrderWithChannelResp, err error) {
 	accessToken, err := p.GetAccessTokenWithCache()
 	if err != nil {
 		util.CheckError("CreateOrderWithChannel Err:%v", err)
@@ -156,7 +168,7 @@ func (p *KsPay) CreateOrderWithChannel(info *PayOrder, openId string) (respData 
 		return
 	}
 
-	respData = new(CreateOrderWithChannelResp)
+	respData = new(KsCreateOrderWithChannelResp)
 	jsoniter.Get([]byte(dataStr), "order_info").ToVal(respData)
 
 	return
@@ -192,6 +204,37 @@ func (p *KsPay) CancelChannel(orderSn string) (err error) {
 
 	return
 
+}
+
+//查询订单
+func (p *KsPay) QueryOrder(orderSn string) (paymentInfo *KsQueryOrderResp, err error) {
+	accessToken, err := p.GetAccessTokenWithCache()
+	if err != nil {
+		util.CheckError("QueryOrder Err:%v", err)
+		return
+	}
+	uri := fmt.Sprintf("%s?app_id=%s&access_token=%s", KsQueryOrder, p.Config.AppId, accessToken)
+	params := map[string]interface{}{
+		"out_order_no": orderSn,
+	}
+	params["sign"] = p.Sign(params)
+	dataStr, err := util.HttpPost(uri, params, 3*time.Second)
+	if err != nil {
+		util.CheckError("QueryOrder Err:%v, OrderSn:%s", err, orderSn)
+		ksHttpRequestErr.CounterInc()
+		return
+	}
+	resultCode := jsoniter.Get([]byte(dataStr), "result").ToInt()
+	if resultCode != 1 {
+		errorMsg := jsoniter.Get([]byte(dataStr), "error_msg").ToString()
+		err = errors.New(errorMsg)
+		util.CheckError("QueryOrder Err:%v, code:%d, OrderSn:%s", err, resultCode, orderSn)
+		ksHttpRequestErr.CounterInc()
+		return
+	}
+	paymentInfo = new(KsQueryOrderResp)
+	jsoniter.Get([]byte(dataStr), "payment_info").ToVal(paymentInfo)
+	return
 }
 
 //==========================  util  ========================================================================
