@@ -2,9 +2,16 @@ package notify
 
 import (
 	"context"
+	"fmt"
+	"gitee.com/zhuyunkj/pay-gateway/common/define"
+	"gitee.com/zhuyunkj/pay-gateway/common/exception"
+	"gitee.com/zhuyunkj/pay-gateway/db/mysql/model"
 	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
+	"gitee.com/zhuyunkj/zhuyun-core/util"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/zeromicro/go-zero/rest/httpx"
 	"net/http"
+	"time"
 
 	"gitee.com/zhuyunkj/pay-gateway/api/internal/svc"
 	"gitee.com/zhuyunkj/pay-gateway/api/internal/types"
@@ -16,6 +23,9 @@ type NotifyKspayLogic struct {
 	logx.Logger
 	ctx    context.Context
 	svcCtx *svc.ServiceContext
+
+	payOrderModel    *model.PmPayOrderModel
+	payConfigKsModel *model.PmPayConfigKsModel
 }
 
 var (
@@ -25,16 +35,16 @@ var (
 //快手回调
 type ksOrderNotifyData struct {
 	Data struct {
-		Channel         string `json:"channel"`
-		OutOrderNo      string `json:"out_order_no"`
-		Attach          string `json:"attach"`
-		Status          string `json:"status"`
-		KsOrderNo       string `json:"ks_order_no"`
-		OrderAmount     int    `json:"order_amount"`
-		TradeNo         string `json:"trade_no"`
-		ExtraInfo       string `json:"extra_info"`
-		EnablePromotion bool   `json:"enable_promotion"`
-		PromotionAmount int    `json:"promotion_amount"`
+		Channel         string `json:"channel"`          //支付渠道。取值：UNKNOWN - 未知｜WECHAT-微信｜ALIPAY-支付宝
+		OutOrderNo      string `json:"out_order_no"`     //商户系统内部订单号
+		Attach          string `json:"attach"`           //预下单时携带的开发者自定义信息
+		Status          string `json:"status"`           //订单支付状态。 取值： PROCESSING-处理中｜SUCCESS-成功｜FAILED-失败
+		KsOrderNo       string `json:"ks_order_no"`      //快手小程序平台订单号
+		OrderAmount     int    `json:"order_amount"`     //订单金额
+		TradeNo         string `json:"trade_no"`         //用户侧支付页交易单号
+		ExtraInfo       string `json:"extra_info"`       //订单来源信息，同支付查询接口
+		EnablePromotion bool   `json:"enable_promotion"` //是否参与分销，true:分销，false:非分销
+		PromotionAmount int    `json:"promotion_amount"` //预计分销金额，单位：分
 	} `json:"data"`
 	BizType   string `json:"biz_type"`
 	MessageId string `json:"message_id"`
@@ -44,9 +54,11 @@ type ksOrderNotifyData struct {
 
 func NewNotifyKspayLogic(ctx context.Context, svcCtx *svc.ServiceContext) *NotifyKspayLogic {
 	return &NotifyKspayLogic{
-		Logger: logx.WithContext(ctx),
-		ctx:    ctx,
-		svcCtx: svcCtx,
+		Logger:           logx.WithContext(ctx),
+		ctx:              ctx,
+		svcCtx:           svcCtx,
+		payOrderModel:    model.NewPmPayOrderModel(define.DbPayGateway),
+		payConfigKsModel: model.NewPmPayConfigKsModel(define.DbPayGateway),
 	}
 }
 
@@ -68,5 +80,42 @@ func (l *NotifyKspayLogic) NotifyKspay(r *http.Request, w http.ResponseWriter) (
 		return
 	}
 
+	//todo 验签
+
+	if notifyData.Data.Status != "SUCCESS" {
+		logx.Errorf("NotifyKspay Status Not Success data: %s", bodyData)
+		return
+	}
+
+	//获取订单信息
+	orderInfo, err := l.payOrderModel.GetOneByCode(notifyData.Data.OutOrderNo)
+	if err != nil {
+		err = fmt.Errorf("获取订单失败！err=%v,order_code = %s", err, notifyData.Data.OutOrderNo)
+		util.CheckError(err.Error())
+		return
+	}
+	if orderInfo.PayStatus != model.PmPayOrderTablePayStatusNo {
+		notifyOrderHasDispose.CounterInc()
+		err = fmt.Errorf("订单已处理")
+		return
+	}
+	//修改数据库
+	orderInfo.NotifyAmount = notifyData.Data.OrderAmount
+	orderInfo.PayStatus = model.PmPayOrderTablePayStatusPaid
+	orderInfo.PayType = model.PmPayOrderTablePayTypeKs
+	err = l.payOrderModel.UpdateNotify(orderInfo)
+	if err != nil {
+		err = fmt.Errorf("orderSn = %s, UpdateNotify，err:=%v", orderInfo.OrderSn, err)
+		util.CheckError(err.Error())
+		return
+	}
+
+	//回调业务方接口
+	go func() {
+		defer exception.Recover()
+		_, _ = util.HttpPost(orderInfo.NotifyUrl, notifyData, 5*time.Second)
+	}()
+
+	httpx.OkJson(w, "success")
 	return
 }

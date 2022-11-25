@@ -26,6 +26,7 @@ const (
 	PmPayOrderTablePayTypeWechatPayUni = 1
 	PmPayOrderTablePayTypeTiktokPayEc  = 2
 	PmPayOrderTablePayTypeAlipay       = 3
+	PmPayOrderTablePayTypeKs           = 4
 )
 
 // 支付订单
