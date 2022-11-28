@@ -26,6 +26,7 @@ type OrderStatusLogic struct {
 	payConfigAlipayModel *model.PmPayConfigAlipayModel
 	payConfigTiktokModel *model.PmPayConfigTiktokModel
 	payConfigWechatModel *model.PmPayConfigWechatModel
+	payConfigKsModel     *model.PmPayConfigKsModel
 }
 
 func NewOrderStatusLogic(ctx context.Context, svcCtx *svc.ServiceContext) *OrderStatusLogic {
@@ -38,6 +39,7 @@ func NewOrderStatusLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Order
 		payConfigAlipayModel: model.NewPmPayConfigAlipayModel(define.DbPayGateway),
 		payConfigTiktokModel: model.NewPmPayConfigTiktokModel(define.DbPayGateway),
 		payConfigWechatModel: model.NewPmPayConfigWechatModel(define.DbPayGateway),
+		payConfigKsModel:     model.NewPmPayConfigKsModel(define.DbPayGateway),
 	}
 }
 
@@ -92,6 +94,24 @@ func (l *OrderStatusLogic) OrderStatus(in *pb.OrderStatusReq) (resp *pb.OrderSta
 		if orderInfo.OrderStatus == "SUCCESS" {
 			resp.Status = 1
 			resp.PayAmount = int64(orderInfo.TotalFee)
+		}
+	case pb.PayType_KsUniAppWx:
+		payCfg, cfgErr := l.payConfigKsModel.GetOneByAppID(pkgCfg.KsPayAppID)
+		if cfgErr != nil {
+			err = fmt.Errorf("pkgName= %s, 读取快手支付配置失败，err:=%v", in.AppPkgName, cfgErr)
+			util.CheckError(err.Error())
+			return
+		}
+		payClient := client.NewKsPay(*payCfg.TransClientConfig())
+		orderInfo, err := payClient.QueryOrder(in.OrderSn)
+		if err != nil {
+			err = fmt.Errorf("查询快手订单失败, orderSn=%s, err=%v", in.OrderSn, err)
+			util.CheckError(err.Error())
+			return nil, err
+		}
+		if orderInfo.PayStatus == "SUCCESS" {
+			resp.Status = 1
+			resp.PayAmount = int64(orderInfo.TotalAmount)
 		}
 	}
 
