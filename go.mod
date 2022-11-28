@@ -5,6 +5,7 @@ go 1.16
 require (
 	gitee.com/zhuyunkj/zero-contrib v1.3.2
 	gitee.com/zhuyunkj/zhuyun-core v1.5.12
+	github.com/coocood/freecache v1.2.2
 	github.com/json-iterator/go v1.1.12
 	github.com/nacos-group/nacos-sdk-go/v2 v2.1.0
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
