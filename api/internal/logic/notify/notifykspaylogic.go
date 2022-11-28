@@ -11,6 +11,8 @@ import (
 	"gitee.com/zhuyunkj/zhuyun-core/util"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/zeromicro/go-zero/rest/httpx"
+	"io"
+	"io/ioutil"
 	"net/http"
 	"time"
 
@@ -70,13 +72,14 @@ func NewNotifyKspayLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Notif
 }
 
 func (l *NotifyKspayLogic) NotifyKspay(r *http.Request, w http.ResponseWriter) (resp *types.EmptyReq, err error) {
-	err = r.ParseForm()
+	reader := io.LimitReader(r.Body, 8<<20)
+	bodyBytes, err := ioutil.ReadAll(reader)
 	if err != nil {
 		logx.Errorf("NotifyKspay err: %v", err)
 		notifyKspayErrNum.CounterInc()
 		return
 	}
-	bodyData := r.Form.Encode()
+	bodyData := string(bodyBytes)
 	logx.Slowf("NotifyKspay form %s", bodyData)
 
 	notifyData := new(ksOrderNotifyData)
