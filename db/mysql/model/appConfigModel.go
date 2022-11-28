@@ -19,6 +19,7 @@ type PmAppConfigTable struct {
 	AlipayAppID    string    `gorm:"column:alipay_app_id;NOT NULL" json:"alipay_app_id"`         // 对应的支付宝appid
 	WechatPayAppID string    `gorm:"column:wechat_pay_app_id;NOT NULL" json:"wechat_pay_app_id"` // 对应的微信支付appid
 	TiktokPayAppID string    `gorm:"column:tiktok_pay_app_id;NOT NULL" json:"tiktok_pay_app_id"` // 对应的字节支付appid
+	KsPayAppID     string    `gorm:"column:ks_pay_app_id;NOT NULL" json:"ks_pay_app_id"`         //对应的快手支付appid
 	CreatedAt      time.Time `gorm:"column:created_at" json:"created_at"`
 	UpdatedAt      time.Time `gorm:"column:updated_at" json:"updated_at"`
 }
