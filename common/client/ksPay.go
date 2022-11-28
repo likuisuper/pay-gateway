@@ -36,16 +36,16 @@ type KsPayConfig struct {
 }
 
 type KsCreateOrderWithChannelReq struct {
-	OutOrderNo  string `json:"out_order_no"` //商户系统内部订单号
-	OpenId      string `json:"open_id"`      //快手用户在当前小程序的open_id
-	TotalAmount int    `json:"total_amount"` //用户支付金额，单位为[分]
-	Subject     string `json:"subject"`      //商品描述
-	Detail      string `json:"detail"`       //商品详情
-	Type        int    `json:"type"`         //商品类型，不同商品类目的编号
-	ExpireTime  int    `json:"expire_time"`  //订单过期时间，单位秒，300s - 172800s
-	Sign        string `json:"sign"`         //签名
-	NotifyUrl   string `json:"notify_url"`   //通知URL，不允许携带查询串
-	Provider    string `json:"provider"`     //无收银台支付 支付方式 json
+	OutOrderNo  string     `json:"out_order_no"` //商户系统内部订单号
+	OpenId      string     `json:"open_id"`      //快手用户在当前小程序的open_id
+	TotalAmount int        `json:"total_amount"` //用户支付金额，单位为[分]
+	Subject     string     `json:"subject"`      //商品描述
+	Detail      string     `json:"detail"`       //商品详情
+	Type        int        `json:"type"`         //商品类型，不同商品类目的编号
+	ExpireTime  int        `json:"expire_time"`  //订单过期时间，单位秒，300s - 172800s
+	Sign        string     `json:"sign"`         //签名
+	NotifyUrl   string     `json:"notify_url"`   //通知URL，不允许携带查询串
+	Provider    KsProvider `json:"provider"`     //无收银台支付 支付方式 json
 }
 
 type KsProvider struct {
@@ -133,21 +133,21 @@ func (p *KsPay) CreateOrderWithChannel(info *PayOrder, openId string) (respData 
 		return
 	}
 	uri := fmt.Sprintf("%s?app_id=%s&access_token=%s", KsCreateOrderWithChannel, p.Config.AppId, accessToken)
-	provider := &KsProvider{
+	provider := KsProvider{
 		Provider:            "WECHAT",
 		ProviderChannelType: "NORMAL",
 	}
-	providerJsonStr, _ := jsoniter.MarshalToString(provider)
+	//providerJsonStr, _ := jsoniter.MarshalToString(provider)
 	param := &KsCreateOrderWithChannelReq{
 		OutOrderNo:  info.OrderSn,
 		OpenId:      openId,
 		TotalAmount: info.Amount,
 		Subject:     info.Subject,
 		Detail:      info.Subject,
-		Type:        1233,
-		ExpireTime:  300,
+		Type:        info.KsTypeId,
+		ExpireTime:  3600,
 		NotifyUrl:   p.Config.NotifyUrl,
-		Provider:    providerJsonStr,
+		Provider:    provider,
 	}
 	param.Sign = p.Sign(param)
 
@@ -247,7 +247,12 @@ func (p *KsPay) Sign(param interface{}) (sign string) {
 	signParam := make(map[string]string, 0)
 	signParam["app_id"] = p.Config.AppId
 	for k, v := range dataMap {
-		signParam[k] = utils.ToString(v)
+		if k == "provider" {
+			jsonStr, _ := jsoniter.MarshalToString(v)
+			signParam[k] = jsonStr
+		} else {
+			signParam[k] = utils.ToString(v)
+		}
 	}
 	sign = p.makeSign(signParam)
 	return
