@@ -253,6 +253,7 @@ func (p *KsPay) Sign(param interface{}) (sign string) {
 		} else {
 			signParam[k] = utils.ToString(v)
 		}
+		//signParam[k] = utils.ToString(v)
 	}
 	sign = p.makeSign(signParam)
 	return

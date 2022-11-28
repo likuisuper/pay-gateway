@@ -25,6 +25,7 @@ var (
 	wechatNativePayFailNum = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "wechatNativePayFailNum", nil, "微信native支付下单失败", nil})}
 	tiktokEcPayFailNum     = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "tiktokEcPayFailNum", nil, "字节支付下单失败", nil})}
 	alipayWebPayFailNum    = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "alipayWebPayFailNum", nil, "支付宝下单失败", nil})}
+	ksPayFailNum           = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "ksPayFailNum", nil, "快手支付下单失败", nil})}
 
 	orderTableIOFailNum = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "orderTableIOFailNum", nil, "订单io失败", nil})}
 )
@@ -39,6 +40,7 @@ type OrderPayLogic struct {
 	payConfigAlipayModel *model.PmPayConfigAlipayModel
 	payConfigTiktokModel *model.PmPayConfigTiktokModel
 	payConfigWechatModel *model.PmPayConfigWechatModel
+	payConfigKsModel     *model.PmPayConfigKsModel
 }
 
 func NewOrderPayLogic(ctx context.Context, svcCtx *svc.ServiceContext) *OrderPayLogic {
@@ -51,6 +53,7 @@ func NewOrderPayLogic(ctx context.Context, svcCtx *svc.ServiceContext) *OrderPay
 		payConfigAlipayModel: model.NewPmPayConfigAlipayModel(define.DbPayGateway),
 		payConfigTiktokModel: model.NewPmPayConfigTiktokModel(define.DbPayGateway),
 		payConfigWechatModel: model.NewPmPayConfigWechatModel(define.DbPayGateway),
+		payConfigKsModel:     model.NewPmPayConfigKsModel(define.DbPayGateway),
 	}
 }
 
@@ -119,6 +122,8 @@ func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (out *pb.OrderPayResp, err 
 		payAppId = pkgCfg.WechatPayAppID
 	case pb.PayType_TiktokEc:
 		payAppId = pkgCfg.TiktokPayAppID
+	case pb.PayType_KsUniAppWx:
+		payAppId = pkgCfg.KsPayAppID
 	}
 	err = l.payOrderModel.UpdatePayAppID(orderInfo.OrderSn, payAppId)
 	if err != nil {
@@ -166,6 +171,15 @@ func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (out *pb.OrderPayResp, err 
 			return
 		}
 		out.TikTokEc, err = l.createTikTokEcOrder(in, payOrder, payCfg.TransClientConfig())
+	case pb.PayType_KsUniAppWx:
+		payCfg, cfgErr := l.payConfigKsModel.GetOneByAppID(pkgCfg.KsPayAppID)
+		if cfgErr != nil {
+			err = fmt.Errorf("pkgName= %s, 读取快手支付配置失败，err:=%v", in.AppPkgName, cfgErr)
+			util.CheckError(err.Error())
+			return
+		}
+		payOrder.KsTypeId = 1273
+		out.KsUniApp, err = l.createKsOrder(in, payOrder, payCfg.TransClientConfig())
 	}
 
 	return
@@ -295,6 +309,17 @@ func (l *OrderPayLogic) createTikTokEcOrder(in *pb.OrderPayReq, info *client.Pay
 }
 
 //快手小程序支付
-func (l *OrderPayLogic) createKsOrder() {
-
+func (l *OrderPayLogic) createKsOrder(in *pb.OrderPayReq, info *client.PayOrder, payConf *client.KsPayConfig) (reply *pb.KsUniAppReply, err error) {
+	payClient := client.NewKsPay(*payConf)
+	res, err := payClient.CreateOrderWithChannel(info, in.WxOpenID)
+	if err != nil {
+		ksPayFailNum.CounterInc()
+		util.CheckError("pkgName= %s, ksPay，err:=%v", in.AppPkgName, err)
+		return
+	}
+	reply = &pb.KsUniAppReply{
+		OrderNo:        res.OrderNo,
+		OrderInfoToken: res.OrderInfoToken,
+	}
+	return
 }

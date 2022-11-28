@@ -24,6 +24,7 @@ type ClosePayOrderLogic struct {
 	payConfigAlipayModel *model.PmPayConfigAlipayModel
 	payConfigTiktokModel *model.PmPayConfigTiktokModel
 	payConfigWechatModel *model.PmPayConfigWechatModel
+	payConfigKsModel     *model.PmPayConfigKsModel
 }
 
 func NewClosePayOrderLogic(ctx context.Context, svcCtx *svc.ServiceContext) *ClosePayOrderLogic {
@@ -36,6 +37,7 @@ func NewClosePayOrderLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Clo
 		payConfigAlipayModel: model.NewPmPayConfigAlipayModel(define.DbPayGateway),
 		payConfigTiktokModel: model.NewPmPayConfigTiktokModel(define.DbPayGateway),
 		payConfigWechatModel: model.NewPmPayConfigWechatModel(define.DbPayGateway),
+		payConfigKsModel:     model.NewPmPayConfigKsModel(define.DbPayGateway),
 	}
 }
 
@@ -60,6 +62,20 @@ func (l *ClosePayOrderLogic) ClosePayOrder(in *pb.ClosePayOrderReq) (resp *pb.Em
 			return
 		}
 		err = l.wxClosePayOrder(in, payCfg.TransClientConfig())
+		if err != nil {
+			err = fmt.Errorf("关闭微信订单失败, orderSn=%s, err=%v", in.OrderSn, err)
+			util.CheckError(err.Error())
+			return
+		}
+	case pb.PayType_KsUniAppWx:
+		payCfg, cfgErr := l.payConfigKsModel.GetOneByAppID(pkgCfg.KsPayAppID)
+		if cfgErr != nil {
+			err = fmt.Errorf("读取快手支付配置失败 pkgName= %s, err:=%v", in.AppPkgName, cfgErr)
+			util.CheckError(err.Error())
+			return
+		}
+		payClient := client.NewKsPay(*payCfg.TransClientConfig())
+		err = payClient.CancelChannel(in.OrderSn)
 		if err != nil {
 			err = fmt.Errorf("关闭微信订单失败, orderSn=%s, err=%v", in.OrderSn, err)
 			util.CheckError(err.Error())
