@@ -275,7 +275,7 @@ func (p *KsPay) makeSign(data map[string]string) string {
 	h := md5.New()
 	h.Write([]byte(str))
 	md5Str := hex.EncodeToString(h.Sum(nil))
-	sign := strings.ToUpper(md5Str)
+	sign := strings.ToLower(md5Str)
 
 	return sign
 }
@@ -308,5 +308,15 @@ func (p *KsPay) post(url string, postData map[string]string) (body []byte, err e
 	if err != nil {
 		return
 	}
+	return
+}
+
+//回调签名
+func (p *KsPay) NotifySign(bodyStr string) (sign string) {
+	str := bodyStr + p.Config.AppSecret
+	h := md5.New()
+	h.Write([]byte(str))
+	md5Str := hex.EncodeToString(h.Sum(nil))
+	sign = strings.ToLower(md5Str)
 	return
 }

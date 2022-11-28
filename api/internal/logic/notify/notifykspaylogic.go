@@ -3,6 +3,7 @@ package notify
 import (
 	"context"
 	"fmt"
+	"gitee.com/zhuyunkj/pay-gateway/common/client"
 	"gitee.com/zhuyunkj/pay-gateway/common/define"
 	"gitee.com/zhuyunkj/pay-gateway/common/exception"
 	"gitee.com/zhuyunkj/pay-gateway/db/mysql/model"
@@ -52,6 +53,12 @@ type ksOrderNotifyData struct {
 	Timestamp int64  `json:"timestamp"`
 }
 
+//回调接口返回
+type ksOrderNotifyResp struct {
+	Result    int    `json:"result"`
+	MessageId string `json:"message_id"`
+}
+
 func NewNotifyKspayLogic(ctx context.Context, svcCtx *svc.ServiceContext) *NotifyKspayLogic {
 	return &NotifyKspayLogic{
 		Logger:           logx.WithContext(ctx),
@@ -80,7 +87,21 @@ func (l *NotifyKspayLogic) NotifyKspay(r *http.Request, w http.ResponseWriter) (
 		return
 	}
 
-	//todo 验签
+	// 验签
+	config, err := l.payConfigKsModel.GetOneByAppID(notifyData.AppId)
+	if err != nil {
+		logx.Errorf("NotifyKspay err: %v", err)
+		notifyKspayErrNum.CounterInc()
+		return
+	}
+	cliConfig := config.TransClientConfig()
+	ksPayCli := client.NewKsPay(*cliConfig)
+	calSign := ksPayCli.NotifySign(bodyData)
+	if r.Header.Get("kwaisign") != calSign {
+		logx.Errorf("NotifyKspay signErr: %v", err)
+		notifyKspayErrNum.CounterInc()
+		return
+	}
 
 	if notifyData.Data.Status != "SUCCESS" {
 		logx.Errorf("NotifyKspay Status Not Success data: %s", bodyData)
@@ -116,6 +137,10 @@ func (l *NotifyKspayLogic) NotifyKspay(r *http.Request, w http.ResponseWriter) (
 		_, _ = util.HttpPost(orderInfo.NotifyUrl, notifyData, 5*time.Second)
 	}()
 
-	httpx.OkJson(w, "success")
+	resData := &ksOrderNotifyResp{
+		Result:    1,
+		MessageId: notifyData.MessageId,
+	}
+	httpx.OkJson(w, resData)
 	return
 }
