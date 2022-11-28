@@ -33,7 +33,7 @@ func TestKsPay_CreateOrderWithChannel(t *testing.T) {
 	payCli := NewKsPay(KsPayConfig{
 		AppId:     "ks698620895251715795",
 		AppSecret: "toS5k0fee7DxfE4LmSPM5g",
-		NotifyUrl: "http://test.api.pay-gateway.yunxiacn.com/notify/kspay",
+		NotifyUrl: "https://test.api.pay-gateway.yunxiacn.com/notify/kspay",
 	})
 	info := &PayOrder{
 		OrderSn:  "111111",
