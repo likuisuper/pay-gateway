@@ -1,9 +1,0 @@
-{"@timestamp":"2022-11-27T00:12:52.890+08:00","caller":"stat/metrics.go:210","content":"(payment.rpc) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms","level":"stat"}
-{"@timestamp":"2022-11-27T09:42:52.573+08:00","caller":"stat/usage.go:61","content":"CPU: 0m, MEMORY: Alloc=4.8Mi, TotalAlloc=151.5Mi, Sys=20.6Mi, NumGC=310","level":"stat"}
-{"@timestamp":"2022-11-27T09:42:52.575+08:00","caller":"load/sheddingstat.go:61","content":"(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0","level":"stat"}
-{"@timestamp":"2022-11-27T09:43:03.877+08:00","caller":"stat/metrics.go:210","content":"(payment.rpc) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms","level":"stat"}
-{"@timestamp":"2022-11-27T22:17:58.408+08:00","caller":"load/sheddingstat.go:61","content":"(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0","level":"stat"}
-{"@timestamp":"2022-11-27T22:17:58.405+08:00","caller":"stat/usage.go:61","content":"CPU: 0m, MEMORY: Alloc=5.2Mi, TotalAlloc=151.9Mi, Sys=20.6Mi, NumGC=310","level":"stat"}
-{"@timestamp":"2022-11-27T22:18:04.801+08:00","caller":"stat/metrics.go:210","content":"(payment.rpc) - qps: 0.0/s, drops: 0, avg time: 0.0ms, med: 0.0ms, 90th: 0.0ms, 99th: 0.0ms, 99.9th: 0.0ms","level":"stat"}
-{"@timestamp":"2022-11-27T22:38:23.230+08:00","caller":"stat/usage.go:61","content":"CPU: 0m, MEMORY: Alloc=4.1Mi, TotalAlloc=152.3Mi, Sys=20.6Mi, NumGC=311","level":"stat"}
-{"@timestamp":"2022-11-27T22:38:23.394+08:00","caller":"load/sheddingstat.go:61","content":"(rpc) shedding_stat [1m], cpu: 0, total: 0, pass: 0, drop: 0","level":"stat"}
