@@ -2,18 +2,17 @@ package inter
 
 import (
 	"context"
-	"gitee.com/zhuyunkj/zhuyun-core/util"
-	clientv3 "go.etcd.io/etcd/client/v3"
-	"google.golang.org/grpc/codes"
-	"net/http"
-	"strconv"
-	"strings"
-	"time"
-
+	"encoding/json"
+	"fmt"
 	"gitee.com/zhuyunkj/pay-gateway/api/internal/svc"
 	"gitee.com/zhuyunkj/pay-gateway/api/internal/types"
-
+	"gitee.com/zhuyunkj/zhuyun-core/util"
+	"github.com/nacos-group/nacos-sdk-go/v2/common/http_agent"
+	"github.com/nacos-group/nacos-sdk-go/v2/model"
 	"github.com/zeromicro/go-zero/core/logx"
+	"google.golang.org/grpc/codes"
+	"io/ioutil"
+	"net/http"
 )
 
 type GetPayNodeListLogic struct {
@@ -33,27 +32,27 @@ func NewGetPayNodeListLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Ge
 
 func (l *GetPayNodeListLogic) GetPayNodeList(req *types.EmptyReq, request *http.Request) (resp *types.ResultResp, err error) {
 
-	config := clientv3.Config{
-		Endpoints:   l.svcCtx.Config.Etcd.Host,
-		DialTimeout: 5 * time.Second,
-	}
-	etcdCli, err := clientv3.New(config)
-	if err != nil {
-		return
-	}
-	defer etcdCli.Close()
+	c := l.svcCtx.Config
 
-	res, err := etcdCli.Get(l.ctx, "payment.rpc", clientv3.WithPrefix())
-	if err != nil {
-		return
+	path := fmt.Sprintf("http://%s:%d%s", c.Nacos.NacosService[0].Ip, c.Nacos.NacosService[0].Port, "/nacos/v2/ns/instance/list")
+	nacosResp, nacosErr := new(http_agent.HttpAgent).Get(path, nil, 5000, map[string]string{
+		"namespaceId": c.Nacos.NamespaceId,
+		"serviceName": "DEFAULT_GROUP@@payment.rpc",
+		"username":    c.Nacos.Username,
+		"password":    c.Nacos.Password,
+	})
+	if nacosErr != nil {
+		logx.Errorf("Couldn't connect to the nacos API: %s", nacosErr.Error())
 	}
+	println(nacosResp)
+	body, err := ioutil.ReadAll(nacosResp.Body)
+	nacosService := new(model.Service)
+	_ = json.Unmarshal(body, nacosService)
 
 	nodeList := make([]string, 0)
-	for _, kv := range res.Kvs {
-		v := string(kv.Value)
-		vList := strings.Split(v, ":")
-		apiHost := vList[0] + ":" + strconv.Itoa(l.svcCtx.Config.Port)
-		nodeList = append(nodeList, apiHost)
+	for _, h := range nacosService.Hosts {
+		nodeHost := fmt.Sprintf("%s:%d", h.Ip, h.Port)
+		nodeList = append(nodeList, nodeHost)
 	}
 
 	resp = &types.ResultResp{

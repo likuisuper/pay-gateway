@@ -7,10 +7,20 @@ import (
 
 type Config struct {
 	rest.RestConf
-	Etcd  EtcdConfig
 	Mysql []*db.DbConfig `json:"Mysql"`
+	Nacos NacosConfig
 }
 
-type EtcdConfig struct {
-	Host []string
+// nacos配置
+type NacosConfig struct {
+	NacosService []NacosService
+	NamespaceId  string
+	TimeoutMs    uint64
+	Username     string
+	Password     string
+}
+
+type NacosService struct {
+	Ip   string
+	Port uint64
 }

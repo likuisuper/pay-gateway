@@ -27,7 +27,12 @@ Mysql:
     ReadTimeout: 20000
     WriteTimeout: 5000
 
-Etcd:
-  Host:
-    - "127.0.0.1:2379"
-    - "127.0.0.1:2379"
+#nacos配置
+Nacos:
+  NamespaceId: release
+  TimeoutMs: 5000
+  Username: nacos
+  Password: "zykj@2021"
+  NacosService:
+    - Ip: 120.79.85.139
+      Port: 8848
