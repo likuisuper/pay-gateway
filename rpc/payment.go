@@ -9,18 +9,20 @@ import (
 	"gitee.com/zhuyunkj/pay-gateway/rpc/internal/server"
 	"gitee.com/zhuyunkj/pay-gateway/rpc/internal/svc"
 	"gitee.com/zhuyunkj/pay-gateway/rpc/pb/pb"
-	"gitee.com/zhuyunkj/zero-contrib/nacos"
+	nacos2 "gitee.com/zhuyunkj/zero-contrib/nacos"
 	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
+	"gitee.com/zhuyunkj/zhuyun-core/nacos"
 	"github.com/nacos-group/nacos-sdk-go/v2/common/constant"
+	"github.com/zeromicro/go-zero/core/conf"
 	"github.com/zeromicro/go-zero/core/logx"
 
-	"github.com/zeromicro/go-zero/core/conf"
 	"github.com/zeromicro/go-zero/core/service"
 	"github.com/zeromicro/go-zero/zrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
 
+var nacosConfigFile = flag.String("nacos", "etc/nacos.yaml", "the nacos config file")
 var configFile = flag.String("f", "etc/payment.yaml", "the config file")
 
 func main() {
@@ -29,7 +31,22 @@ func main() {
 	flag.Parse()
 
 	var c config.Config
-	conf.MustLoad(*configFile, &c)
+	//conf.MustLoad(*configFile, &c)
+	//从nacos获取配置
+	var nacosConfig nacos.Config
+	conf.MustLoad(*nacosConfigFile, &nacosConfig)
+	nacosClient, nacosErr := nacos.InitNacosClient(nacosConfig)
+	if nacosErr != nil {
+		logx.Errorf("初始化nacos客户端失败: " + nacosErr.Error())
+		return
+	}
+	err := nacosClient.GetConfig(nacosConfig.DataId, nacosConfig.GroupId, &c)
+	defer nacosClient.CloseClient()
+	if err != nil {
+		logx.Errorf("获取配置失败：" + err.Error())
+		return
+	}
+
 	// 初始化数据库
 	db.DBInit(c.Mysql)
 	ctx := svc.NewServiceContext(c)
@@ -65,8 +82,8 @@ func main() {
 		LogRollingConfig:    logRollingConfig,
 	}
 
-	opts := nacos.NewNacosConfig("payment.rpc", c.Nacos.ListenOn, sc, cc)
-	err := nacos.RegisterService(opts)
+	opts := nacos2.NewNacosConfig("payment.rpc", c.Nacos.ListenOn, sc, cc)
+	err = nacos2.RegisterService(opts)
 	if err != nil {
 		logx.Errorf("nacosService err:%v", err)
 	}

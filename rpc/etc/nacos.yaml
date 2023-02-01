@@ -1,0 +1,12 @@
+IpAddress: "120.79.85.139"
+Port: 8848
+NamespaceId: "release"
+GroupId: "pay.gateway.rpc"
+DataId: "payment.yaml"
+LogDir: "./nacos/log"
+CacheDir: "./nacos/cache"
+LogLevel: "debug"
+CfgGroupId: ""
+CfgDataId: ""
+Username: "nacos"
+Password: "zykj@2021"
