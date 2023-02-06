@@ -67,7 +67,7 @@ func (l *GetPayNodeListLogic) GetPayNodeList(req *types.EmptyReq, request *http.
 	}
 
 	for _, h := range nacosService.Hosts {
-		nodeHost := fmt.Sprintf("%s:%d", h.Ip, h.Port)
+		nodeHost := fmt.Sprintf("%s:%d", h.Ip, c.Port)
 		nodeList = append(nodeList, nodeHost)
 	}
 
