@@ -39,12 +39,7 @@ func (l *GetPayNodeListLogic) GetPayNodeList(req *types.EmptyReq, request *http.
 		"username":    c.Nacos.Username,
 		"password":    c.Nacos.Password,
 	}, map[string]string{})
-	//nacosResp, nacosErr := new(http_agent.HttpAgent).Get(path, nil, 5000, map[string]string{
-	//	"namespaceId": c.Nacos.NamespaceId,
-	//	"serviceName": "DEFAULT_GROUP@@payment.rpc",
-	//	"username":    c.Nacos.Username,
-	//	"password":    c.Nacos.Password,
-	//})
+
 	if nacosErr != nil {
 		logx.Errorf("Couldn't connect to the nacos API: %s", nacosErr.Error())
 	}
