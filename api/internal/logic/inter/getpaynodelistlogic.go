@@ -48,10 +48,12 @@ func (l *GetPayNodeListLogic) GetPayNodeList(req *types.EmptyReq, request *http.
 	if nacosErr != nil {
 		logx.Errorf("Couldn't connect to the nacos API: %s", nacosErr.Error())
 	}
-	println(nacosResp)
 	body, err := ioutil.ReadAll(nacosResp.Body)
 	nacosService := new(model.Service)
-	_ = json.Unmarshal(body, nacosService)
+	err = json.Unmarshal(body, nacosService)
+	if err != nil {
+		logx.Errorf("Unmarshal err: %s", err.Error())
+	}
 
 	nodeList := make([]string, 0)
 	for _, h := range nacosService.Hosts {
