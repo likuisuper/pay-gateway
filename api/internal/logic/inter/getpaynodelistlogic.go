@@ -10,7 +10,9 @@ import (
 	"github.com/nacos-group/nacos-sdk-go/v2/model"
 	"github.com/zeromicro/go-zero/core/logx"
 	"google.golang.org/grpc/codes"
+	"io/ioutil"
 	"net/http"
+	"time"
 )
 
 type GetPayNodeListLogic struct {
@@ -34,10 +36,28 @@ func (l *GetPayNodeListLogic) GetPayNodeList(req *types.EmptyReq, request *http.
 
 	path := fmt.Sprintf("http://%s:%d%s", c.Nacos.NacosService[0].Ip, c.Nacos.NacosService[0].Port, "/nacos/v2/ns/instance/list")
 	path += fmt.Sprintf("?namespaceId=%s&serviceName=DEFAULT_GROUP@@payment.rpc&username=%s&password=%s", c.Nacos.NamespaceId, c.Nacos.Username, c.Nacos.Password)
-	body, nacosErr := util.HttpGet(path, map[string]string{}, map[string]string{})
 
-	if nacosErr != nil {
-		logx.Errorf("Couldn't connect to the nacos API: %s", nacosErr.Error())
+	nodeList := make([]string, 0)
+
+	method := "GET"
+	client := &http.Client{
+		Timeout: 5 * time.Second,
+	}
+	httpReq, _ := http.NewRequest(method, path, nil)
+	res, err := client.Do(httpReq)
+	if err != nil {
+		logx.Errorf("http request err: %s", err)
+		resp = &types.ResultResp{
+			RequestId: util.GetUuid(),
+			Status:    int64(codes.OK),
+			Data:      nodeList,
+		}
+		return
+	}
+	defer res.Body.Close()
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		logx.Errorf("Couldn't connect to the nacos API: %s", err.Error())
 	}
 	//body, err := ioutil.ReadAll(nacosResp.Body)
 	nacosService := new(model.Service)
@@ -46,7 +66,6 @@ func (l *GetPayNodeListLogic) GetPayNodeList(req *types.EmptyReq, request *http.
 		logx.Errorf("Unmarshal err: %s, dataStr: %s", err.Error(), string(body))
 	}
 
-	nodeList := make([]string, 0)
 	for _, h := range nacosService.Hosts {
 		nodeHost := fmt.Sprintf("%s:%d", h.Ip, h.Port)
 		nodeList = append(nodeList, nodeHost)
