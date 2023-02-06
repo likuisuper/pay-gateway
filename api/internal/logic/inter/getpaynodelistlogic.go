@@ -47,7 +47,7 @@ func (l *GetPayNodeListLogic) GetPayNodeList(req *types.EmptyReq, request *http.
 	nacosService := new(model.Service)
 	err = json.Unmarshal(body, nacosService)
 	if err != nil {
-		logx.Errorf("Unmarshal err: %s", err.Error())
+		logx.Errorf("Unmarshal err: %s, dataStr: %s", err.Error(), string(body))
 	}
 
 	nodeList := make([]string, 0)
