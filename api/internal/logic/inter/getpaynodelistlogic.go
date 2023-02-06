@@ -33,12 +33,8 @@ func (l *GetPayNodeListLogic) GetPayNodeList(req *types.EmptyReq, request *http.
 	c := l.svcCtx.Config
 
 	path := fmt.Sprintf("http://%s:%d%s", c.Nacos.NacosService[0].Ip, c.Nacos.NacosService[0].Port, "/nacos/v2/ns/instance/list")
-	body, nacosErr := util.HttpGet(path, map[string]string{
-		"namespaceId": c.Nacos.NamespaceId,
-		"serviceName": "DEFAULT_GROUP@@payment.rpc",
-		"username":    c.Nacos.Username,
-		"password":    c.Nacos.Password,
-	}, map[string]string{})
+	path += fmt.Sprintf("?namespaceId=%s&serviceName=DEFAULT_GROUP@@payment.rpc&username=%s&password=%s", c.Nacos.NamespaceId, c.Nacos.Username, c.Nacos.Password)
+	body, nacosErr := util.HttpGet(path, map[string]string{}, map[string]string{})
 
 	if nacosErr != nil {
 		logx.Errorf("Couldn't connect to the nacos API: %s", nacosErr.Error())
