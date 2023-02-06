@@ -10,6 +10,7 @@ import (
 	"github.com/nacos-group/nacos-sdk-go/v2/common/http_agent"
 	"github.com/nacos-group/nacos-sdk-go/v2/model"
 	"github.com/zeromicro/go-zero/core/logx"
+	"github.com/zeromicro/go-zero/core/service"
 	"google.golang.org/grpc/codes"
 	"io/ioutil"
 	"net/http"
@@ -34,7 +35,11 @@ func (l *GetPayNodeListLogic) GetPayNodeList(req *types.EmptyReq, request *http.
 
 	c := l.svcCtx.Config
 
-	path := fmt.Sprintf("http://%s:%d%s", c.Nacos.NacosService[0].Ip, c.Nacos.NacosService[0].Port, "/nacos/v2/ns/instance/list")
+	scheme := "https"
+	if c.Mode != service.ProMode {
+		scheme = "http"
+	}
+	path := fmt.Sprintf("%s://%s:%d%s", scheme, c.Nacos.NacosService[0].Ip, c.Nacos.NacosService[0].Port, "/nacos/v2/ns/instance/list")
 	nacosResp, nacosErr := new(http_agent.HttpAgent).Get(path, nil, 5000, map[string]string{
 		"namespaceId": c.Nacos.NamespaceId,
 		"serviceName": "DEFAULT_GROUP@@payment.rpc",
