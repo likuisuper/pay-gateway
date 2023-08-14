@@ -39,6 +39,14 @@ func NewNotifyBytedanceLogic(ctx context.Context, svcCtx *svc.ServiceContext) *N
 }
 
 func (l *NotifyBytedanceLogic) NotifyBytedance(req *types.ByteDanceReq) (resp *types.ByteDanceResp, err error) {
+	if req.Type == "settle_finish" {
+		resp = &types.ByteDanceResp{
+			ErrNo:   0,
+			ErrTips: "success",
+		}
+		return
+	}
+
 	msgData := new(client.TikTokNotifyMsgData)
 	err = json.Unmarshal([]byte(req.Msg), msgData)
 	if err != nil {
