@@ -7,8 +7,8 @@ import (
 
 func TestKsPay_GetAccessToken(t *testing.T) {
 	payCli := NewKsPay(KsPayConfig{
-		AppId:     "ks698620895251715795",
-		AppSecret: "toS5k0fee7DxfE4LmSPM5g",
+		AppId:     "ks715227916870121633",
+		AppSecret: "xAFjgq_av6sdhhfXBjSZ-w",
 		NotifyUrl: "",
 	})
 	accessToken, err := payCli.HttpGetAccessToken()
@@ -18,8 +18,8 @@ func TestKsPay_GetAccessToken(t *testing.T) {
 func TestKsPay_GetAccessTokenWithCache(t *testing.T) {
 	global.InitMemoryCacheInstance(3)
 	payCli := NewKsPay(KsPayConfig{
-		AppId:     "ks698620895251715795",
-		AppSecret: "toS5k0fee7DxfE4LmSPM5g",
+		AppId:     "ks715227916870121633",
+		AppSecret: "xAFjgq_av6sdhhfXBjSZ-w",
 		NotifyUrl: "",
 	})
 	accessToken, err := payCli.GetAccessTokenWithCache()
@@ -31,8 +31,8 @@ func TestKsPay_CreateOrderWithChannel(t *testing.T) {
 	global.InitMemoryCacheInstance(3)
 
 	payCli := NewKsPay(KsPayConfig{
-		AppId:     "ks698620895251715795",
-		AppSecret: "toS5k0fee7DxfE4LmSPM5g",
+		AppId:     "ks715227916870121633",
+		AppSecret: "xAFjgq_av6sdhhfXBjSZ-w",
 		NotifyUrl: "https://test.api.pay-gateway.yunxiacn.com/notify/kspay",
 	})
 	info := &PayOrder{
@@ -49,8 +49,8 @@ func TestKsPay_CancelChannel(t *testing.T) {
 	global.InitMemoryCacheInstance(3)
 
 	payCli := NewKsPay(KsPayConfig{
-		AppId:     "ks698620895251715795",
-		AppSecret: "toS5k0fee7DxfE4LmSPM5g",
+		AppId:     "ks715227916870121633",
+		AppSecret: "xAFjgq_av6sdhhfXBjSZ-w",
 		NotifyUrl: "https://test.api.pay-gateway.yunxiacn.com/notify/kspay",
 	})
 	err := payCli.CancelChannel("111111")
@@ -61,8 +61,8 @@ func TestKsPay_QueryOrder(t *testing.T) {
 	global.InitMemoryCacheInstance(3)
 
 	payCli := NewKsPay(KsPayConfig{
-		AppId:     "ks698620895251715795",
-		AppSecret: "toS5k0fee7DxfE4LmSPM5g",
+		AppId:     "ks715227916870121633",
+		AppSecret: "xAFjgq_av6sdhhfXBjSZ-w",
 		NotifyUrl: "https://test.api.pay-gateway.yunxiacn.com/notify/kspay",
 	})
 	info, err := payCli.QueryOrder("111111")
