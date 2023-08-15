@@ -39,7 +39,7 @@ func NewNotifyBytedanceLogic(ctx context.Context, svcCtx *svc.ServiceContext) *N
 }
 
 func (l *NotifyBytedanceLogic) NotifyBytedance(req *types.ByteDanceReq) (resp *types.ByteDanceResp, err error) {
-	if req.Type == "settle_finish" {
+	if req.Type != "payment" {
 		resp = &types.ByteDanceResp{
 			ErrNo:   0,
 			ErrTips: "success",
