@@ -95,7 +95,7 @@ func (l *OrderStatusLogic) OrderStatus(in *pb.OrderStatusReq) (resp *pb.OrderSta
 			resp.Status = 1
 			resp.PayAmount = int64(orderInfo.TotalFee)
 		}
-	case pb.PayType_KsUniAppWx:
+	case pb.PayType_KsUniApp:
 		payCfg, cfgErr := l.payConfigKsModel.GetOneByAppID(pkgCfg.KsPayAppID)
 		if cfgErr != nil {
 			err = fmt.Errorf("pkgName= %s, 读取快手支付配置失败，err:=%v", in.AppPkgName, cfgErr)

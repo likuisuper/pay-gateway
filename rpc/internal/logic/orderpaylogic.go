@@ -122,7 +122,7 @@ func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (out *pb.OrderPayResp, err 
 		payAppId = pkgCfg.WechatPayAppID
 	case pb.PayType_TiktokEc:
 		payAppId = pkgCfg.TiktokPayAppID
-	case pb.PayType_KsUniAppWx:
+	case pb.PayType_KsUniApp:
 		payAppId = pkgCfg.KsPayAppID
 	}
 	err = l.payOrderModel.UpdatePayAppID(orderInfo.OrderSn, payAppId)
@@ -171,7 +171,7 @@ func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (out *pb.OrderPayResp, err 
 			return
 		}
 		out.TikTokEc, err = l.createTikTokEcOrder(in, payOrder, payCfg.TransClientConfig())
-	case pb.PayType_KsUniAppWx:
+	case pb.PayType_KsUniApp:
 		payCfg, cfgErr := l.payConfigKsModel.GetOneByAppID(pkgCfg.KsPayAppID)
 		if cfgErr != nil {
 			err = fmt.Errorf("pkgName= %s, 读取快手支付配置失败，err:=%v", in.AppPkgName, cfgErr)
@@ -311,7 +311,7 @@ func (l *OrderPayLogic) createTikTokEcOrder(in *pb.OrderPayReq, info *client.Pay
 //快手小程序支付
 func (l *OrderPayLogic) createKsOrder(in *pb.OrderPayReq, info *client.PayOrder, payConf *client.KsPayConfig) (reply *pb.KsUniAppReply, err error) {
 	payClient := client.NewKsPay(*payConf)
-	res, err := payClient.CreateOrderWithChannel(info, in.WxOpenID)
+	res, err := payClient.CreateOrder(info, in.WxOpenID)
 	if err != nil {
 		ksPayFailNum.CounterInc()
 		util.CheckError("pkgName= %s, ksPay，err:=%v", in.AppPkgName, err)

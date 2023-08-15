@@ -67,7 +67,7 @@ func (l *ClosePayOrderLogic) ClosePayOrder(in *pb.ClosePayOrderReq) (resp *pb.Em
 			util.CheckError(err.Error())
 			return
 		}
-	case pb.PayType_KsUniAppWx:
+	case pb.PayType_KsUniApp:
 		payCfg, cfgErr := l.payConfigKsModel.GetOneByAppID(pkgCfg.KsPayAppID)
 		if cfgErr != nil {
 			err = fmt.Errorf("读取快手支付配置失败 pkgName= %s, err:=%v", in.AppPkgName, cfgErr)
