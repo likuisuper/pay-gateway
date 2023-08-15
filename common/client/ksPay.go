@@ -25,6 +25,7 @@ var (
 const (
 	ksAccessToken            = "https://open.kuaishou.com/oauth2/access_token"                                 //获取accessToken
 	KsCreateOrderWithChannel = "https://open.kuaishou.com/openapi/mp/developer/epay/create_order_with_channel" //预下单接口（无收银台版）
+	KsCreateOrder            = "https://open.kuaishou.com/openapi/mp/developer/epay/create_order"              //预下单接口（有收银台版）
 	KsCancelChannel          = "https://open.kuaishou.com/openapi/mp/developer/epay/cancel_channel"            //取消支付方式
 	KsQueryOrder             = "https://open.kuaishou.com/openapi/mp/developer/epay/query_order"               //查询订单
 )
@@ -155,6 +156,50 @@ func (p *KsPay) CreateOrderWithChannel(info *PayOrder, openId string) (respData 
 	if err != nil {
 		jsonStr, _ := jsoniter.MarshalToString(param)
 		util.CheckError("CreateOrderWithChannel Err:%v, dataJson: %s", err, jsonStr)
+		ksHttpRequestErr.CounterInc()
+		return
+	}
+	resultCode := jsoniter.Get([]byte(dataStr), "result").ToInt()
+	if resultCode != 1 {
+		errorMsg := jsoniter.Get([]byte(dataStr), "error_msg").ToString()
+		err = errors.New(errorMsg)
+		jsonStr, _ := jsoniter.MarshalToString(param)
+		util.CheckError("CreateOrderWithChannel Err:%v, dataJson: %s", err, jsonStr)
+		ksHttpRequestErr.CounterInc()
+		return
+	}
+
+	respData = new(KsCreateOrderWithChannelResp)
+	jsoniter.Get([]byte(dataStr), "order_info").ToVal(respData)
+
+	return
+}
+
+//预下单接口(有收银台版)
+func (p *KsPay) CreateOrder(info *PayOrder, openId string) (respData *KsCreateOrderWithChannelResp, err error) {
+	accessToken, err := p.GetAccessTokenWithCache()
+	if err != nil {
+		util.CheckError("CreateOrder Err:%v", err)
+		return
+	}
+	uri := fmt.Sprintf("%s?app_id=%s&access_token=%s", KsCreateOrder, p.Config.AppId, accessToken)
+
+	param := &KsCreateOrderWithChannelReq{
+		OutOrderNo:  info.OrderSn,
+		OpenId:      openId,
+		TotalAmount: info.Amount,
+		Subject:     info.Subject,
+		Detail:      info.Subject,
+		Type:        info.KsTypeId,
+		ExpireTime:  3600,
+		NotifyUrl:   p.Config.NotifyUrl,
+	}
+	param.Sign = p.Sign(param)
+
+	dataStr, err := util.HttpPost(uri, param, 3*time.Second)
+	if err != nil {
+		jsonStr, _ := jsoniter.MarshalToString(param)
+		util.CheckError("CreateOrder Err:%v, dataJson: %s", err, jsonStr)
 		ksHttpRequestErr.CounterInc()
 		return
 	}

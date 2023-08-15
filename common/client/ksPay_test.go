@@ -45,6 +45,24 @@ func TestKsPay_CreateOrderWithChannel(t *testing.T) {
 	println(accessToken, err)
 }
 
+func TestKsPay_CreateOrder(t *testing.T) {
+	global.InitMemoryCacheInstance(3)
+
+	payCli := NewKsPay(KsPayConfig{
+		AppId:     "ks715227916870121633",
+		AppSecret: "xAFjgq_av6sdhhfXBjSZ-w",
+		NotifyUrl: "https://test.api.pay-gateway.yunxiacn.com/notify/kspay",
+	})
+	info := &PayOrder{
+		OrderSn:  "111111",
+		Amount:   1,
+		Subject:  "xhx-test",
+		KsTypeId: 1273,
+	}
+	accessToken, err := payCli.CreateOrderWithChannel(info, "f18edd95958a8bd414bf57246298c1e9")
+	println(accessToken, err)
+}
+
 func TestKsPay_CancelChannel(t *testing.T) {
 	global.InitMemoryCacheInstance(3)
 
