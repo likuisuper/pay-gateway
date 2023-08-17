@@ -2,6 +2,7 @@
 package model
 
 import (
+	"errors"
 	"fmt"
 	"gitee.com/zhuyunkj/pay-gateway/db"
 	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
@@ -72,9 +73,9 @@ func (o *PmPayOrderModel) Create(info *PmPayOrderTable) error {
 func (o *PmPayOrderModel) GetOneByCode(orderSn string) (info *PmPayOrderTable, err error) {
 	var orderInfo PmPayOrderTable
 	err = o.DB.Where("`order_sn` = ? ", orderSn).First(&orderInfo).Error
-	//if errors.Is(err, gorm.ErrRecordNotFound) {
-	//	return nil, nil
-	//}
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
 	if err != nil {
 		logx.Errorf("获取订单信息失败，err:=%v,order_sn=%s", err, orderSn)
 		getPayOrderErr.CounterInc()
