@@ -49,6 +49,18 @@ type KsCreateOrderWithChannelReq struct {
 	Provider    KsProvider `json:"provider"`     //无收银台支付 支付方式 json
 }
 
+type KsCreateOrderReq struct {
+	OutOrderNo  string `json:"out_order_no"` //商户系统内部订单号
+	OpenId      string `json:"open_id"`      //快手用户在当前小程序的open_id
+	TotalAmount int    `json:"total_amount"` //用户支付金额，单位为[分]
+	Subject     string `json:"subject"`      //商品描述
+	Detail      string `json:"detail"`       //商品详情
+	Type        int    `json:"type"`         //商品类型，不同商品类目的编号
+	ExpireTime  int    `json:"expire_time"`  //订单过期时间，单位秒，300s - 172800s
+	Sign        string `json:"sign"`         //签名
+	NotifyUrl   string `json:"notify_url"`   //通知URL，不允许携带查询串
+}
+
 type KsProvider struct {
 	Provider            string `json:"provider"`              //支付方式，枚举值，目前只支持"WECHAT"、"ALIPAY"两种
 	ProviderChannelType string `json:"provider_channel_type"` //支付方式子类型，枚举值，目前只支持"NORMAL"
@@ -184,7 +196,7 @@ func (p *KsPay) CreateOrder(info *PayOrder, openId string) (respData *KsCreateOr
 	}
 	uri := fmt.Sprintf("%s?app_id=%s&access_token=%s", KsCreateOrder, p.Config.AppId, accessToken)
 
-	param := &KsCreateOrderWithChannelReq{
+	param := &KsCreateOrderReq{
 		OutOrderNo:  info.OrderSn,
 		OpenId:      openId,
 		TotalAmount: info.Amount,

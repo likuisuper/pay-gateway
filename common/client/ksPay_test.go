@@ -54,12 +54,12 @@ func TestKsPay_CreateOrder(t *testing.T) {
 		NotifyUrl: "https://test.api.pay-gateway.yunxiacn.com/notify/kspay",
 	})
 	info := &PayOrder{
-		OrderSn:  "111111",
+		OrderSn:  "12345667",
 		Amount:   1,
-		Subject:  "xhx-test",
+		Subject:  "xhx-test222",
 		KsTypeId: 1273,
 	}
-	accessToken, err := payCli.CreateOrderWithChannel(info, "f18edd95958a8bd414bf57246298c1e9")
+	accessToken, err := payCli.CreateOrder(info, "f1b8a126c1c5063514bf572462cdfbbf")
 	println(accessToken, err)
 }
 
