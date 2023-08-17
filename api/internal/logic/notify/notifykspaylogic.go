@@ -81,6 +81,7 @@ func (l *NotifyKspayLogic) NotifyKspay(r *http.Request, w http.ResponseWriter) (
 	}
 	bodyData := string(bodyBytes)
 	logx.Slowf("NotifyKspay form %s", bodyData)
+	logx.Slowf("NotifyKspay header %+v", r.Header)
 
 	notifyData := new(ksOrderNotifyData)
 	err = jsoniter.UnmarshalFromString(bodyData, notifyData)
