@@ -4,6 +4,7 @@ package handler
 import (
 	"net/http"
 
+	health "gitee.com/zhuyunkj/pay-gateway/api/internal/handler/health"
 	inter "gitee.com/zhuyunkj/pay-gateway/api/internal/handler/inter"
 	notify "gitee.com/zhuyunkj/pay-gateway/api/internal/handler/notify"
 	"gitee.com/zhuyunkj/pay-gateway/api/internal/svc"
@@ -12,6 +13,16 @@ import (
 )
 
 func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
+	server.AddRoutes(
+		[]rest.Route{
+			{
+				Method:  http.MethodPost,
+				Path:    "/ver/health/check",
+				Handler: health.HealthCheckHandler(serverCtx),
+			},
+		},
+	)
+
 	server.AddRoutes(
 		[]rest.Route{
 			{

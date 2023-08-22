@@ -11,3 +11,32 @@ import (
 	"notify.api"
 	"inter.api"
 )
+
+type CommonHeader {
+	Brand string `header:"Brand,optional"`
+	AppOrigin string `header:"App-Origin,optional"`
+	AppVersion string `header:"App-Version,optional"`
+	SdkVersion string `header:"Sdk-Version,optional"`
+	DeviceId string `header:"Device-Id,optional"`
+	Token string `header:"Token,optional"`
+	IMEI string `header:"IMEI,optional"`
+}
+
+type HeaderReq {
+	CommonHeader
+	UserId int `header:"UserId,optional"`
+	OldDeviceId string `header:"NativeDeviceId,optional"`
+	Xsign string `header:"Xsign,optional"`
+	XForwardedFor string `header:"X-Forwarded-For,optional"`
+	Remoteip string `header:"Remoteip,optional"`
+	RandomId int `json:"random_id,optional"`
+}
+
+@server(
+	group: health
+)
+service payment {
+	@doc "键康检查"
+	@handler healthCheck
+	post /ver/health/check (HeaderReq) returns (ResultResp)
+}
