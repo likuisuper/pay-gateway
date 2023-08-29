@@ -66,17 +66,20 @@ func (l *DyOrderRefundLogic) DyOrderRefund(in *pb.DyOrderRefundReq) (out *pb.DyO
 		return
 	}
 
-	//写入数据库
-	_ = l.refundOrderModel.Create(&model.PmRefundOrderTable{
-		AppID:        clientConfig.AppId,
-		OutOrderNo:   in.GetOutOrderNo(),
-		OutRefundNo:  in.GetOutRefundNo(),
-		Reason:       in.GetReason(),
-		RefundAmount: int(in.RefundAmount),
-		NotifyUrl:    in.NotifyUrl,
-		RefundNo:     in.OutRefundNo,
-		RefundStatus: 0,
-	})
+	if resp.ErrNo == 0 {
+		//写入数据库
+		refundObj := &model.PmRefundOrderTable{
+			AppID:        clientConfig.AppId,
+			OutOrderNo:   in.OutOrderNo,
+			OutRefundNo:  in.OutRefundNo,
+			Reason:       in.Reason,
+			RefundAmount: int(in.RefundAmount),
+			NotifyUrl:    in.NotifyUrl,
+			RefundNo:     resp.RefundNo,
+			RefundStatus: 0,
+		}
+		_ = l.refundOrderModel.Create(refundObj)
+	}
 
 	out = &pb.DyOrderRefundResp{
 		ErrNo:   int64(resp.ErrNo),

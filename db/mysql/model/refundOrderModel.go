@@ -9,7 +9,14 @@ import (
 )
 
 var (
-	createRefundOrderErr = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "createRefundOrderErr", nil, "创建退款订单失败", nil})}
+	refundOrderMysqlErr = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "refundOrderMysqlErr", nil, "退款订单数据库操作失败", nil})}
+)
+
+const (
+	//退款状态
+	PmRefundOrderTableRefundStatusApply   = 0
+	PmRefundOrderTableRefundStatusSuccess = 1
+	PmRefundOrderTableRefundStatusFail    = 2
 )
 
 // 退款订单
@@ -23,6 +30,8 @@ type PmRefundOrderTable struct {
 	NotifyUrl    string    `gorm:"column:notify_url;NOT NULL" json:"notify_url"`                 // 回调应用机地址
 	RefundNo     string    `gorm:"column:refund_no;NOT NULL" json:"refund_no"`                   // 担保交易服务端退款单号
 	RefundStatus int       `gorm:"column:refund_status;default:0;NOT NULL" json:"refund_status"` // 0申请中  1成功  2失败
+	RefundedAt   int       `gorm:"column:refunded_at;default:0;NOT NULL" json:"refunded_at"`     // 退款时间
+	NotifyData   string    `gorm:"column:notify_data" json:"notify_data"`                        // 退款回调数据
 	CreatedAt    time.Time `gorm:"column:created_at" json:"created_at"`
 	UpdatedAt    time.Time `gorm:"column:updated_at" json:"updated_at"`
 }
@@ -45,8 +54,29 @@ func NewPmRefundOrderModel(dbName string) *PmRefundOrderModel {
 func (o *PmRefundOrderModel) Create(info *PmRefundOrderTable) error {
 	err := o.DB.Create(info).Error
 	if err != nil {
-		logx.Errorf("创建退款订单失败，err:=%v", err)
-		createPayOrderErr.CounterInc()
+		logx.Errorf("Create, info:%+v, err:=%v", info, err)
+		refundOrderMysqlErr.CounterInc()
 	}
 	return err
+}
+
+//更新订单
+func (o *PmRefundOrderModel) Update(outRefundNo string, info *PmRefundOrderTable) error {
+	err := o.DB.Where("out_refund_no = ?", outRefundNo).Updates(info).Error
+	if err != nil {
+		logx.Errorf("Update, info:%+v, err:=%v", info, err)
+		refundOrderMysqlErr.CounterInc()
+	}
+	return err
+}
+
+//获取订单
+func (o *PmRefundOrderModel) GetInfo(outRefundNo string) (info *PmRefundOrderTable, err error) {
+	info = new(PmRefundOrderTable)
+	err = o.DB.Where("out_refund_no = ?", outRefundNo).Find(info).Error
+	if err != nil {
+		logx.Errorf("GetInfo, outRefundNo:%s, err:%v", outRefundNo, err)
+		refundOrderMysqlErr.CounterInc()
+	}
+	return
 }

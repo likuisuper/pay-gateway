@@ -156,6 +156,20 @@ type TikTokNotifyMsgData struct {
 	OrderId        string `json:"order_id"`         //抖音侧订单号
 }
 
+//退款回调msg解析结构体
+type TikTokNotifyMsgRefundData struct {
+	Appid        string `json:"appid"`          //当前交易发起的小程序id
+	CpRefundno   string `json:"cp_refundno"`    //开发者侧的退款订单号
+	CpExtra      string `json:"cp_extra"`       //预下单时开发者传入字段
+	Status       string `json:"status"`         //状态枚举值： SUCCESS：成功  FAIL：失败
+	RefundAmount int    `json:"refund_amount"`  //退款金额，单位为分
+	IsAllSettled bool   `json:"is_all_settled"` //是否为分账后退款
+	RefundedAt   int    `json:"refunded_at"`    //退款时间，Unix 时间戳，10 位，整型数，秒级
+	Message      string `json:"message"`        //退款失败原因描述，详见发起退款错误码
+	OrderId      string `json:"order_id"`       //抖音侧订单号
+	RefundNo     string `json:"refund_no"`      //抖音侧退款单号
+}
+
 type ByteDanceReq struct {
 	Timestamp    string `json:"timestamp,optional"`
 	Nonce        string `json:"nonce,optional"`
@@ -168,7 +182,7 @@ type ByteDanceReq struct {
 func (t *TikTokPay) Notify(req *ByteDanceReq) (orderInfo *TikTokNotifyMsgData, err error) {
 	//签名核对
 	timestamp, _ := strconv.Atoi(req.Timestamp)
-	notifySing := t.notifySign(timestamp, req.Nonce, req.Msg)
+	notifySing := t.NotifySign(timestamp, req.Nonce, req.Msg)
 	if notifySing != req.MsgSignature {
 		tikTokNotifyErr.CounterInc()
 		logx.Errorf("回调签名错误")
@@ -186,7 +200,7 @@ func (t *TikTokPay) Notify(req *ByteDanceReq) (orderInfo *TikTokNotifyMsgData, e
 }
 
 //获取验签
-func (t *TikTokPay) notifySign(timestamp int, nonce, msg string) string {
+func (t *TikTokPay) NotifySign(timestamp int, nonce, msg string) string {
 
 	sortedString := make([]string, 0)
 	sortedString = append(sortedString, t.Config.Token)

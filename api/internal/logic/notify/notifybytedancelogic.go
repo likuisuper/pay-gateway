@@ -13,6 +13,7 @@ import (
 	"gitee.com/zhuyunkj/pay-gateway/db/mysql/model"
 	"gitee.com/zhuyunkj/zhuyun-core/util"
 	jsoniter "github.com/json-iterator/go"
+	"strconv"
 	"time"
 
 	"github.com/zeromicro/go-zero/core/logx"
@@ -25,6 +26,7 @@ type NotifyBytedanceLogic struct {
 
 	payOrderModel        *model.PmPayOrderModel
 	payConfigTiktokModel *model.PmPayConfigTiktokModel
+	refundOrderModel     *model.PmRefundOrderModel
 }
 
 func NewNotifyBytedanceLogic(ctx context.Context, svcCtx *svc.ServiceContext) *NotifyBytedanceLogic {
@@ -35,18 +37,30 @@ func NewNotifyBytedanceLogic(ctx context.Context, svcCtx *svc.ServiceContext) *N
 
 		payOrderModel:        model.NewPmPayOrderModel(define.DbPayGateway),
 		payConfigTiktokModel: model.NewPmPayConfigTiktokModel(define.DbPayGateway),
+		refundOrderModel:     model.NewPmRefundOrderModel(define.DbPayGateway),
 	}
 }
 
 func (l *NotifyBytedanceLogic) NotifyBytedance(req *types.ByteDanceReq) (resp *types.ByteDanceResp, err error) {
-	if req.Type != "payment" {
-		resp = &types.ByteDanceResp{
-			ErrNo:   0,
-			ErrTips: "success",
-		}
+	logx.Slowf("NotifyBytedance, req:%+v", req)
+
+	if req.Type == "payment" {
+		resp, err = l.NotifyPayment(req)
 		return
 	}
+	if req.Type == "refund" {
+		resp, err = l.NotifyRefund(req)
+	}
 
+	resp = &types.ByteDanceResp{
+		ErrNo:   0,
+		ErrTips: "success",
+	}
+	return
+}
+
+//支付成功回调
+func (l *NotifyBytedanceLogic) NotifyPayment(req *types.ByteDanceReq) (resp *types.ByteDanceResp, err error) {
 	msgData := new(client.TikTokNotifyMsgData)
 	err = json.Unmarshal([]byte(req.Msg), msgData)
 	if err != nil {
@@ -119,6 +133,56 @@ func (l *NotifyBytedanceLogic) NotifyBytedance(req *types.ByteDanceReq) (resp *t
 		ErrNo:   0,
 		ErrTips: "success",
 	}
+	return
+}
 
+//退款回调
+func (l *NotifyBytedanceLogic) NotifyRefund(req *types.ByteDanceReq) (resp *types.ByteDanceResp, err error) {
+	refundData := new(client.TikTokNotifyMsgRefundData)
+	err = json.Unmarshal([]byte(req.Msg), refundData)
+	if err != nil {
+		util.CheckError("json unmarshal err :%v", err)
+		return
+	}
+
+	payCfg, cfgErr := l.payConfigTiktokModel.GetOneByAppID(refundData.Appid)
+	if cfgErr != nil {
+		err = fmt.Errorf("appid = %s, 读取抖音支付配置失败，err:=%v", refundData.Appid, cfgErr)
+		util.CheckError(err.Error())
+		return
+	}
+	payServer := client.NewTikTokPay(*payCfg.TransClientConfig())
+	//签名核对
+	timestamp, _ := strconv.Atoi(req.Timestamp)
+	notifySing := payServer.NotifySign(timestamp, req.Nonce, req.Msg)
+	if notifySing != req.MsgSignature {
+		logx.Errorf("回调签名错误, req:%+v", req)
+		return nil, errors.New("回调签名错误")
+	}
+	//修改数据库
+	refundInfo, _ := l.refundOrderModel.GetInfo(refundData.CpRefundno)
+	refundInfo.NotifyData = req.Msg
+	refundInfo.RefundedAt = refundData.RefundedAt
+	if refundData.Status == "SUCCESS" {
+		refundInfo.RefundStatus = model.PmRefundOrderTableRefundStatusSuccess
+	} else {
+		refundInfo.RefundStatus = model.PmRefundOrderTableRefundStatusFail
+	}
+	_ = l.refundOrderModel.Update(refundData.CpRefundno, refundInfo)
+	//回调业务方接口
+	go func() {
+		defer exception.Recover()
+		respData, requestErr := util.HttpPost(refundInfo.NotifyUrl, req, 5*time.Second)
+		if requestErr != nil {
+			util.CheckError("NotifyRefund-post, req:%+v, err:%v", req, requestErr)
+			return
+		}
+		logx.Slowf("NotifyRefund-post, req:%+v, respData:%s", req, respData)
+	}()
+
+	resp = &types.ByteDanceResp{
+		ErrNo:   0,
+		ErrTips: "success",
+	}
 	return
 }
