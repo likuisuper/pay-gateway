@@ -126,7 +126,12 @@ func (l *NotifyBytedanceLogic) NotifyPayment(req *types.ByteDanceReq) (resp *typ
 	//回调业务方接口
 	go func() {
 		defer exception.Recover()
-		_, _ = util.HttpPost(orderInfo.NotifyUrl, req, 5*time.Second)
+		respData, requestErr := util.HttpPost(orderInfo.NotifyUrl, req, 5*time.Second)
+		if requestErr != nil {
+			util.CheckError("NotifyPayment-post, req:%+v, err:%v", req, requestErr)
+			return
+		}
+		logx.Slowf("NotifyPayment-post, req:%+v, respData:%s", req, respData)
 	}()
 
 	resp = &types.ByteDanceResp{
