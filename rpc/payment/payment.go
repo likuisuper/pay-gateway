@@ -17,6 +17,8 @@ type (
 	AlipayCheckAccountResp        = pb.AlipayCheckAccountResp
 	AlipayFundTransUniTransferReq = pb.AlipayFundTransUniTransferReq
 	ClosePayOrderReq              = pb.ClosePayOrderReq
+	DyOrderRefundReq              = pb.DyOrderRefundReq
+	DyOrderRefundResp             = pb.DyOrderRefundResp
 	Empty                         = pb.Empty
 	KsUniAppReply                 = pb.KsUniAppReply
 	OrderPayReq                   = pb.OrderPayReq
@@ -39,6 +41,8 @@ type (
 		OrderStatus(ctx context.Context, in *OrderStatusReq, opts ...grpc.CallOption) (*OrderStatusResp, error)
 		// 支付宝转出账号校验
 		AlipayCheckAccount(ctx context.Context, in *AlipayCheckAccountReq, opts ...grpc.CallOption) (*AlipayCheckAccountResp, error)
+		// 抖音退款订单
+		DyOrderRefund(ctx context.Context, in *DyOrderRefundReq, opts ...grpc.CallOption) (*DyOrderRefundResp, error)
 	}
 
 	defaultPayment struct {
@@ -80,4 +84,10 @@ func (m *defaultPayment) OrderStatus(ctx context.Context, in *OrderStatusReq, op
 func (m *defaultPayment) AlipayCheckAccount(ctx context.Context, in *AlipayCheckAccountReq, opts ...grpc.CallOption) (*AlipayCheckAccountResp, error) {
 	client := pb.NewPaymentClient(m.cli.Conn())
 	return client.AlipayCheckAccount(ctx, in, opts...)
+}
+
+// 抖音退款订单
+func (m *defaultPayment) DyOrderRefund(ctx context.Context, in *DyOrderRefundReq, opts ...grpc.CallOption) (*DyOrderRefundResp, error) {
+	client := pb.NewPaymentClient(m.cli.Conn())
+	return client.DyOrderRefund(ctx, in, opts...)
 }

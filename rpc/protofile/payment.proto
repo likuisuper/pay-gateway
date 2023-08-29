@@ -123,6 +123,24 @@ message AlipayCheckAccountResp {
   int64 Status = 1;
   string Desc = 2;
 }
+//============== 转出 ==============================================================================
+
+
+//抖音支付-退款
+message DyOrderRefundReq {
+  string AppPkgName = 1; //小程序pkgName
+  string OutOrderNo = 2; //商户分配支付单号，标识进行退款的订单
+  string OutRefundNo = 3; //商户分配退款号，保证在商户中唯一
+  string Reason = 4;  //退款原因
+  int64  RefundAmount = 5; //退款金额，单位分
+  string NotifyUrl = 6; //商户自定义回调地址，必须以 https 开头，支持 443 端口
+}
+
+//抖音支付-退款
+message DyOrderRefundResp {
+  int64 ErrNo = 1; //详见错误码
+  string ErrTips = 2; //详见错误描述
+}
 
 //============== service ==============================================================================
 
@@ -141,4 +159,7 @@ service Payment {
 
   //支付宝转出账号校验
   rpc AlipayCheckAccount(AlipayCheckAccountReq) returns (AlipayCheckAccountResp);
+
+  //抖音退款订单
+  rpc DyOrderRefund(DyOrderRefundReq) returns (DyOrderRefundResp);
 }

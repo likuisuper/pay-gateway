@@ -51,3 +51,9 @@ func (s *PaymentServer) AlipayCheckAccount(ctx context.Context, in *pb.AlipayChe
 	l := logic.NewAlipayCheckAccountLogic(ctx, s.svcCtx)
 	return l.AlipayCheckAccount(in)
 }
+
+// 抖音退款订单
+func (s *PaymentServer) DyOrderRefund(ctx context.Context, in *pb.DyOrderRefundReq) (*pb.DyOrderRefundResp, error) {
+	l := logic.NewDyOrderRefundLogic(ctx, s.svcCtx)
+	return l.DyOrderRefund(in)
+}

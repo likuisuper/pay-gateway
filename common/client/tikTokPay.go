@@ -22,12 +22,20 @@ var (
 	tikTokGetOrderStatusErr = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "tikTokGetOrderStatusErr", nil, "tikTok回调错误", nil})}
 )
 
+const (
+	OtherSettleParams = "other_settle_params" // 其他分账方参数 (Other settle params)
+	AppId             = "app_id"              // 小程序appID (Applets appID)
+	ThirdpartyId      = "thirdparty_id"       // 代小程序进行该笔交易调用的第三方平台服务商 id (The id of the third-party platform service provider that calls the transaction on behalf of the Applets)
+	Sign              = "sign"                // 签名 (sign)
+)
+
 //请求地址
 const (
-	tikTokCreateUri = "https://developer.toutiao.com/api/apps/ecpay/v1/create_order"
-	tikTokQueryUri  = "https://developer.toutiao.com/api/apps/ecpay/v1/query_order"
-	tikTokBody      = "充值VIP"
-	tikTokValidTime = 300
+	tikTokCreateUri       = "https://developer.toutiao.com/api/apps/ecpay/v1/create_order"
+	tikTokQueryUri        = "https://developer.toutiao.com/api/apps/ecpay/v1/query_order"
+	tikTokCreateRefundUri = "https://developer.toutiao.com/api/apps/ecpay/v1/create_refund" //发起退款
+	tikTokBody            = "充值VIP"
+	tikTokValidTime       = 300
 )
 
 //字节支付配置
@@ -110,10 +118,8 @@ func (t *TikTokPay) CreateEcPayOrder(info *PayOrder) (result TikTokReply, err er
 //获取签名
 func (t *TikTokPay) getSign(paramsMap map[string]interface{}) string {
 	var paramsArr []string
-	//加入token
-	paramsMap["token"] = t.Config.Token
 	for k, v := range paramsMap {
-		if k == "other_settle_params" {
+		if k == OtherSettleParams || k == AppId || k == ThirdpartyId || k == Sign {
 			continue
 		}
 		value := strings.TrimSpace(fmt.Sprintf("%v", v))
@@ -124,12 +130,9 @@ func (t *TikTokPay) getSign(paramsMap map[string]interface{}) string {
 		if value == "" || value == "null" {
 			continue
 		}
-		switch k {
-		case "app_id", "thirdparty_id", "sign":
-		default:
-			paramsArr = append(paramsArr, value)
-		}
+		paramsArr = append(paramsArr, value)
 	}
+
 	paramsArr = append(paramsArr, t.Config.SALT)
 	sort.Strings(paramsArr)
 	return fmt.Sprintf("%x", md5.Sum([]byte(strings.Join(paramsArr, "&"))))
@@ -246,4 +249,47 @@ func (t *TikTokPay) GetOrderStatus(orderCode string) (orderInfo *TikTokPaymentIn
 		return nil, errors.New(result.ErrTips)
 	}
 	return nil, nil
+}
+
+//创建退款订单
+type TikTokCreateRefundOrderReq struct {
+	AppId        string `json:"app_id"`               //小程序APPID
+	OutOrderNo   string `json:"out_order_no"`         //商户分配支付单号，标识进行退款的订单
+	OutRefundNo  string `json:"out_refund_no"`        //商户分配退款号，保证在商户中唯一
+	Reason       string `json:"reason"`               //退款原因
+	RefundAmount int    `json:"refund_amount"`        //退款金额，单位分
+	Sign         string `json:"sign,omitempty"`       //签名，详见签名DEMO
+	NotifyUrl    string `json:"notify_url,omitempty"` //商户自定义回调地址，必须以 https 开头，支持 443 端口
+}
+
+type TikTokCreateRefundOrderResp struct {
+	ErrNo    int    `json:"err_no"`    //错误码
+	ErrTips  string `json:"err_tips"`  //错误描述
+	RefundNo string `json:"refund_no"` //担保交易服务端退款单号
+}
+
+//创建退款订单
+func (t *TikTokPay) CreateRefundOrder(refundReq TikTokCreateRefundOrderReq) (resp TikTokCreateRefundOrderResp, err error) {
+	refundReq.NotifyUrl = t.Config.NotifyUrl
+
+	paramsMap := make(map[string]interface{}, 0)
+	jsonBytes, _ := json.Marshal(refundReq)
+	_ = json.Unmarshal(jsonBytes, &paramsMap)
+
+	refundReq.Sign = t.getSign(paramsMap)
+
+	res, err := util.HttpPost(tikTokCreateRefundUri, refundReq, 5*time.Second)
+	if err != nil {
+		util.CheckError("CreateRefundOrder, config:%+v, refundReq:%+v, err:%v", t.Config, refundReq, err)
+		tikTokHttpRequestErr.CounterInc()
+		return
+	}
+	logx.Slowf("CreateRefundOrder, config:%+v, refundReq:%+v, res:%s", t.Config, refundReq, res)
+
+	err = json.Unmarshal([]byte(res), &resp)
+	if err != nil {
+		util.CheckError("CreateRefundOrder-CreateRefundOrder, res:%s, err:%v", res, err)
+		return
+	}
+	return
 }

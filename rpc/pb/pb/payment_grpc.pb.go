@@ -32,6 +32,8 @@ type PaymentClient interface {
 	OrderStatus(ctx context.Context, in *OrderStatusReq, opts ...grpc.CallOption) (*OrderStatusResp, error)
 	//支付宝转出账号校验
 	AlipayCheckAccount(ctx context.Context, in *AlipayCheckAccountReq, opts ...grpc.CallOption) (*AlipayCheckAccountResp, error)
+	//抖音退款订单
+	DyOrderRefund(ctx context.Context, in *DyOrderRefundReq, opts ...grpc.CallOption) (*DyOrderRefundResp, error)
 }
 
 type paymentClient struct {
@@ -87,6 +89,15 @@ func (c *paymentClient) AlipayCheckAccount(ctx context.Context, in *AlipayCheckA
 	return out, nil
 }
 
+func (c *paymentClient) DyOrderRefund(ctx context.Context, in *DyOrderRefundReq, opts ...grpc.CallOption) (*DyOrderRefundResp, error) {
+	out := new(DyOrderRefundResp)
+	err := c.cc.Invoke(ctx, "/payment.Payment/DyOrderRefund", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PaymentServer is the server API for Payment service.
 // All implementations must embed UnimplementedPaymentServer
 // for forward compatibility
@@ -101,6 +112,8 @@ type PaymentServer interface {
 	OrderStatus(context.Context, *OrderStatusReq) (*OrderStatusResp, error)
 	//支付宝转出账号校验
 	AlipayCheckAccount(context.Context, *AlipayCheckAccountReq) (*AlipayCheckAccountResp, error)
+	//抖音退款订单
+	DyOrderRefund(context.Context, *DyOrderRefundReq) (*DyOrderRefundResp, error)
 	mustEmbedUnimplementedPaymentServer()
 }
 
@@ -122,6 +135,9 @@ func (UnimplementedPaymentServer) OrderStatus(context.Context, *OrderStatusReq) 
 }
 func (UnimplementedPaymentServer) AlipayCheckAccount(context.Context, *AlipayCheckAccountReq) (*AlipayCheckAccountResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AlipayCheckAccount not implemented")
+}
+func (UnimplementedPaymentServer) DyOrderRefund(context.Context, *DyOrderRefundReq) (*DyOrderRefundResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DyOrderRefund not implemented")
 }
 func (UnimplementedPaymentServer) mustEmbedUnimplementedPaymentServer() {}
 
@@ -226,6 +242,24 @@ func _Payment_AlipayCheckAccount_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Payment_DyOrderRefund_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DyOrderRefundReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PaymentServer).DyOrderRefund(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/payment.Payment/DyOrderRefund",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PaymentServer).DyOrderRefund(ctx, req.(*DyOrderRefundReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Payment_ServiceDesc is the grpc.ServiceDesc for Payment service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -252,6 +286,10 @@ var Payment_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AlipayCheckAccount",
 			Handler:    _Payment_AlipayCheckAccount_Handler,
+		},
+		{
+			MethodName: "DyOrderRefund",
+			Handler:    _Payment_DyOrderRefund_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
