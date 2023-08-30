@@ -177,12 +177,16 @@ func (l *NotifyBytedanceLogic) NotifyRefund(req *types.ByteDanceReq) (resp *type
 	//回调业务方接口
 	go func() {
 		defer exception.Recover()
-		respData, requestErr := util.HttpPost(refundInfo.NotifyUrl, req, 5*time.Second)
+		dataMap := map[string]interface{}{
+			"dy_notify_data": req,
+			"refund_info":    refundInfo,
+		}
+		respData, requestErr := util.HttpPost(refundInfo.NotifyUrl, dataMap, 5*time.Second)
 		if requestErr != nil {
-			util.CheckError("NotifyRefund-post, req:%+v, err:%v", req, requestErr)
+			util.CheckError("NotifyRefund-post, req:%+v, err:%v", dataMap, requestErr)
 			return
 		}
-		logx.Slowf("NotifyRefund-post, req:%+v, respData:%s", req, respData)
+		logx.Slowf("NotifyRefund-post, req:%+v, respData:%s", dataMap, respData)
 	}()
 
 	resp = &types.ByteDanceResp{
