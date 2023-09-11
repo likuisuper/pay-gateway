@@ -1,8 +1,11 @@
 package client
 
 import (
+	alipay2 "gitee.com/yan-yixin0612/alipay/v3"
 	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
-	alipay2 "github.com/smartwalle/alipay/v3"
+	"net/http"
+	"sync"
+	"time"
 )
 
 var (
@@ -20,8 +23,25 @@ type AliPayConfig struct {
 	IsProduction     bool
 }
 
+var cliCache sync.Map
+
 func GetAlipayClient(config AliPayConfig) (client *alipay2.Client, err error) {
-	client, err = alipay2.New(config.AppId, config.PrivateKey, config.IsProduction)
+	if cli, ok := cliCache.Load(config.AppId); ok {
+		return cli.(*alipay2.Client), nil
+	}
+	client, err = alipay2.New(config.AppId, config.PrivateKey, config.IsProduction, func(c *alipay2.Client) {
+		transport := &http.Transport{
+			MaxIdleConns:          100,
+			IdleConnTimeout:       90 * time.Second,
+			TLSHandshakeTimeout:   10 * time.Second,
+			ExpectContinueTimeout: 1 * time.Second,
+			MaxIdleConnsPerHost:   10,
+		}
+		c.Client = &http.Client{ // 不要使用默认的，默认的没有超时设置
+			Transport: transport,
+			Timeout:   10 * time.Second,
+		}
+	})
 	// 将 key 的验证调整到初始化阶段
 	if err != nil {
 		aliPayClientInitFailNum.CounterInc()
@@ -42,5 +62,6 @@ func GetAlipayClient(config AliPayConfig) (client *alipay2.Client, err error) {
 		aliPayClientInitFailNum.CounterInc()
 		return nil, err
 	}
+	cliCache.Store(config.AppId, client)
 	return client, err
 }

@@ -57,3 +57,27 @@ func (s *PaymentServer) DyOrderRefund(ctx context.Context, in *pb.DyOrderRefundR
 	l := logic.NewDyOrderRefundLogic(ctx, s.svcCtx)
 	return l.DyOrderRefund(in)
 }
+
+// 支付宝：创建支付
+func (s *PaymentServer) AlipayTrade(ctx context.Context, in *pb.AlipayTradeReq) (*pb.AlipayPageSignResp, error) {
+	l := logic.NewAlipayTradeLogic(ctx, s.svcCtx)
+	return l.AlipayTrade(in)
+}
+
+// 支付宝：支付并签约
+func (s *PaymentServer) AlipayPagePayAndSign(ctx context.Context, in *pb.AlipayPageSignReq) (*pb.AlipayPageSignResp, error) {
+	l := logic.NewAlipayPagePayAndSignLogic(ctx, s.svcCtx)
+	return l.AlipayPagePayAndSign(in)
+}
+
+// 支付宝：解约
+func (s *PaymentServer) AlipayPageUnSign(ctx context.Context, in *pb.AlipayPageUnSignReq) (*pb.AlipayCommonResp, error) {
+	l := logic.NewAlipayPageUnSignLogic(ctx, s.svcCtx)
+	return l.AlipayPageUnSign(in)
+}
+
+// 支付宝：退款
+func (s *PaymentServer) AlipayRefund(ctx context.Context, in *pb.AlipayRefundReq) (*pb.AlipayCommonResp, error) {
+	l := logic.NewAlipayRefundLogic(ctx, s.svcCtx)
+	return l.AlipayRefund(in)
+}

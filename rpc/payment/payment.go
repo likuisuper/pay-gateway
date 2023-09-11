@@ -15,7 +15,13 @@ import (
 type (
 	AlipayCheckAccountReq         = pb.AlipayCheckAccountReq
 	AlipayCheckAccountResp        = pb.AlipayCheckAccountResp
+	AlipayCommonResp              = pb.AlipayCommonResp
 	AlipayFundTransUniTransferReq = pb.AlipayFundTransUniTransferReq
+	AlipayPageSignReq             = pb.AlipayPageSignReq
+	AlipayPageSignResp            = pb.AlipayPageSignResp
+	AlipayPageUnSignReq           = pb.AlipayPageUnSignReq
+	AlipayRefundReq               = pb.AlipayRefundReq
+	AlipayTradeReq                = pb.AlipayTradeReq
 	ClosePayOrderReq              = pb.ClosePayOrderReq
 	DyOrderRefundReq              = pb.DyOrderRefundReq
 	DyOrderRefundResp             = pb.DyOrderRefundResp
@@ -43,6 +49,14 @@ type (
 		AlipayCheckAccount(ctx context.Context, in *AlipayCheckAccountReq, opts ...grpc.CallOption) (*AlipayCheckAccountResp, error)
 		// 抖音退款订单
 		DyOrderRefund(ctx context.Context, in *DyOrderRefundReq, opts ...grpc.CallOption) (*DyOrderRefundResp, error)
+		// 支付宝：创建支付
+		AlipayTrade(ctx context.Context, in *AlipayTradeReq, opts ...grpc.CallOption) (*AlipayPageSignResp, error)
+		// 支付宝：支付并签约
+		AlipayPagePayAndSign(ctx context.Context, in *AlipayPageSignReq, opts ...grpc.CallOption) (*AlipayPageSignResp, error)
+		// 支付宝：解约
+		AlipayPageUnSign(ctx context.Context, in *AlipayPageUnSignReq, opts ...grpc.CallOption) (*AlipayCommonResp, error)
+		// 支付宝：退款
+		AlipayRefund(ctx context.Context, in *AlipayRefundReq, opts ...grpc.CallOption) (*AlipayCommonResp, error)
 	}
 
 	defaultPayment struct {
@@ -90,4 +104,28 @@ func (m *defaultPayment) AlipayCheckAccount(ctx context.Context, in *AlipayCheck
 func (m *defaultPayment) DyOrderRefund(ctx context.Context, in *DyOrderRefundReq, opts ...grpc.CallOption) (*DyOrderRefundResp, error) {
 	client := pb.NewPaymentClient(m.cli.Conn())
 	return client.DyOrderRefund(ctx, in, opts...)
+}
+
+// 支付宝：创建支付
+func (m *defaultPayment) AlipayTrade(ctx context.Context, in *AlipayTradeReq, opts ...grpc.CallOption) (*AlipayPageSignResp, error) {
+	client := pb.NewPaymentClient(m.cli.Conn())
+	return client.AlipayTrade(ctx, in, opts...)
+}
+
+// 支付宝：支付并签约
+func (m *defaultPayment) AlipayPagePayAndSign(ctx context.Context, in *AlipayPageSignReq, opts ...grpc.CallOption) (*AlipayPageSignResp, error) {
+	client := pb.NewPaymentClient(m.cli.Conn())
+	return client.AlipayPagePayAndSign(ctx, in, opts...)
+}
+
+// 支付宝：解约
+func (m *defaultPayment) AlipayPageUnSign(ctx context.Context, in *AlipayPageUnSignReq, opts ...grpc.CallOption) (*AlipayCommonResp, error) {
+	client := pb.NewPaymentClient(m.cli.Conn())
+	return client.AlipayPageUnSign(ctx, in, opts...)
+}
+
+// 支付宝：退款
+func (m *defaultPayment) AlipayRefund(ctx context.Context, in *AlipayRefundReq, opts ...grpc.CallOption) (*AlipayCommonResp, error) {
+	client := pb.NewPaymentClient(m.cli.Conn())
+	return client.AlipayRefund(ctx, in, opts...)
 }

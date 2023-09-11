@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"gitee.com/yan-yixin0612/alipay/v3"
 	"gitee.com/zhuyunkj/pay-gateway/common/client"
 	"gitee.com/zhuyunkj/pay-gateway/common/define"
 	"gitee.com/zhuyunkj/pay-gateway/db/mysql/model"
@@ -13,7 +14,6 @@ import (
 	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
 	"gitee.com/zhuyunkj/zhuyun-core/util"
 	"github.com/skip2/go-qrcode"
-	"github.com/smartwalle/alipay/v3"
 	"github.com/zeromicro/go-zero/core/logx"
 	"strconv"
 )

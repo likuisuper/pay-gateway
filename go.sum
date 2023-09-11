@@ -31,6 +31,8 @@ cloud.google.com/go/storage v1.6.0/go.mod h1:N7U0C8pVQ/+NIKOBQyamJIeKQKkZ+mxpohl
 cloud.google.com/go/storage v1.8.0/go.mod h1:Wv1Oy7z6Yz3DshWRJFhqM/UCfaWIRTdp0RXyy7KQOVs=
 cloud.google.com/go/storage v1.10.0/go.mod h1:FLPqc6j+Ki4BU591ie1oL6qBQGu2Bl/tZ9ullr3+Kg0=
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=
+gitee.com/yan-yixin0612/alipay/v3 v3.2.19 h1:Faqp0HZWQOfB5L/m40Zk2GvLs8CLq3Wk5GLggMBqVgE=
+gitee.com/yan-yixin0612/alipay/v3 v3.2.19/go.mod h1:CtL46pDWUvUj9nc6SMwMXHYRrxIRckdU9TtLXkLa6M8=
 gitee.com/zhuyunkj/zero-contrib v1.3.2 h1:sqmmkjTnLRcPzFBxmE8oVYvlFLJ2NkvEr2SfrcPGAkk=
 gitee.com/zhuyunkj/zero-contrib v1.3.2/go.mod h1:2rhHRchgvQ+5Ur+XFfCybjmJ89L54UjWlgbUh5vzCE4=
 gitee.com/zhuyunkj/zhuyun-core v1.6.30 h1:dI9kk/8G/W11o8fWPcI/3QfJQZAudQFji85cj7QnMPY=
@@ -468,8 +470,6 @@ github.com/sirupsen/logrus v1.6.0/go.mod h1:7uNnSEd1DgxDLC74fIahvMZmmYsHGZGEOFrf
 github.com/sirupsen/logrus v1.8.1/go.mod h1:yWOB1SBYBC5VeMP7gHvWumXLIWorT60ONWic61uBYv0=
 github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e h1:MRM5ITcdelLK2j1vwZ3Je0FKVCfqOLp5zO6trqMLYs0=
 github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e/go.mod h1:XV66xRDqSt+GTGFMVlhk3ULuV0y9ZmzeVGR4mloJI3M=
-github.com/smartwalle/alipay/v3 v3.1.7 h1:J4U5slABafKVD/b9gPCZe/3HAPB8Pa2NOYOPcugEJBo=
-github.com/smartwalle/alipay/v3 v3.1.7/go.mod h1:cZUMCCnsux9YAxA0/f3PWUR+7wckWtE1BqxbVRtGij0=
 github.com/smartwalle/crypto4go v1.0.2 h1:9DUEOOsPhmp00438L4oBdcL8EZG1zumecft5bWj5phI=
 github.com/smartwalle/crypto4go v1.0.2/go.mod h1:LQ7vCZIb7BE5+MuMtJBuO8ORkkQ01m4DXDBWPzLbkMY=
 github.com/smartystreets/assertions v1.1.1/go.mod h1:tcbTF8ujkAEcZ8TElKY+i30BzYlVhC/LOxJk7iOWnoo=

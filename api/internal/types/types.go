@@ -70,3 +70,13 @@ type AlipayFundTransUniTransferReq struct {
 	Remark      string `json:"remark"`       //转账备注
 	PkgName     string `json:"pkg_name"`     //包名
 }
+
+type AlipayPageSignReq struct {
+	PkgName     string `json:"pkg_name"`     //包名
+	OrderNo     string `json:"order_no"`     //商户唯一订单号
+	OrderTitle  string `json:"order_title"`  //转账标题
+	TransAmount string `json:"trans_amount"` //订单总金额 [0.1,100]
+	PayAccount  string `json:"pay_account"`  //收款方账户
+	PayName     string `json:"pay_name"`     //收款方真实姓名
+	PeriodType  string `json:"period_type"`  //
+}

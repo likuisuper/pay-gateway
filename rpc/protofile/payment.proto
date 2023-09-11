@@ -142,6 +142,52 @@ message DyOrderRefundResp {
   string ErrTips = 2; //详见错误描述
 }
 
+message AlipayPageSignReq {
+  string OutTradeNo = 1;  //商户唯一订单号
+  string TotalAmount = 2; // 订单总金额，单位为元，精确到小数点后两位，STD_RED_PACKET 产品取值范围[0.01,100000000]； TRANS_ACCOUNT_NO_PWD产品取值范围[0.1,100000000]
+  string Subject = 3; //订单标题
+  string SignScene = 4; //场景
+  string PeriodType = 5; //扣款周期类型 DAY或者MONTH
+  string Period = 6; //扣款周期
+  string SingleAmount = 7; //周期扣款金额
+  string SignNotifyURL = 8; //签约通知回调
+
+  string AppPkgName = 9; //应用包名
+  string ExecuteTime = 10; //扣款时间
+  string ExternalAgreementNo = 11; //商户系统中的唯一签约号
+}
+
+message AlipayTradeReq {
+  string OutTradeNo = 1;  //商户唯一订单号
+  string TotalAmount = 2; // 订单总金额，单位为元，精确到小数点后两位，STD_RED_PACKET 产品取值范围[0.01,100000000]； TRANS_ACCOUNT_NO_PWD产品取值范围[0.1,100000000]
+  string AppPkgName = 3; //应用包名
+  string SignNotifyURL = 4; //签约通知回调
+  string Subject = 5; //订单标题
+}
+
+message AlipayPageUnSignReq {
+  string OutTradeNo = 1; //商户唯一订单号
+  string AgreementNo = 2; //支付宝系统中的唯一签约号
+  string AppPkgName = 3; //应用包名
+}
+
+message AlipayPageSignResp {
+  string URL = 1;
+}
+
+message AlipayCommonResp {
+  int64 Status = 1;
+  string Desc = 2;
+}
+
+message AlipayRefundReq {
+  string AppPkgName = 1; //应用包名
+  string OutTradeNo = 2; //商户唯一订单号
+  string TradeNo = 3; //支付宝交易号
+  string RefundAmount = 4; //退款金额
+  string RefundReason = 5; //退款原因
+}
+
 //============== service ==============================================================================
 
 service Payment {
@@ -162,4 +208,16 @@ service Payment {
 
   //抖音退款订单
   rpc DyOrderRefund(DyOrderRefundReq) returns (DyOrderRefundResp);
+
+  //支付宝：创建支付
+  rpc AlipayTrade(AlipayTradeReq) returns (AlipayPageSignResp);
+
+  //支付宝：支付并签约
+  rpc AlipayPagePayAndSign(AlipayPageSignReq) returns (AlipayPageSignResp);
+
+  //支付宝：解约
+  rpc AlipayPageUnSign(AlipayPageUnSignReq) returns (AlipayCommonResp);
+
+  //支付宝：退款
+  rpc AlipayRefund(AlipayRefundReq) returns (AlipayCommonResp);
 }
