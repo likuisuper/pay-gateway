@@ -4,6 +4,7 @@ package model
 import (
 	"gitee.com/zhuyunkj/pay-gateway/common/client"
 	"gitee.com/zhuyunkj/pay-gateway/db"
+	"gitee.com/zhuyunkj/zhuyun-core/cache"
 	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
 	"github.com/zeromicro/go-zero/core/logx"
 	"gorm.io/gorm"
@@ -50,11 +51,13 @@ func (m *PmPayConfigAlipayTable) TransClientConfig() (clientCfg *client.AliPayCo
 
 type PmPayConfigAlipayModel struct {
 	DB *gorm.DB
+	RDB *cache.RedisInstance
 }
 
 func NewPmPayConfigAlipayModel(dbName string) *PmPayConfigAlipayModel {
 	return &PmPayConfigAlipayModel{
 		DB: db.WithDBContext(dbName),
+		RDB: db.WithRedisDBContext(dbName),
 	}
 }
 

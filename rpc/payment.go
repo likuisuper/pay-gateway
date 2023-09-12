@@ -48,7 +48,7 @@ func main() {
 	}
 
 	// 初始化数据库
-	db.DBInit(c.Mysql)
+	db.DBInit(c.Mysql, c.RedisConfig)
 	ctx := svc.NewServiceContext(c)
 
 	s := zrpc.MustNewServer(c.RpcServerConf, func(grpcServer *grpc.Server) {

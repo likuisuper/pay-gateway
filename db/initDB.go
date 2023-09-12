@@ -11,12 +11,23 @@ import (
 	"strings"
 )
 
-func DBInit(mysqlCfgs []*mysql.DbConfig) {
+func DBInit(mysqlCfgs []*mysql.DbConfig, redisCfgs []*redisdb.RedisConfigs) {
 	err := mysql.InitMysql(mysqlCfgs)
 	if err != nil {
 		logx.Errorf("mysql init YunYueDu err, err= %v", err)
 		os.Exit(1)
 	}
+
+	err = redisdb.InitRedis(redisCfgs)
+	if err != nil {
+		os.Exit(1)
+	}
+
+	rdbCount := 0
+	for _, rdbCfg := range redisCfgs {
+		rdbCount += len(rdbCfg.DBs)
+	}
+	logx.Infof("init redis success! redis cfg count:%d instance count:%d", len(redisCfgs), rdbCount)
 }
 
 /*

@@ -4,7 +4,6 @@ import (
 	alipay2 "gitee.com/yan-yixin0612/alipay/v3"
 	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
 	"net/http"
-	"sync"
 	"time"
 )
 
@@ -23,12 +22,7 @@ type AliPayConfig struct {
 	IsProduction     bool
 }
 
-var cliCache sync.Map
-
 func GetAlipayClient(config AliPayConfig) (client *alipay2.Client, err error) {
-	if cli, ok := cliCache.Load(config.AppId); ok {
-		return cli.(*alipay2.Client), nil
-	}
 	client, err = alipay2.New(config.AppId, config.PrivateKey, config.IsProduction, func(c *alipay2.Client) {
 		transport := &http.Transport{
 			MaxIdleConns:          100,
@@ -62,6 +56,5 @@ func GetAlipayClient(config AliPayConfig) (client *alipay2.Client, err error) {
 		aliPayClientInitFailNum.CounterInc()
 		return nil, err
 	}
-	cliCache.Store(config.AppId, client)
 	return client, err
 }
