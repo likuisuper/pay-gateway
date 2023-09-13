@@ -10,6 +10,7 @@ import (
 	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
 	"gitee.com/zhuyunkj/zhuyun-core/util"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/zeromicro/go-zero/core/logx"
 	"io/ioutil"
 	"net/http"
 	"sort"
@@ -227,6 +228,8 @@ func (p *KsPay) CreateOrder(info *PayOrder, openId string) (respData *KsCreateOr
 
 	respData = new(KsCreateOrderWithChannelResp)
 	jsoniter.Get([]byte(dataStr), "order_info").ToVal(respData)
+
+	logx.Slowf("KsPay-CreateOrder, param:%+v, dataStr:%s", param, dataStr)
 
 	return
 }
