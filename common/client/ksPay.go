@@ -3,6 +3,7 @@ package client
 import (
 	"crypto/md5"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"gitee.com/zhuyunkj/pay-gateway/common/global"
@@ -301,8 +302,8 @@ func (p *KsPay) QueryOrder(orderSn string) (paymentInfo *KsQueryOrderResp, err e
 
 func (p *KsPay) Sign(param interface{}) (sign string) {
 	dataMap := make(map[string]interface{}, 0)
-	jsonBytes, _ := jsoniter.Marshal(param)
-	_ = jsoniter.Unmarshal(jsonBytes, &dataMap)
+	jsonBytes, _ := json.Marshal(param)
+	_ = json.Unmarshal(jsonBytes, &dataMap)
 
 	signParam := make(map[string]string, 0)
 	signParam["app_id"] = p.Config.AppId
