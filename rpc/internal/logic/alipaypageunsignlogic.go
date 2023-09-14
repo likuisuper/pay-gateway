@@ -35,7 +35,7 @@ func NewAlipayPageUnSignLogic(ctx context.Context, svcCtx *svc.ServiceContext) *
 
 // 支付宝：解约
 func (l *AlipayPageUnSignLogic) AlipayPageUnSign(in *pb.AlipayPageUnSignReq) (*pb.AlipayCommonResp, error) {
-	payClient, err := clientMgr.GetAlipayClientWithCache(in.AppPkgName)
+	payClient, _, _, err := clientMgr.GetAlipayClientWithCache(in.AppPkgName)
 	if err != nil {
 		return nil, err
 	}

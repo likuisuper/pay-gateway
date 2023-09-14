@@ -143,18 +143,13 @@ message DyOrderRefundResp {
 }
 
 message AlipayPageSignReq {
-  string OutTradeNo = 1;  //商户唯一订单号
-  string TotalAmount = 2; // 订单总金额，单位为元，精确到小数点后两位，STD_RED_PACKET 产品取值范围[0.01,100000000]； TRANS_ACCOUNT_NO_PWD产品取值范围[0.1,100000000]
-  string Subject = 3; //订单标题
-  string SignScene = 4; //场景
-  string PeriodType = 5; //扣款周期类型 DAY或者MONTH
-  string Period = 6; //扣款周期
-  string SingleAmount = 7; //周期扣款金额
-  string SignNotifyURL = 8; //签约通知回调
-
-  string AppPkgName = 9; //应用包名
-  string ExecuteTime = 10; //扣款时间
-  string ExternalAgreementNo = 11; //商户系统中的唯一签约号
+  int64 UserId = 1;  //商户唯一订单号
+  string Subject = 2; //订单标题
+  string NotifyURL = 3; //通知回调
+  string AppPkgName = 4; //应用包名
+  int64 ProductType = 5;    //商品类型
+  int64 ProductId = 6;  //商品id
+  string ProductDesc = 7; //商品详情
 }
 
 message AlipayTradeReq {

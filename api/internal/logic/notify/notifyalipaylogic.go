@@ -66,18 +66,7 @@ func (l *NotifyAlipayLogic) NotifyAlipay(r *http.Request, w http.ResponseWriter)
 		util.CheckError("pkgName= %s, 初使化支付错误，err:=%v", "all", err)
 		return
 	}
-	//ok, err := payClient.VerifySign(r.Form)
-	//if err != nil {
-	//	logx.Errorf("NotifyAlipay err: %v", err)
-	//	notifyAlipayErrNum.CounterInc()
-	//	return
-	//}
-	//if !ok {
-	//	err = errors.New("verify sign err")
-	//	logx.Error(err)
-	//	notifyAlipayErrNum.CounterInc()
-	//	return
-	//}
+
 	var outTradeNo = r.Form.Get("out_trade_no")
 	var tradeQuery = alipay.TradeQuery{
 		OutTradeNo: outTradeNo,

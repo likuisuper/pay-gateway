@@ -59,4 +59,16 @@ service payment {
     )
     @handler notifyKspay
     post /notify/kspay (EmptyReq) returns (EmptyReq)
+
+    @doc(
+        summary: "支付宝支付回调"
+    )
+    @handler notifyAlipayNew
+    post /notify/alipayNew (EmptyReq) returns (EmptyReq)
+
+    @doc(
+        summary: "支付宝签约成功回调"
+    )
+    @handler notifyAlipaySign
+    post /notify/alipaySign (EmptyReq) returns (EmptyReq)
 }

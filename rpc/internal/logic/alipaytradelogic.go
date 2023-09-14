@@ -2,8 +2,6 @@ package logic
 
 import (
 	"context"
-	alipay2 "gitee.com/yan-yixin0612/alipay/v3"
-	"gitee.com/zhuyunkj/pay-gateway/common/clientMgr"
 	"gitee.com/zhuyunkj/pay-gateway/common/define"
 	"gitee.com/zhuyunkj/pay-gateway/db/mysql/model"
 	"gitee.com/zhuyunkj/pay-gateway/rpc/internal/svc"
@@ -34,29 +32,30 @@ func NewAlipayTradeLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Alipa
 
 // 支付宝：创建支付
 func (l *AlipayTradeLogic) AlipayTrade(in *pb.AlipayTradeReq) (*pb.AlipayPageSignResp, error) {
-	payClient, err := clientMgr.GetAlipayClientWithCache(in.AppPkgName)
-	if err != nil {
-		return nil, err
-	}
-
-	trade := alipay2.Trade{
-		ProductCode:    "QUICK_MSECURITY_PAY",
-		Subject:        in.Subject,
-		OutTradeNo:     in.OutTradeNo,
-		TotalAmount:    in.TotalAmount,
-		TimeoutExpress: "30m",
-	}
-
-	appPay := alipay2.TradeAppPay{
-		Trade: trade,
-	}
-
-	result, err := payClient.TradeAppPay(appPay)
-	if err != nil {
-		logx.Errorf(err.Error())
-	}
-
-	return &pb.AlipayPageSignResp{
-		URL: result,
-	}, nil
+	//payClient, _, _, err := clientMgr.GetAlipayClientWithCache(in.AppPkgName)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//
+	//trade := alipay2.Trade{
+	//	ProductCode:    "QUICK_MSECURITY_PAY",
+	//	Subject:        in.Subject,
+	//	OutTradeNo:     in.OutTradeNo,
+	//	TotalAmount:    in.TotalAmount,
+	//	TimeoutExpress: "30m",
+	//}
+	//
+	//appPay := alipay2.TradeAppPay{
+	//	Trade: trade,
+	//}
+	//
+	//result, err := payClient.TradeAppPay(appPay)
+	//if err != nil {
+	//	logx.Errorf(err.Error())
+	//}
+	//
+	//return &pb.AlipayPageSignResp{
+	//	URL: result,
+	//}, nil
+	return nil, nil
 }
