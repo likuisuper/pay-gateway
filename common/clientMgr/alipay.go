@@ -29,10 +29,10 @@ func GetAlipayClientWithCache(pkgName string, aliAppId string) (payClient *alipa
 	var rKeyAppCfg, rKeyPayCfg string
 
 	pkgCfg := &model.PmAppConfigTable{}
+	appConfigModel = model.NewPmAppConfigModel(define.DbPayGateway)
 	if aliAppId != "" {
 		pkgCfg.AlipayAppID = aliAppId
 	} else {
-		appConfigModel = model.NewPmAppConfigModel(define.DbPayGateway)
 		rKeyAppCfg = appConfigModel.RDB.GetRedisKey(RedisAppConfigKey, pkgName)
 		appConfigModel.RDB.GetObject(nil, rKeyAppCfg, pkgCfg)
 	}
@@ -52,13 +52,16 @@ func GetAlipayClientWithCache(pkgName string, aliAppId string) (payClient *alipa
 	}
 
 	if payCfg.ID == 0 || pkgCfg.ID == 0 || payClient == nil {
-		pkgCfg, err = appConfigModel.GetOneByPkgName(pkgName)
-		if err != nil {
-			util.CheckError("pkgName= %s, 读取应用配置失败，err:=%v", pkgName, err)
-			return nil, "", "", err
+		if pkgName != "" {
+			pkgCfg, err = appConfigModel.GetOneByPkgName(pkgName)
+			if err != nil {
+				util.CheckError("pkgName= %s, 读取应用配置失败，err:=%v", pkgName, err)
+				return nil, "", "", err
+			}
+			aliAppId = pkgCfg.AlipayAppID
 		}
 
-		payCfg, err = payConfigAlipayModel.GetOneByAppID(pkgCfg.AlipayAppID)
+		payCfg, err = payConfigAlipayModel.GetOneByAppID(aliAppId)
 		if err != nil {
 			err = fmt.Errorf("pkgName= %s, 读取支付宝配置失败，err:=%v", pkgName, err)
 			util.CheckError(err.Error())
