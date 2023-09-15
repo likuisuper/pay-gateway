@@ -14,25 +14,37 @@ const RedisAppConfigKey = "app:config:%s"    //%s:包名
 const RedisAliPayConfigKey = "pay:config:%s" //%s:支付宝的app_id
 var cliCache sync.Map
 
-func GetAlipayClientWithCache(pkgName string) (payClient *alipay2.Client, appId string, notifyUrl string, err error) {
+func GetAlipayClientByAppPkgWithCache(pkgName string) (payClient *alipay2.Client, appId string, notifyUrl string, err error) {
+	return GetAlipayClientWithCache(pkgName, "")
+}
+
+func GetAlipayClientByAppIdWithCache(aliAppId string) (payClient *alipay2.Client, appId string, notifyUrl string, err error) {
+	return GetAlipayClientWithCache("", aliAppId)
+}
+
+func GetAlipayClientWithCache(pkgName string, aliAppId string) (payClient *alipay2.Client, appId string, notifyUrl string, err error) {
 
 	var appConfigModel *model.PmAppConfigModel
 	var payConfigAlipayModel *model.PmPayConfigAlipayModel
 	var rKeyAppCfg, rKeyPayCfg string
 
 	pkgCfg := &model.PmAppConfigTable{}
-	appConfigModel = model.NewPmAppConfigModel(define.DbPayGateway)
-	rKeyAppCfg = appConfigModel.RDB.GetRedisKey(RedisAppConfigKey, pkgName)
-	appConfigModel.RDB.GetObject(nil, rKeyAppCfg, pkgCfg)
+	if aliAppId != "" {
+		pkgCfg.AlipayAppID = aliAppId
+	} else {
+		appConfigModel = model.NewPmAppConfigModel(define.DbPayGateway)
+		rKeyAppCfg = appConfigModel.RDB.GetRedisKey(RedisAppConfigKey, pkgName)
+		appConfigModel.RDB.GetObject(nil, rKeyAppCfg, pkgCfg)
+	}
 
 	payCfg := &model.PmPayConfigAlipayTable{}
 	payConfigAlipayModel = model.NewPmPayConfigAlipayModel(define.DbPayGateway)
-	if pkgCfg.ID != 0 {
+	if pkgCfg.AlipayAppID != "" {
 		rKeyPayCfg = payConfigAlipayModel.RDB.GetRedisKey(RedisAliPayConfigKey, pkgCfg.AlipayAppID)
 		payConfigAlipayModel.RDB.GetObject(nil, rKeyPayCfg, payCfg)
 	}
 
-	if payCfg.ID != 0 && pkgCfg.ID != 0 {
+	if payCfg.ID != 0 && pkgCfg.AlipayAppID != "" {
 		config := *payCfg.TransClientConfig()
 		if cli, ok := cliCache.Load(config.AppId); ok {
 			payClient = cli.(*alipay2.Client)

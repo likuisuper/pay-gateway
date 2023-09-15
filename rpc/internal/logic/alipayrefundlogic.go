@@ -35,7 +35,7 @@ func NewAlipayRefundLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Alip
 
 // 支付宝：退款
 func (l *AlipayRefundLogic) AlipayRefund(in *pb.AlipayRefundReq) (*pb.AlipayCommonResp, error) {
-	payClient, _, _, err := clientMgr.GetAlipayClientWithCache(in.AppPkgName)
+	payClient, _, _, err := clientMgr.GetAlipayClientByAppPkgWithCache(in.AppPkgName)
 	if err != nil {
 		return nil, err
 	}

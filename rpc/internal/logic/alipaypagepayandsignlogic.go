@@ -52,7 +52,7 @@ type Product struct {
 
 // 支付宝：支付并签约
 func (l *AlipayPagePayAndSignLogic) AlipayPagePayAndSign(in *pb.AlipayPageSignReq) (*pb.AlipayPageSignResp, error) {
-	payClient, payAppId, notifyUrl, err := clientMgr.GetAlipayClientWithCache(in.AppPkgName)
+	payClient, payAppId, notifyUrl, err := clientMgr.GetAlipayClientByAppPkgWithCache(in.AppPkgName)
 	if err != nil {
 		return nil, err
 	}

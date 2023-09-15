@@ -48,9 +48,9 @@ func (l *NotifyAlipayNewLogic) NotifyAlipayNew(r *http.Request, w http.ResponseW
 	bodyData := r.Form.Encode()
 	logx.Slowf("NotifyAlipay form %s", bodyData)
 
-	appPkg := r.Form.Get("app_pkg")
+	appId := r.Form.Get("app_id")
 
-	client, _, _, err := clientMgr.GetAlipayClientWithCache(appPkg)
+	client, _, _, err := clientMgr.GetAlipayClientByAppIdWithCache(appId)
 	if err != nil {
 		logx.Errorf(err.Error())
 		notifyAlipayErrNum.CounterInc()
