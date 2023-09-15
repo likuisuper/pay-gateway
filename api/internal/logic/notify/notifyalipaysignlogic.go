@@ -47,9 +47,8 @@ func (l *NotifyAlipaySignLogic) NotifyAlipaySign(r *http.Request, w http.Respons
 	agreementNo := r.Form.Get("agreement_no")
 	externalAgreementNo := r.Form.Get("external_agreement_no")
 	outTradeNo := r.Form.Get("out_trade_no")
-	userid := r.Form.Get("user_id")
 
-	if agreementNo == "" || externalAgreementNo == "" || userid == "" || outTradeNo == "" {
+	if agreementNo == "" || externalAgreementNo == "" || outTradeNo == "" {
 		logx.Errorf("签约回调参数异常, %s", bodyData)
 		return
 	}

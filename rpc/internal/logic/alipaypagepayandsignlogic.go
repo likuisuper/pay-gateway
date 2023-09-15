@@ -42,7 +42,7 @@ func NewAlipayPagePayAndSignLogic(ctx context.Context, svcCtx *svc.ServiceContex
 
 type Product struct {
 	ProductType     int    `json:"productType"`
-	ProductSwitch   int    `json:"productSwitch"`
+	ProductSwitch   bool   `json:"productSwitch"`
 	Amount          string `json:"amount"`
 	PrepaidAmount   string `json:"prepaidAmount"`
 	SubscribePeriod int    `json:"subscribePeriod"`
@@ -86,6 +86,8 @@ func (l *AlipayPagePayAndSignLogic) AlipayPagePayAndSign(in *pb.AlipayPageSignRe
 		NotifyURL:      notifyUrl,
 	}
 
+	externalAgreementNo := ""
+
 	if product.ProductType == code.PRODUCT_TYPE_SUBSCRIBE {
 
 		accessParam := &alipay2.AccessParams{
@@ -102,9 +104,6 @@ func (l *AlipayPagePayAndSignLogic) AlipayPagePayAndSign(in *pb.AlipayPageSignRe
 		trade.TotalAmount = product.PrepaidAmount
 
 		signNotifyValues := url.Values{}
-		signNotifyValues.Set("period_type", "DAY")
-		signNotifyValues.Set("period", strconv.Itoa(product.SubscribePeriod))
-		signNotifyValues.Set("user_id", strconv.Itoa(int(in.UserId)))
 		signNotifyValues.Set("out_trade_no", orderInfo.OutTradeNo)
 
 		signParams := &alipay2.SignParams{
@@ -116,6 +115,8 @@ func (l *AlipayPagePayAndSignLogic) AlipayPagePayAndSign(in *pb.AlipayPageSignRe
 			ExternalAgreementNo: utils.GenerateOrderCode(l.svcCtx.Config.SnowFlake.MachineNo, l.svcCtx.Config.SnowFlake.WorkerNo),
 			SignNotifyURL:       notifyUrl + "/sign?" + signNotifyValues.Encode(),
 		}
+
+		externalAgreementNo = signParams.ExternalAgreementNo
 
 		trade.AgreementSignParams = signParams
 	}
@@ -132,7 +133,8 @@ func (l *AlipayPagePayAndSignLogic) AlipayPagePayAndSign(in *pb.AlipayPageSignRe
 	l.orderModel.Create(&orderInfo)
 
 	return &pb.AlipayPageSignResp{
-		URL:        result,
-		OutTradeNo: orderInfo.OutTradeNo,
+		URL:                 result,
+		OutTradeNo:          orderInfo.OutTradeNo,
+		ExternalAgreementNo: externalAgreementNo,
 	}, nil
 }

@@ -169,6 +169,7 @@ message AlipayPageUnSignReq {
 message AlipayPageSignResp {
   string URL = 1;
   string OutTradeNo = 2;
+  string ExternalAgreementNo = 3;
 }
 
 message AlipayCommonResp {
