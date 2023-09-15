@@ -69,7 +69,7 @@ func (l *AlipayPagePayAndSignLogic) AlipayPagePayAndSign(in *pb.AlipayPageSignRe
 		AppPkg:       in.AppPkgName,
 		UserID:       int(in.UserId),
 		OutTradeNo:   utils.GenerateOrderCode(l.svcCtx.Config.SnowFlake.MachineNo, l.svcCtx.Config.SnowFlake.WorkerNo),
-		PayType:      code.PAY_TYPE_ALI,
+		PayType:      model.PmPayOrderTablePayTypeAlipay,
 		Status:       0,
 		PayAppID:     payAppId,
 		AppNotifyUrl: in.NotifyURL,
