@@ -24,7 +24,7 @@ func main() {
 	var c config.Config
 	conf.MustLoad(*configFile, &c)
 	// 初始化数据库
-	db.DBInit(c.Mysql, nil)
+	db.DBInit(c.Mysql, c.RedisConfig)
 
 	server := rest.MustNewServer(c.RestConf)
 	defer server.Stop()
