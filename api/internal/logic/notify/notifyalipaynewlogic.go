@@ -86,8 +86,6 @@ func (l *NotifyAlipayNewLogic) NotifyAlipayNew(r *http.Request, w http.ResponseW
 		return
 	}
 	//修改数据库
-	//amount := util.String2Float64(res.Content.TotalAmount) * 100
-	//orderInfo.NotifyAmount = int(amount)
 	orderInfo.Status = model.PmPayOrderTablePayStatusPaid
 	orderInfo.PayType = model.PmPayOrderTablePayTypeAlipay
 	err = l.orderModel.UpdateNotify(orderInfo)
@@ -98,10 +96,10 @@ func (l *NotifyAlipayNewLogic) NotifyAlipayNew(r *http.Request, w http.ResponseW
 	}
 
 	//回调业务方接口
-
 	go func() {
 		defer exception.Recover()
 		dataMap := l.transFormDataToMap(bodyData)
+		dataMap["notify_type"] = "pay"
 		_, _ = util.HttpPost(orderInfo.AppNotifyUrl, dataMap, 5*time.Second)
 	}()
 

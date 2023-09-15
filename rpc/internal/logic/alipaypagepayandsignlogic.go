@@ -13,7 +13,6 @@ import (
 	"gitee.com/zhuyunkj/pay-gateway/rpc/internal/svc"
 	"gitee.com/zhuyunkj/pay-gateway/rpc/pb/pb"
 	"github.com/zeromicro/go-zero/core/logx"
-	"net/url"
 	"strconv"
 	"time"
 )
@@ -77,8 +76,7 @@ func (l *AlipayPagePayAndSignLogic) AlipayPagePayAndSign(in *pb.AlipayPageSignRe
 	}
 
 	trade := alipay2.Trade{
-		ProductCode: "CYCLE_PAY_AUTH",
-		//AgreementSignParams: signParams,
+		ProductCode:    "CYCLE_PAY_AUTH",
 		Subject:        in.Subject,
 		OutTradeNo:     orderInfo.OutTradeNo,
 		TotalAmount:    product.Amount,
@@ -103,9 +101,6 @@ func (l *AlipayPagePayAndSignLogic) AlipayPagePayAndSign(in *pb.AlipayPageSignRe
 
 		trade.TotalAmount = product.PrepaidAmount
 
-		signNotifyValues := url.Values{}
-		signNotifyValues.Set("out_trade_no", orderInfo.OutTradeNo)
-
 		signParams := &alipay2.SignParams{
 			SignScene:           "INDUSTRY|DEFAULT_SCENE", // 固定参数
 			ProductCode:         "GENERAL_WITHHOLDING",    // 固定参数
@@ -113,7 +108,7 @@ func (l *AlipayPagePayAndSignLogic) AlipayPagePayAndSign(in *pb.AlipayPageSignRe
 			AccessParams:        accessParam,
 			PeriodRuleParams:    rule,
 			ExternalAgreementNo: utils.GenerateOrderCode(l.svcCtx.Config.SnowFlake.MachineNo, l.svcCtx.Config.SnowFlake.WorkerNo),
-			SignNotifyURL:       notifyUrl + "/sign?" + signNotifyValues.Encode(),
+			SignNotifyURL:       utils.GenSignNotifyUrl(notifyUrl, orderInfo.OutTradeNo),
 		}
 
 		externalAgreementNo = signParams.ExternalAgreementNo

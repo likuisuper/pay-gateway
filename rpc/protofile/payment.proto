@@ -162,7 +162,7 @@ message AlipayTradeReq {
 
 message AlipayPageUnSignReq {
   string OutTradeNo = 1; //商户唯一订单号
-  string AgreementNo = 2; //支付宝系统中的唯一签约号
+  string ExternalAgreementNo = 2; //商户系统中的签约号
   string AppPkgName = 3; //应用包名
 }
 

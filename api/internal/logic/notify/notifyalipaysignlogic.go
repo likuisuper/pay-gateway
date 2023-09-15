@@ -6,6 +6,7 @@ import (
 	"gitee.com/zhuyunkj/pay-gateway/common/exception"
 	"gitee.com/zhuyunkj/pay-gateway/db/mysql/model"
 	"gitee.com/zhuyunkj/zhuyun-core/util"
+	"github.com/zeromicro/go-zero/rest/httpx"
 	"net/http"
 	"net/url"
 	"time"
@@ -78,8 +79,12 @@ func (l *NotifyAlipaySignLogic) NotifyAlipaySign(r *http.Request, w http.Respons
 	go func() {
 		defer exception.Recover()
 		dataMap := l.transFormDataToMap(bodyData)
+		dataMap["notify_type"] = "sign"
 		_, _ = util.HttpPost(order.AppNotifyUrl, dataMap, 5*time.Second)
 	}()
+
+	httpx.OkJson(w, "success")
+
 	return
 }
 
