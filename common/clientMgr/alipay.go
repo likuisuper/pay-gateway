@@ -13,9 +13,8 @@ import (
 const RedisAppConfigKey = "app:config:%s"    //%s:包名
 const RedisAliPayConfigKey = "pay:config:%s" //%s:支付宝的app_id
 var cliCache sync.Map
-var mutex sync.Mutex
 
-func GetAlipayClientWithCache(pkgName string) (payClient *alipay2.Client, err error) {
+func GetAlipayClientWithCache(pkgName string) (payClient *alipay2.Client, appId string, notifyUrl string, err error) {
 
 	var appConfigModel *model.PmAppConfigModel
 	var payConfigAlipayModel *model.PmPayConfigAlipayModel
@@ -44,14 +43,14 @@ func GetAlipayClientWithCache(pkgName string) (payClient *alipay2.Client, err er
 		pkgCfg, err = appConfigModel.GetOneByPkgName(pkgName)
 		if err != nil {
 			util.CheckError("pkgName= %s, 读取应用配置失败，err:=%v", pkgName, err)
-			return nil, err
+			return nil, "", "", err
 		}
 
 		payCfg, err = payConfigAlipayModel.GetOneByAppID(pkgCfg.AlipayAppID)
 		if err != nil {
 			err = fmt.Errorf("pkgName= %s, 读取支付宝配置失败，err:=%v", pkgName, err)
 			util.CheckError(err.Error())
-			return nil, err
+			return nil, "", "", err
 		}
 
 		config := *payCfg.TransClientConfig()
@@ -71,8 +70,8 @@ func GetAlipayClientWithCache(pkgName string) (payClient *alipay2.Client, err er
 	if err != nil {
 		err = fmt.Errorf("pkgName= %s, 初始化支付错误，err:=%v", pkgName, err)
 		util.CheckError(err.Error())
-		return nil, err
+		return nil, "", "", err
 	}
 
-	return payClient, err
+	return payClient, pkgCfg.AlipayAppID, notifyUrl, err
 }

@@ -70,5 +70,5 @@ service payment {
         summary: "支付宝签约成功回调"
     )
     @handler notifyAlipaySign
-    post /notify/alipaySign (EmptyReq) returns (EmptyReq)
+    post /notify/alipayNew/sign (EmptyReq) returns (EmptyReq)
 }

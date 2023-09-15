@@ -52,7 +52,7 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 			},
 			{
 				Method:  http.MethodPost,
-				Path:    "/notify/alipaySign",
+				Path:    "/notify/alipayNew/sign",
 				Handler: notify.NotifyAlipaySignHandler(serverCtx),
 			},
 		},

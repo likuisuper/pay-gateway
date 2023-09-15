@@ -31,8 +31,8 @@ cloud.google.com/go/storage v1.6.0/go.mod h1:N7U0C8pVQ/+NIKOBQyamJIeKQKkZ+mxpohl
 cloud.google.com/go/storage v1.8.0/go.mod h1:Wv1Oy7z6Yz3DshWRJFhqM/UCfaWIRTdp0RXyy7KQOVs=
 cloud.google.com/go/storage v1.10.0/go.mod h1:FLPqc6j+Ki4BU591ie1oL6qBQGu2Bl/tZ9ullr3+Kg0=
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=
-gitee.com/yan-yixin0612/alipay/v3 v3.2.19 h1:Faqp0HZWQOfB5L/m40Zk2GvLs8CLq3Wk5GLggMBqVgE=
-gitee.com/yan-yixin0612/alipay/v3 v3.2.19/go.mod h1:CtL46pDWUvUj9nc6SMwMXHYRrxIRckdU9TtLXkLa6M8=
+gitee.com/yan-yixin0612/alipay/v3 v3.2.20 h1:OKHt07iYygmjdGU9K/V9sbrFOd5P6sqteAgxVLFnc1g=
+gitee.com/yan-yixin0612/alipay/v3 v3.2.20/go.mod h1:CtL46pDWUvUj9nc6SMwMXHYRrxIRckdU9TtLXkLa6M8=
 gitee.com/zhuyunkj/zero-contrib v1.3.2 h1:sqmmkjTnLRcPzFBxmE8oVYvlFLJ2NkvEr2SfrcPGAkk=
 gitee.com/zhuyunkj/zero-contrib v1.3.2/go.mod h1:2rhHRchgvQ+5Ur+XFfCybjmJ89L54UjWlgbUh5vzCE4=
 gitee.com/zhuyunkj/zhuyun-core v1.6.30 h1:dI9kk/8G/W11o8fWPcI/3QfJQZAudQFji85cj7QnMPY=
@@ -270,6 +270,8 @@ github.com/google/uuid v1.1.1/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+
 github.com/google/uuid v1.1.2/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/google/uuid v1.3.0 h1:t6JiXgmwXMjEs8VusXIJk2BXHsn+wx8BZdTaoZ5fu7I=
 github.com/google/uuid v1.3.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
+github.com/google/uuid v1.3.1 h1:KjJaJ9iWZ3jOFZIf1Lqf4laDRCasjl0BCmnEGxkdLb4=
+github.com/google/uuid v1.3.1/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/googleapis/gax-go/v2 v2.0.4/go.mod h1:0Wqv26UfaUD9n4G6kQubkQ+KchISgw+vpHVxEJEs9eg=
 github.com/googleapis/gax-go/v2 v2.0.5/go.mod h1:DWXyrwAJ9X0FpwwEdw+IPEYBICEFu5mhpdKc/us6bOk=
 github.com/googleapis/gnostic v0.4.1/go.mod h1:LRhVm6pbyptWbWbuZ38d1eyptfvIytN3ir6b65WBswg=

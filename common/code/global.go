@@ -16,3 +16,8 @@ const (
 	// 达到收款方笔数超限
 	ALI_PAY_UP_LIMIT = 1006
 )
+
+const (
+	PAY_TYPE_ALI    = 1
+	PAY_TYPE_WECHAT = 2
+)
