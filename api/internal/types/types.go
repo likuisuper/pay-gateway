@@ -80,3 +80,10 @@ type AlipayPageSignReq struct {
 	PayName     string `json:"pay_name"`     //收款方真实姓名
 	PeriodType  string `json:"period_type"`  //
 }
+
+type RefundReq struct {
+	OutTradeRefundNo string `json:"order_title"`      //
+	Status           int    `json:"status"`           // 操作，1通过，2拒绝
+	Reviewer         string `json:"reviewer"`         // 操作者
+	ReviewerComment  string `json:"reviewer_comment"` // 操作者备注
+}

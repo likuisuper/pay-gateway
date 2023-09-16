@@ -36,6 +36,7 @@ type RefundTable struct {
 	NotifyData       string    `gorm:"column:notify_data;NOT NULL"`                             // 退款回调数据
 	Operator         string    `gorm:"column:operator;NOT NULL"`                                // 操作者
 	Reviewer         string    `gorm:"column:reviewer;NOT NULL"`                                // 审核人员
+	ReviewerComment  string    `gorm:"column:reviewer_comment;NOT NULL"`                        // 审核人员备注
 	CreatedAt        time.Time `gorm:"column:created_at;default:CURRENT_TIMESTAMP;NOT NULL"`    // 创建时间
 	UpdatedAt        time.Time `gorm:"column:updated_at;default:CURRENT_TIMESTAMP;NOT NULL"`    // 更新时间
 }
@@ -60,6 +61,16 @@ func (o *RefundModel) Create(info *RefundTable) error {
 	if err != nil {
 		logx.Errorf("创建支付订单失败，err:=%v", err)
 		getRefundOrderErr.CounterInc()
+	}
+	return err
+}
+
+//更新订单
+func (o *RefundModel) Update(outRefundNo string, info *RefundTable) error {
+	err := o.DB.Where("out_trade_refund_no = ?", outRefundNo).Updates(info).Error
+	if err != nil {
+		logx.Errorf("Update, info:%+v, err:=%v", info, err)
+		updateRefundOrderNotifyErr.CounterInc()
 	}
 	return err
 }

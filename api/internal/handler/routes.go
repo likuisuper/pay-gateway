@@ -77,6 +77,11 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 					Path:    "/internal/alipayFundTransUniTransfer",
 					Handler: inter.AlipayFundTransUniTransferHandler(serverCtx),
 				},
+				{
+					Method:  http.MethodPost,
+					Path:    "/internal/handleRefund",
+					Handler: inter.HandleRefundHandler(serverCtx),
+				},
 			}...,
 		),
 	)
