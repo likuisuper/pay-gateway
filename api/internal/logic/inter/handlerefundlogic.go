@@ -50,6 +50,7 @@ func (l *HandleRefundLogic) HandleRefund(req *types.RefundReq) (resp *types.Resu
 	}
 
 	table.RefundStatus = req.Status
+	table.Reviewer = req.Reviewer
 	if req.Status == model.REFUND_STATUS_SUCCESS {
 
 		payClient, _, _, err := clientMgr.GetAlipayClientByAppPkgWithCache(table.AppPkg)
