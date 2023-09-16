@@ -7,6 +7,7 @@ import (
 	"gitee.com/zhuyunkj/pay-gateway/common/define"
 	"gitee.com/zhuyunkj/pay-gateway/common/utils"
 	"gitee.com/zhuyunkj/pay-gateway/db/mysql/model"
+	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
 	"strconv"
 
 	"gitee.com/zhuyunkj/pay-gateway/rpc/internal/svc"
@@ -23,6 +24,10 @@ type AlipayCreateRefundLogic struct {
 	refundModel *model.RefundModel
 	orderModel  *model.OrderModel
 }
+
+var (
+	createRefundErr = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "createRefundErr", nil, "创建退款单失败", nil})}
+)
 
 func NewAlipayCreateRefundLogic(ctx context.Context, svcCtx *svc.ServiceContext) *AlipayCreateRefundLogic {
 	return &AlipayCreateRefundLogic{
@@ -42,12 +47,14 @@ func (l *AlipayCreateRefundLogic) AlipayCreateRefund(in *pb.AlipayRefundReq) (*p
 	if err != nil {
 		errInfo := fmt.Sprintf("创建退款订单：获取订单失败!!! %s", in.OutTradeNo)
 		logx.Errorf(errInfo)
+		createRefundErr.CounterInc()
 		return nil, errors.New(errInfo)
 	}
 
 	if order.Status != model.PmPayOrderTablePayStatusPaid {
 		errInfo := fmt.Sprintf("创建退款订单：订单状态错误!!! %s", in.OutTradeNo)
 		logx.Errorf(errInfo)
+		createRefundErr.CounterInc()
 		return nil, errors.New(errInfo)
 	}
 
@@ -57,6 +64,7 @@ func (l *AlipayCreateRefundLogic) AlipayCreateRefund(in *pb.AlipayRefundReq) (*p
 	if refundAmount > order.Amount {
 		errInfo := fmt.Sprintf("创建退款订单：退款金额大于支付金额!!! %s", in.OutTradeNo)
 		logx.Errorf(errInfo)
+		createRefundErr.CounterInc()
 		return nil, errors.New(errInfo)
 	}
 
@@ -74,6 +82,7 @@ func (l *AlipayCreateRefundLogic) AlipayCreateRefund(in *pb.AlipayRefundReq) (*p
 	if err != nil {
 		errInfo := fmt.Sprintf("创建退款订单失败!!! %s", in.OutTradeNo)
 		logx.Errorf(errInfo)
+		createRefundErr.CounterInc()
 		return nil, errors.New(errInfo)
 	}
 
