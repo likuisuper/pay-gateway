@@ -1,11 +1,9 @@
 package main
 
 import (
-	"encoding/binary"
 	"flag"
 	"fmt"
 	"gitee.com/zhuyunkj/pay-gateway/common/global"
-	"gitee.com/zhuyunkj/pay-gateway/common/utils"
 	"gitee.com/zhuyunkj/pay-gateway/db"
 	"gitee.com/zhuyunkj/pay-gateway/rpc/internal/config"
 	"gitee.com/zhuyunkj/pay-gateway/rpc/internal/server"
@@ -91,19 +89,6 @@ func main() {
 	}
 
 	global.InitMemoryCacheInstance(3)
-
-	if c.Mode != service.DevMode {
-		bytes, ipErr := utils.GetInterfaceIpv4Addr("eth0")
-		if bytes != nil {
-			// 暂时先取机器内网ip的后10位为机器的id (目前我们阿里云的机器后12位不会重复, 取后10位重复概率低)
-			tmp := binary.BigEndian.Uint16(bytes[2:])
-			c.SnowFlake.WorkerNo = int64(tmp & 0x1F)
-			c.SnowFlake.MachineNo = int64((tmp >> 5) & 0x1F)
-			logx.Infof("SnowFlake WorkerNo: %v, MachineNo: %v", c.SnowFlake.WorkerNo, c.SnowFlake.MachineNo)
-		} else {
-			logx.Infof("获取本机ip地址失败: %v", ipErr.Error())
-		}
-	}
 
 	fmt.Printf("Starting rpc server at %s...\n", c.ListenOn)
 	s.Start()
