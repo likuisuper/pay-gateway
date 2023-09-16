@@ -183,6 +183,8 @@ message AlipayRefundReq {
   string TradeNo = 3; //支付宝交易号
   string RefundAmount = 4; //退款金额
   string RefundReason = 5; //退款原因
+  string RefundNotifyUrl = 6; //退款回调
+  string Operator = 7; //发起者
 }
 
 //============== service ==============================================================================
@@ -214,6 +216,9 @@ service Payment {
 
   //支付宝：解约
   rpc AlipayPageUnSign(AlipayPageUnSignReq) returns (AlipayCommonResp);
+
+  //支付宝：创建退款订单
+  rpc AlipayCreateRefund(AlipayRefundReq) returns (AlipayCommonResp);
 
   //支付宝：退款
   rpc AlipayRefund(AlipayRefundReq) returns (AlipayCommonResp);

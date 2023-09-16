@@ -95,5 +95,4 @@ func (o *OrderModel) UpdatePayAppID(tradeNo string, payAppId string) (err error)
 		util.CheckError(err.Error())
 	}
 	return
-
 }

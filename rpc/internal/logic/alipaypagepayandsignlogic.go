@@ -12,6 +12,7 @@ import (
 	"gitee.com/zhuyunkj/pay-gateway/db/mysql/model"
 	"gitee.com/zhuyunkj/pay-gateway/rpc/internal/svc"
 	"gitee.com/zhuyunkj/pay-gateway/rpc/pb/pb"
+	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
 	"github.com/zeromicro/go-zero/core/logx"
 	"strconv"
 	"time"
@@ -26,6 +27,11 @@ type AlipayPagePayAndSignLogic struct {
 	payConfigAlipayModel *model.PmPayConfigAlipayModel
 	orderModel           *model.OrderModel
 }
+
+var (
+	parseProductDescErr = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "parseProductDescErr", nil, "解析商品详情失败", nil})}
+	createOrderErr      = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "createOrderErr", nil, "创建订单失败", nil})}
+)
 
 func NewAlipayPagePayAndSignLogic(ctx context.Context, svcCtx *svc.ServiceContext) *AlipayPagePayAndSignLogic {
 	return &AlipayPagePayAndSignLogic{
@@ -57,11 +63,43 @@ func (l *AlipayPagePayAndSignLogic) AlipayPagePayAndSign(in *pb.AlipayPageSignRe
 		return nil, err
 	}
 
-	product := Product{}
+	var amount, prepaidAmount string
+	var productType, intAmount, period int
 
-	err = json.Unmarshal([]byte(in.ProductDesc), &product)
-	if err != nil {
-		logx.Errorf("%s", err.Error())
+	productType = int(in.ProductType)
+
+	if in.ProductId == 0 { // 目前没有商品的配置，通过解析商品详情来获取商品的内容
+		product := Product{}
+
+		err = json.Unmarshal([]byte(in.ProductDesc), &product)
+		if err != nil {
+			parseProductDescErr.CounterInc()
+			logx.Errorf("创建订单异常：商品信息错误 err = %s product = %s", err.Error(), in.ProductDesc)
+			return nil, errors.New("商品信息错误")
+		}
+
+		if !product.ProductSwitch {
+			parseProductDescErr.CounterInc()
+			logx.Errorf("创建订单异常：商品不允许购买 product = %s", in.ProductDesc)
+			return nil, errors.New("商品信息错误")
+		}
+
+		floatAmount, parseErr := strconv.ParseFloat(product.Amount, 64)
+		if parseErr != nil {
+			parseProductDescErr.CounterInc()
+			logx.Errorf("创建订单异常：商品金额异常 product = %s", in.ProductDesc)
+			return nil, errors.New("商品信息错误")
+		}
+
+		intAmount = int(floatAmount * 100)
+		prepaidAmount = product.PrepaidAmount
+		period = product.SubscribePeriod
+		productType = product.ProductType
+	}
+
+	if intAmount <= 0 {
+		parseProductDescErr.CounterInc()
+		logx.Errorf("创建订单异常：商品金额异常 product = %s", in.ProductDesc)
 		return nil, errors.New("商品信息错误")
 	}
 
@@ -73,20 +111,24 @@ func (l *AlipayPagePayAndSignLogic) AlipayPagePayAndSign(in *pb.AlipayPageSignRe
 		Status:       0,
 		PayAppID:     payAppId,
 		AppNotifyUrl: in.NotifyURL,
+		Amount:       intAmount,
+		ProductDesc:  in.ProductDesc,
+		ProductType:  productType,
+		ProductID:    int(in.ProductId),
 	}
 
 	trade := alipay2.Trade{
-		ProductCode:    "CYCLE_PAY_AUTH",
+		ProductCode:    "CYCLE_PAY_AUTH", // 固定参数
 		Subject:        in.Subject,
 		OutTradeNo:     orderInfo.OutTradeNo,
-		TotalAmount:    product.Amount,
+		TotalAmount:    amount,
 		TimeoutExpress: "30m",
 		NotifyURL:      notifyUrl,
 	}
 
 	externalAgreementNo := ""
 
-	if product.ProductType == code.PRODUCT_TYPE_SUBSCRIBE {
+	if productType == code.PRODUCT_TYPE_SUBSCRIBE {
 
 		accessParam := &alipay2.AccessParams{
 			Channel: "ALIPAYAPP",
@@ -94,12 +136,12 @@ func (l *AlipayPagePayAndSignLogic) AlipayPagePayAndSign(in *pb.AlipayPageSignRe
 
 		rule := &alipay2.PeriodRuleParams{
 			PeriodType:   "DAY",
-			Period:       strconv.Itoa(product.SubscribePeriod),
+			Period:       strconv.Itoa(period),
 			ExecuteTime:  time.Now().Format("2006-01-02"),
-			SingleAmount: product.Amount,
+			SingleAmount: amount,
 		}
 
-		trade.TotalAmount = product.PrepaidAmount
+		trade.TotalAmount = prepaidAmount // 订阅商品，首次付款的金额是预付金额
 
 		signParams := &alipay2.SignParams{
 			SignScene:           "INDUSTRY|DEFAULT_SCENE", // 固定参数
@@ -122,10 +164,16 @@ func (l *AlipayPagePayAndSignLogic) AlipayPagePayAndSign(in *pb.AlipayPageSignRe
 
 	result, err := payClient.TradeAppPay(appPay)
 	if err != nil {
-		logx.Errorf(err.Error())
+		logx.Errorf("创建订单异常：生成支付宝加签串失败， err = %s", err.Error())
+		return nil, errors.New("创建订单异常")
 	}
 
-	l.orderModel.Create(&orderInfo)
+	err = l.orderModel.Create(&orderInfo)
+	if err != nil {
+		createOrderErr.CounterInc()
+		logx.Errorf("创建订单异常：创建订单表失败， err = %s", err.Error())
+		return nil, errors.New("创建订单异常")
+	}
 
 	return &pb.AlipayPageSignResp{
 		URL:                 result,

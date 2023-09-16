@@ -55,6 +55,8 @@ type (
 		AlipayPagePayAndSign(ctx context.Context, in *AlipayPageSignReq, opts ...grpc.CallOption) (*AlipayPageSignResp, error)
 		// 支付宝：解约
 		AlipayPageUnSign(ctx context.Context, in *AlipayPageUnSignReq, opts ...grpc.CallOption) (*AlipayCommonResp, error)
+		// 支付宝：创建退款订单
+		AlipayCreateRefund(ctx context.Context, in *AlipayRefundReq, opts ...grpc.CallOption) (*AlipayCommonResp, error)
 		// 支付宝：退款
 		AlipayRefund(ctx context.Context, in *AlipayRefundReq, opts ...grpc.CallOption) (*AlipayCommonResp, error)
 	}
@@ -122,6 +124,12 @@ func (m *defaultPayment) AlipayPagePayAndSign(ctx context.Context, in *AlipayPag
 func (m *defaultPayment) AlipayPageUnSign(ctx context.Context, in *AlipayPageUnSignReq, opts ...grpc.CallOption) (*AlipayCommonResp, error) {
 	client := pb.NewPaymentClient(m.cli.Conn())
 	return client.AlipayPageUnSign(ctx, in, opts...)
+}
+
+// 支付宝：创建退款订单
+func (m *defaultPayment) AlipayCreateRefund(ctx context.Context, in *AlipayRefundReq, opts ...grpc.CallOption) (*AlipayCommonResp, error) {
+	client := pb.NewPaymentClient(m.cli.Conn())
+	return client.AlipayCreateRefund(ctx, in, opts...)
 }
 
 // 支付宝：退款

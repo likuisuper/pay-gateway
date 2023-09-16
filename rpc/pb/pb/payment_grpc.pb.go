@@ -40,6 +40,8 @@ type PaymentClient interface {
 	AlipayPagePayAndSign(ctx context.Context, in *AlipayPageSignReq, opts ...grpc.CallOption) (*AlipayPageSignResp, error)
 	//支付宝：解约
 	AlipayPageUnSign(ctx context.Context, in *AlipayPageUnSignReq, opts ...grpc.CallOption) (*AlipayCommonResp, error)
+	//支付宝：创建退款订单
+	AlipayCreateRefund(ctx context.Context, in *AlipayRefundReq, opts ...grpc.CallOption) (*AlipayCommonResp, error)
 	//支付宝：退款
 	AlipayRefund(ctx context.Context, in *AlipayRefundReq, opts ...grpc.CallOption) (*AlipayCommonResp, error)
 }
@@ -133,6 +135,15 @@ func (c *paymentClient) AlipayPageUnSign(ctx context.Context, in *AlipayPageUnSi
 	return out, nil
 }
 
+func (c *paymentClient) AlipayCreateRefund(ctx context.Context, in *AlipayRefundReq, opts ...grpc.CallOption) (*AlipayCommonResp, error) {
+	out := new(AlipayCommonResp)
+	err := c.cc.Invoke(ctx, "/payment.Payment/AlipayCreateRefund", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *paymentClient) AlipayRefund(ctx context.Context, in *AlipayRefundReq, opts ...grpc.CallOption) (*AlipayCommonResp, error) {
 	out := new(AlipayCommonResp)
 	err := c.cc.Invoke(ctx, "/payment.Payment/AlipayRefund", in, out, opts...)
@@ -164,6 +175,8 @@ type PaymentServer interface {
 	AlipayPagePayAndSign(context.Context, *AlipayPageSignReq) (*AlipayPageSignResp, error)
 	//支付宝：解约
 	AlipayPageUnSign(context.Context, *AlipayPageUnSignReq) (*AlipayCommonResp, error)
+	//支付宝：创建退款订单
+	AlipayCreateRefund(context.Context, *AlipayRefundReq) (*AlipayCommonResp, error)
 	//支付宝：退款
 	AlipayRefund(context.Context, *AlipayRefundReq) (*AlipayCommonResp, error)
 	mustEmbedUnimplementedPaymentServer()
@@ -199,6 +212,9 @@ func (UnimplementedPaymentServer) AlipayPagePayAndSign(context.Context, *AlipayP
 }
 func (UnimplementedPaymentServer) AlipayPageUnSign(context.Context, *AlipayPageUnSignReq) (*AlipayCommonResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AlipayPageUnSign not implemented")
+}
+func (UnimplementedPaymentServer) AlipayCreateRefund(context.Context, *AlipayRefundReq) (*AlipayCommonResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AlipayCreateRefund not implemented")
 }
 func (UnimplementedPaymentServer) AlipayRefund(context.Context, *AlipayRefundReq) (*AlipayCommonResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AlipayRefund not implemented")
@@ -378,6 +394,24 @@ func _Payment_AlipayPageUnSign_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Payment_AlipayCreateRefund_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AlipayRefundReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PaymentServer).AlipayCreateRefund(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/payment.Payment/AlipayCreateRefund",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PaymentServer).AlipayCreateRefund(ctx, req.(*AlipayRefundReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Payment_AlipayRefund_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(AlipayRefundReq)
 	if err := dec(in); err != nil {
@@ -438,6 +472,10 @@ var Payment_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AlipayPageUnSign",
 			Handler:    _Payment_AlipayPageUnSign_Handler,
+		},
+		{
+			MethodName: "AlipayCreateRefund",
+			Handler:    _Payment_AlipayCreateRefund_Handler,
 		},
 		{
 			MethodName: "AlipayRefund",

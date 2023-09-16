@@ -5,8 +5,6 @@ import (
 	alipay2 "gitee.com/yan-yixin0612/alipay/v3"
 	"gitee.com/zhuyunkj/pay-gateway/common/clientMgr"
 	"gitee.com/zhuyunkj/pay-gateway/common/code"
-	"gitee.com/zhuyunkj/pay-gateway/common/define"
-	"gitee.com/zhuyunkj/pay-gateway/db/mysql/model"
 	"gitee.com/zhuyunkj/pay-gateway/rpc/internal/svc"
 	"gitee.com/zhuyunkj/pay-gateway/rpc/pb/pb"
 
@@ -17,9 +15,6 @@ type AlipayRefundLogic struct {
 	ctx    context.Context
 	svcCtx *svc.ServiceContext
 	logx.Logger
-
-	appConfigModel       *model.PmAppConfigModel
-	payConfigAlipayModel *model.PmPayConfigAlipayModel
 }
 
 func NewAlipayRefundLogic(ctx context.Context, svcCtx *svc.ServiceContext) *AlipayRefundLogic {
@@ -27,9 +22,6 @@ func NewAlipayRefundLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Alip
 		ctx:    ctx,
 		svcCtx: svcCtx,
 		Logger: logx.WithContext(ctx),
-
-		appConfigModel:       model.NewPmAppConfigModel(define.DbPayGateway),
-		payConfigAlipayModel: model.NewPmPayConfigAlipayModel(define.DbPayGateway),
 	}
 }
 

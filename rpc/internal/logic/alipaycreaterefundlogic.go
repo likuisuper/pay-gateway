@@ -1,0 +1,83 @@
+package logic
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"gitee.com/zhuyunkj/pay-gateway/common/define"
+	"gitee.com/zhuyunkj/pay-gateway/common/utils"
+	"gitee.com/zhuyunkj/pay-gateway/db/mysql/model"
+	"strconv"
+
+	"gitee.com/zhuyunkj/pay-gateway/rpc/internal/svc"
+	"gitee.com/zhuyunkj/pay-gateway/rpc/pb/pb"
+
+	"github.com/zeromicro/go-zero/core/logx"
+)
+
+type AlipayCreateRefundLogic struct {
+	ctx    context.Context
+	svcCtx *svc.ServiceContext
+	logx.Logger
+
+	refundModel *model.RefundModel
+	orderModel  *model.OrderModel
+}
+
+func NewAlipayCreateRefundLogic(ctx context.Context, svcCtx *svc.ServiceContext) *AlipayCreateRefundLogic {
+	return &AlipayCreateRefundLogic{
+		ctx:         ctx,
+		svcCtx:      svcCtx,
+		Logger:      logx.WithContext(ctx),
+		refundModel: model.NewRefundModel(define.DbPayGateway),
+		orderModel:  model.NewOrderModel(define.DbPayGateway),
+	}
+}
+
+// 支付宝：创建退款订单
+func (l *AlipayCreateRefundLogic) AlipayCreateRefund(in *pb.AlipayRefundReq) (*pb.AlipayCommonResp, error) {
+	// todo: add your logic here and delete this line
+
+	order, err := l.orderModel.GetOneByOutTradeNo(in.OutTradeNo)
+	if err != nil {
+		errInfo := fmt.Sprintf("创建退款订单：获取订单失败!!! %s", in.OutTradeNo)
+		logx.Errorf(errInfo)
+		return nil, errors.New(errInfo)
+	}
+
+	if order.Status != model.PmPayOrderTablePayStatusPaid {
+		errInfo := fmt.Sprintf("创建退款订单：订单状态错误!!! %s", in.OutTradeNo)
+		logx.Errorf(errInfo)
+		return nil, errors.New(errInfo)
+	}
+
+	refundAmountFloat, _ := strconv.ParseFloat(in.RefundAmount, 64)
+	refundAmount := int(refundAmountFloat * 100)
+
+	if refundAmount > order.Amount {
+		errInfo := fmt.Sprintf("创建退款订单：退款金额大于支付金额!!! %s", in.OutTradeNo)
+		logx.Errorf(errInfo)
+		return nil, errors.New(errInfo)
+	}
+
+	refund := model.RefundTable{
+		PayType:          order.PayType,
+		OutTradeNo:       order.OutTradeNo,
+		OutTradeRefundNo: utils.GenerateOrderCode(l.svcCtx.Config.SnowFlake.MachineNo, l.svcCtx.Config.SnowFlake.WorkerNo),
+		Reason:           in.RefundReason,
+		RefundAmount:     refundAmount,
+		NotifyUrl:        in.RefundNotifyUrl,
+		Operator:         in.Operator,
+		AppPkg:           order.AppPkg,
+	}
+	err = l.refundModel.Create(&refund)
+	if err != nil {
+		errInfo := fmt.Sprintf("创建退款订单失败!!! %s", in.OutTradeNo)
+		logx.Errorf(errInfo)
+		return nil, errors.New(errInfo)
+	}
+
+	return &pb.AlipayCommonResp{
+		Desc: "创建退款订单成功",
+	}, nil
+}

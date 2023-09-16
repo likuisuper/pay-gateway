@@ -76,6 +76,12 @@ func (s *PaymentServer) AlipayPageUnSign(ctx context.Context, in *pb.AlipayPageU
 	return l.AlipayPageUnSign(in)
 }
 
+// 支付宝：创建退款订单
+func (s *PaymentServer) AlipayCreateRefund(ctx context.Context, in *pb.AlipayRefundReq) (*pb.AlipayCommonResp, error) {
+	l := logic.NewAlipayCreateRefundLogic(ctx, s.svcCtx)
+	return l.AlipayCreateRefund(in)
+}
+
 // 支付宝：退款
 func (s *PaymentServer) AlipayRefund(ctx context.Context, in *pb.AlipayRefundReq) (*pb.AlipayCommonResp, error) {
 	l := logic.NewAlipayRefundLogic(ctx, s.svcCtx)
