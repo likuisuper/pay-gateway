@@ -21,6 +21,7 @@ type (
 	AlipayPageSignResp            = pb.AlipayPageSignResp
 	AlipayPageUnSignReq           = pb.AlipayPageUnSignReq
 	AlipayRefundReq               = pb.AlipayRefundReq
+	AlipayTradePayReq             = pb.AlipayTradePayReq
 	AlipayTradeReq                = pb.AlipayTradeReq
 	ClosePayOrderReq              = pb.ClosePayOrderReq
 	DyOrderRefundReq              = pb.DyOrderRefundReq
@@ -59,6 +60,8 @@ type (
 		AlipayCreateRefund(ctx context.Context, in *AlipayRefundReq, opts ...grpc.CallOption) (*AlipayCommonResp, error)
 		// 支付宝：退款
 		AlipayRefund(ctx context.Context, in *AlipayRefundReq, opts ...grpc.CallOption) (*AlipayCommonResp, error)
+		// 支付宝：订阅扣款
+		AlipayTradePay(ctx context.Context, in *AlipayTradePayReq, opts ...grpc.CallOption) (*AlipayCommonResp, error)
 	}
 
 	defaultPayment struct {
@@ -136,4 +139,10 @@ func (m *defaultPayment) AlipayCreateRefund(ctx context.Context, in *AlipayRefun
 func (m *defaultPayment) AlipayRefund(ctx context.Context, in *AlipayRefundReq, opts ...grpc.CallOption) (*AlipayCommonResp, error) {
 	client := pb.NewPaymentClient(m.cli.Conn())
 	return client.AlipayRefund(ctx, in, opts...)
+}
+
+// 支付宝：订阅扣款
+func (m *defaultPayment) AlipayTradePay(ctx context.Context, in *AlipayTradePayReq, opts ...grpc.CallOption) (*AlipayCommonResp, error) {
+	client := pb.NewPaymentClient(m.cli.Conn())
+	return client.AlipayTradePay(ctx, in, opts...)
 }

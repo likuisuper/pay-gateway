@@ -3,3 +3,4 @@
 *.pem
 *.log
 **/.DS_Store
+/rpc/logs

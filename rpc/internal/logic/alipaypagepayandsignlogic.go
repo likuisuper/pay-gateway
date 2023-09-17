@@ -29,8 +29,8 @@ type AlipayPagePayAndSignLogic struct {
 }
 
 var (
-	parseProductDescErr = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "parseProductDescErr", nil, "解析商品详情失败", nil})}
-	createOrderErr      = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "createOrderErr", nil, "创建订单失败", nil})}
+	parseProductDescErr      = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "parseProductDescErr", nil, "解析商品详情失败", nil})}
+	payAndSignCreateOrderErr = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "payAndSignCreateOrderErr", nil, "创建订单失败", nil})}
 )
 
 func NewAlipayPagePayAndSignLogic(ctx context.Context, svcCtx *svc.ServiceContext) *AlipayPagePayAndSignLogic {
@@ -170,7 +170,7 @@ func (l *AlipayPagePayAndSignLogic) AlipayPagePayAndSign(in *pb.AlipayPageSignRe
 
 	err = l.orderModel.Create(&orderInfo)
 	if err != nil {
-		createOrderErr.CounterInc()
+		payAndSignCreateOrderErr.CounterInc()
 		logx.Errorf("创建订单异常：创建订单表失败， err = %s", err.Error())
 		return nil, errors.New("创建订单异常")
 	}

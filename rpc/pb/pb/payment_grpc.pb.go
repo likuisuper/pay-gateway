@@ -44,6 +44,8 @@ type PaymentClient interface {
 	AlipayCreateRefund(ctx context.Context, in *AlipayRefundReq, opts ...grpc.CallOption) (*AlipayCommonResp, error)
 	//支付宝：退款
 	AlipayRefund(ctx context.Context, in *AlipayRefundReq, opts ...grpc.CallOption) (*AlipayCommonResp, error)
+	//支付宝：订阅扣款
+	AlipayTradePay(ctx context.Context, in *AlipayTradePayReq, opts ...grpc.CallOption) (*AlipayCommonResp, error)
 }
 
 type paymentClient struct {
@@ -153,6 +155,15 @@ func (c *paymentClient) AlipayRefund(ctx context.Context, in *AlipayRefundReq, o
 	return out, nil
 }
 
+func (c *paymentClient) AlipayTradePay(ctx context.Context, in *AlipayTradePayReq, opts ...grpc.CallOption) (*AlipayCommonResp, error) {
+	out := new(AlipayCommonResp)
+	err := c.cc.Invoke(ctx, "/payment.Payment/AlipayTradePay", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PaymentServer is the server API for Payment service.
 // All implementations must embed UnimplementedPaymentServer
 // for forward compatibility
@@ -179,6 +190,8 @@ type PaymentServer interface {
 	AlipayCreateRefund(context.Context, *AlipayRefundReq) (*AlipayCommonResp, error)
 	//支付宝：退款
 	AlipayRefund(context.Context, *AlipayRefundReq) (*AlipayCommonResp, error)
+	//支付宝：订阅扣款
+	AlipayTradePay(context.Context, *AlipayTradePayReq) (*AlipayCommonResp, error)
 	mustEmbedUnimplementedPaymentServer()
 }
 
@@ -218,6 +231,9 @@ func (UnimplementedPaymentServer) AlipayCreateRefund(context.Context, *AlipayRef
 }
 func (UnimplementedPaymentServer) AlipayRefund(context.Context, *AlipayRefundReq) (*AlipayCommonResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AlipayRefund not implemented")
+}
+func (UnimplementedPaymentServer) AlipayTradePay(context.Context, *AlipayTradePayReq) (*AlipayCommonResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AlipayTradePay not implemented")
 }
 func (UnimplementedPaymentServer) mustEmbedUnimplementedPaymentServer() {}
 
@@ -430,6 +446,24 @@ func _Payment_AlipayRefund_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Payment_AlipayTradePay_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AlipayTradePayReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PaymentServer).AlipayTradePay(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/payment.Payment/AlipayTradePay",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PaymentServer).AlipayTradePay(ctx, req.(*AlipayTradePayReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Payment_ServiceDesc is the grpc.ServiceDesc for Payment service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -480,6 +514,10 @@ var Payment_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AlipayRefund",
 			Handler:    _Payment_AlipayRefund_Handler,
+		},
+		{
+			MethodName: "AlipayTradePay",
+			Handler:    _Payment_AlipayTradePay_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

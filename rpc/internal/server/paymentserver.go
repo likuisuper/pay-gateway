@@ -87,3 +87,9 @@ func (s *PaymentServer) AlipayRefund(ctx context.Context, in *pb.AlipayRefundReq
 	l := logic.NewAlipayRefundLogic(ctx, s.svcCtx)
 	return l.AlipayRefund(in)
 }
+
+// 支付宝：订阅扣款
+func (s *PaymentServer) AlipayTradePay(ctx context.Context, in *pb.AlipayTradePayReq) (*pb.AlipayCommonResp, error) {
+	l := logic.NewAlipayTradePayLogic(ctx, s.svcCtx)
+	return l.AlipayTradePay(in)
+}

@@ -187,6 +187,11 @@ message AlipayRefundReq {
   string Operator = 7; //发起者
 }
 
+message AlipayTradePayReq {
+  string OutTradeNo = 1;
+  string ExternalAgreementNo = 2;
+}
+
 //============== service ==============================================================================
 
 service Payment {
@@ -222,4 +227,7 @@ service Payment {
 
   //支付宝：退款
   rpc AlipayRefund(AlipayRefundReq) returns (AlipayCommonResp);
+
+  //支付宝：订阅扣款
+  rpc AlipayTradePay(AlipayTradePayReq) returns (AlipayCommonResp);
 }
