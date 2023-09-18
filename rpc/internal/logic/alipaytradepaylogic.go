@@ -63,22 +63,23 @@ func (l *AlipayTradePayLogic) AlipayTradePay(in *pb.AlipayTradePayReq) (*pb.Alip
 		return nil, errors.New("获取订单异常")
 	}
 
+	client, _, notifyUrl, err := clientMgr.GetAlipayClientByAppIdWithCache(tb.PayAppID)
+	if err != nil {
+		logx.Errorf("订阅扣款：获取支付宝客户端失败 outTradeNo=%s err=%s", in.OutTradeNo, err.Error())
+		return nil, errors.New("扣款失败")
+	}
+
 	trade := alipay2.Trade{
 		OutTradeNo:     utils.GenerateOrderCode(l.svcCtx.Config.SnowFlake.MachineNo, l.svcCtx.Config.SnowFlake.WorkerNo),
 		TotalAmount:    product.Amount,
 		Subject:        product.TopText,
 		ProductCode:    "GENERAL_WITHHOLDING",
 		TimeoutExpress: "30m",
+		NotifyURL:      notifyUrl,
 	}
 	tradePayApp := alipay2.TradePay{
 		Trade:           trade,
 		AgreementParams: agreementSignParams,
-	}
-
-	client, _, _, err := clientMgr.GetAlipayClientByAppIdWithCache(tb.PayAppID)
-	if err != nil {
-		logx.Errorf("订阅扣款：获取支付宝客户端失败 outTradeNo=%s err=%s", in.OutTradeNo, err.Error())
-		return nil, errors.New("扣款失败")
 	}
 
 	result, err := client.TradePay(tradePayApp)
