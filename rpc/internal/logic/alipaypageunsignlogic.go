@@ -42,6 +42,7 @@ func (l *AlipayPageUnSignLogic) AlipayPageUnSign(in *pb.AlipayPageUnSignReq) (*p
 
 	unSign := alipay2.AgreementUnsign{
 		ExternalAgreementNo: in.ExternalAgreementNo,
+		AlipayLogonId:       in.AlipayLogonId,
 	}
 
 	result, err := payClient.AgreementUnsign(unSign)
