@@ -3,6 +3,7 @@ package model
 import (
 	"errors"
 	"fmt"
+	"gitee.com/zhuyunkj/pay-gateway/common/code"
 	"gitee.com/zhuyunkj/pay-gateway/db"
 	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
 	"gitee.com/zhuyunkj/zhuyun-core/util"
@@ -94,5 +95,22 @@ func (o *OrderModel) UpdatePayAppID(tradeNo string, payAppId string) (err error)
 		err = fmt.Errorf("UpdatePayAppID Err: %v", err)
 		util.CheckError(err.Error())
 	}
+	return
+}
+
+func (o *OrderModel) GetFirstUnpaidSubscribeFee() (table *OrderTable, err error) {
+	// 订阅状态：0未签约，1签约成功，2失效
+	err = o.DB.Where(" product_type = ? and status = 0 ", code.PRODUCT_TYPE_SUBSCRIBE_FEE).Order("id asc").First(&table).Error
+	return
+}
+
+// 一次批量取数据条数
+const VIP_DATA_ONCE_LIMIT = 100
+
+func (o *OrderModel) GetRangeData(id int) (records []*OrderTable, err error) {
+	err = o.DB.Where("product_type = ? and status = 0 and id > ? and updated_time > ? and updated_time < ?", code.PRODUCT_TYPE_SUBSCRIBE_FEE, id, time.Now().Add(-time.Hour*25), time.Now()).
+		Order("id asc").
+		Limit(VIP_DATA_ONCE_LIMIT).
+		Find(&records).Error
 	return
 }

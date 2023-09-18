@@ -8,8 +8,8 @@ import (
 
 type Config struct {
 	rest.RestConf
-	Mysql       []*db.DbConfig `json:"Mysql"`
-	Nacos       NacosConfig
+	Mysql       []*db.DbConfig        `json:"Mysql"`
+	Nacos       NacosConfig           `json:"Nacos"`
 	RedisConfig []*cache.RedisConfigs `json:"RedisConfig"`
 }
 

@@ -8,6 +8,7 @@ import (
 	"gitee.com/zhuyunkj/pay-gateway/common/clientMgr"
 	"gitee.com/zhuyunkj/pay-gateway/common/code"
 	"gitee.com/zhuyunkj/pay-gateway/common/define"
+	"gitee.com/zhuyunkj/pay-gateway/common/types"
 	"gitee.com/zhuyunkj/pay-gateway/common/utils"
 	"gitee.com/zhuyunkj/pay-gateway/db/mysql/model"
 	"gitee.com/zhuyunkj/pay-gateway/rpc/internal/svc"
@@ -45,17 +46,6 @@ func NewAlipayPagePayAndSignLogic(ctx context.Context, svcCtx *svc.ServiceContex
 	}
 }
 
-type Product struct {
-	ProductType     int    `json:"productType"`
-	ProductSwitch   bool   `json:"productSwitch"`
-	Amount          string `json:"amount"`
-	PrepaidAmount   string `json:"prepaidAmount"`
-	SubscribePeriod int    `json:"subscribePeriod"`
-	VipDays         int    `json:"vipDays"`
-	TopText         string `json:"topText"`
-	BottomText      string `json:"bottomText"`
-}
-
 // 支付宝：支付并签约
 func (l *AlipayPagePayAndSignLogic) AlipayPagePayAndSign(in *pb.AlipayPageSignReq) (*pb.AlipayPageSignResp, error) {
 	payClient, payAppId, notifyUrl, err := clientMgr.GetAlipayClientByAppPkgWithCache(in.AppPkgName)
@@ -69,7 +59,7 @@ func (l *AlipayPagePayAndSignLogic) AlipayPagePayAndSign(in *pb.AlipayPageSignRe
 	productType = int(in.ProductType)
 
 	if in.ProductId == 0 { // 目前没有商品的配置，通过解析商品详情来获取商品的内容
-		product := Product{}
+		product := types.Product{}
 
 		err = json.Unmarshal([]byte(in.ProductDesc), &product)
 		if err != nil {
@@ -166,6 +156,16 @@ func (l *AlipayPagePayAndSignLogic) AlipayPagePayAndSign(in *pb.AlipayPageSignRe
 	if err != nil {
 		logx.Errorf("创建订单异常：生成支付宝加签串失败， err = %s", err.Error())
 		return nil, errors.New("创建订单异常")
+	}
+
+	if in.ProductType == code.PRODUCT_TYPE_SUBSCRIBE_FEE && in.BelongSignOrder != "" {
+		tb, err := l.orderModel.GetOneByOutTradeNo(in.BelongSignOrder)
+		if err != nil {
+			logx.Errorf("创建续费订单异常：获取所属的签约订单失败， err = %s", err.Error())
+			return nil, errors.New("创建订单异常")
+		}
+		orderInfo.AgreementNo = tb.AgreementNo
+		orderInfo.ExternalAgreementNo = tb.ExternalAgreementNo
 	}
 
 	err = l.orderModel.Create(&orderInfo)

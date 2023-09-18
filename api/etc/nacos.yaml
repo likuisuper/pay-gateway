@@ -1,0 +1,14 @@
+#Nacos配置
+IpAddress: "120.79.85.139"
+Port: 8848
+NamespaceId: "release"
+GroupId: "pay.gateway.api"
+DataId: "payment.yaml"
+LogDir: "./nacos/log"
+CacheDir: "./nacos/cache"
+# debug,info,warn,error, default
+LogLevel: "debug"
+CfgGroupId: "quickApp.config"
+CfgDataId: "quickApp.yaml"
+Username: "nacos"
+Password: "zykj@2021"
