@@ -12,3 +12,9 @@ const (
 	PRODUCT_TYPE_VIP       = 1 // 会员商品
 	PRODUCT_TYPE_SUBSCRIBE = 2 // 订阅商品
 )
+
+const (
+	NOTIFY_TYPE_PAY    = "pay"
+	NOTIFY_TYPE_REFUND = "refund"
+	NOTIFY_TYPE_SIGN   = "sign"
+)

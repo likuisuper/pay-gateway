@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"gitee.com/yan-yixin0612/alipay/v3"
 	"gitee.com/zhuyunkj/pay-gateway/common/clientMgr"
+	"gitee.com/zhuyunkj/pay-gateway/common/code"
 	"gitee.com/zhuyunkj/pay-gateway/common/define"
 	"gitee.com/zhuyunkj/pay-gateway/common/exception"
 	"gitee.com/zhuyunkj/pay-gateway/db/mysql/model"
@@ -99,7 +100,7 @@ func (l *NotifyAlipayNewLogic) NotifyAlipayNew(r *http.Request, w http.ResponseW
 	go func() {
 		defer exception.Recover()
 		dataMap := l.transFormDataToMap(bodyData)
-		dataMap["notify_type"] = "pay"
+		dataMap["notify_type"] = code.NOTIFY_TYPE_PAY
 		_, _ = util.HttpPost(orderInfo.AppNotifyUrl, dataMap, 5*time.Second)
 	}()
 

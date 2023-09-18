@@ -7,8 +7,11 @@ import (
 	"gitee.com/zhuyunkj/pay-gateway/common/clientMgr"
 	"gitee.com/zhuyunkj/pay-gateway/common/code"
 	"gitee.com/zhuyunkj/pay-gateway/common/define"
+	"gitee.com/zhuyunkj/pay-gateway/common/exception"
 	"gitee.com/zhuyunkj/pay-gateway/db/mysql/model"
+	"gitee.com/zhuyunkj/zhuyun-core/util"
 	"strconv"
+	"time"
 
 	"gitee.com/zhuyunkj/pay-gateway/api/internal/svc"
 	"gitee.com/zhuyunkj/pay-gateway/api/internal/types"
@@ -91,6 +94,15 @@ func (l *HandleRefundLogic) HandleRefund(req *types.RefundReq) (resp *types.Resu
 			return &res, nil
 		}
 	}
+
+	// 回调通知续约成功
+	go func() {
+		defer exception.Recover()
+		dataMap := make(map[string]interface{})
+		dataMap["notify_type"] = code.NOTIFY_TYPE_REFUND
+		dataMap["out_trade_refund_no"] = req.OutTradeRefundNo
+		_, _ = util.HttpPost(table.NotifyUrl, dataMap, 5*time.Second)
+	}()
 
 	res := response.MakeResult(code.CODE_OK, "操作成功", nil)
 	return &res, nil

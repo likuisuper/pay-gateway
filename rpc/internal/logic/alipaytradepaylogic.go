@@ -8,9 +8,12 @@ import (
 	"gitee.com/zhuyunkj/pay-gateway/common/clientMgr"
 	"gitee.com/zhuyunkj/pay-gateway/common/code"
 	"gitee.com/zhuyunkj/pay-gateway/common/define"
+	"gitee.com/zhuyunkj/pay-gateway/common/exception"
 	"gitee.com/zhuyunkj/pay-gateway/common/utils"
 	"gitee.com/zhuyunkj/pay-gateway/db/mysql/model"
 	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
+	"gitee.com/zhuyunkj/zhuyun-core/util"
+	"time"
 
 	"gitee.com/zhuyunkj/pay-gateway/rpc/internal/svc"
 	"gitee.com/zhuyunkj/pay-gateway/rpc/pb/pb"
@@ -92,6 +95,14 @@ func (l *AlipayTradePayLogic) AlipayTradePay(in *pb.AlipayTradePayReq) (*pb.Alip
 		}, nil
 	} else {
 		logx.Infof("%v", result)
+		// 回调通知续约成功
+		go func() {
+			defer exception.Recover()
+			dataMap := make(map[string]interface{})
+			dataMap["notify_type"] = code.NOTIFY_TYPE_PAY
+			dataMap["external_agreement_no"] = in.ExternalAgreementNo
+			_, _ = util.HttpPost(tb.AppNotifyUrl, dataMap, 5*time.Second)
+		}()
 		return &pb.AlipayCommonResp{
 			Status: code.ALI_PAY_SUCCESS,
 			Desc:   "扣款成功",

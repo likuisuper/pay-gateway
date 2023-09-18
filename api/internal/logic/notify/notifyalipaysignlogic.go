@@ -2,6 +2,7 @@ package notify
 
 import (
 	"context"
+	"gitee.com/zhuyunkj/pay-gateway/common/code"
 	"gitee.com/zhuyunkj/pay-gateway/common/define"
 	"gitee.com/zhuyunkj/pay-gateway/common/exception"
 	"gitee.com/zhuyunkj/pay-gateway/db/mysql/model"
@@ -79,7 +80,7 @@ func (l *NotifyAlipaySignLogic) NotifyAlipaySign(r *http.Request, w http.Respons
 	go func() {
 		defer exception.Recover()
 		dataMap := l.transFormDataToMap(bodyData)
-		dataMap["notify_type"] = "sign"
+		dataMap["notify_type"] = code.NOTIFY_TYPE_SIGN
 		_, _ = util.HttpPost(order.AppNotifyUrl, dataMap, 5*time.Second)
 	}()
 
