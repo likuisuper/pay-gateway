@@ -152,6 +152,9 @@ func (l *AlipayPagePayAndSignLogic) AlipayPagePayAndSign(in *pb.AlipayPageSignRe
 		Trade: trade,
 	}
 
+	bytes, err := json.Marshal(appPay)
+	logx.Slowf("请求参数: %v", bytes)
+
 	result, err := payClient.TradeAppPay(appPay)
 	if err != nil {
 		logx.Errorf("创建订单异常：生成支付宝加签串失败， err = %s", err.Error())

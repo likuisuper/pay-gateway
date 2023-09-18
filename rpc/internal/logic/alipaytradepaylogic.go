@@ -9,6 +9,7 @@ import (
 	"gitee.com/zhuyunkj/pay-gateway/common/code"
 	"gitee.com/zhuyunkj/pay-gateway/common/define"
 	"gitee.com/zhuyunkj/pay-gateway/common/exception"
+	"gitee.com/zhuyunkj/pay-gateway/common/types"
 	"gitee.com/zhuyunkj/pay-gateway/common/utils"
 	"gitee.com/zhuyunkj/pay-gateway/db/mysql/model"
 	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
@@ -59,7 +60,7 @@ func (l *AlipayTradePayLogic) AlipayTradePay(in *pb.AlipayTradePayReq) (*pb.Alip
 		AgreementNo: tb.AgreementNo,
 	}
 
-	product := Product{}
+	product := types.Product{}
 	err = json.Unmarshal([]byte(tb.ProductDesc), &product)
 	if err != nil {
 		logx.Errorf("订阅扣款： 解析订单商品详情 outTradeNo=%s err=%s", in.OutTradeNo, err.Error())
