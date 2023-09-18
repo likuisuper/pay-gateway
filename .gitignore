@@ -5,3 +5,4 @@
 **/.DS_Store
 /rpc/logs
 /api/nacos
+/rpc/nacos

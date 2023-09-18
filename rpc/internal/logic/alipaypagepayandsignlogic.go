@@ -109,8 +109,9 @@ func (l *AlipayPagePayAndSignLogic) AlipayPagePayAndSign(in *pb.AlipayPageSignRe
 	}
 
 	trade := alipay2.Trade{
-		ProductCode:    "CYCLE_PAY_AUTH", // 固定参数
-		Subject:        in.Subject,
+		ProductCode: "CYCLE_PAY_AUTH", // 固定参数
+		//Subject:        in.Subject,
+		Subject:        "11111",
 		OutTradeNo:     orderInfo.OutTradeNo,
 		TotalAmount:    amount,
 		TimeoutExpress: "30m",
