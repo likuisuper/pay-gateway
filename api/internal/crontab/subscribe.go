@@ -81,7 +81,6 @@ func (c *CrontabOrder) PayOrder() {
 		return
 	}
 
-	// 根据user_subscribe_vip表数据创建订单
 	orderModel = dbmodel.NewOrderModel(define.DbPayGateway)
 
 	firstModel, err := orderModel.GetFirstUnpaidSubscribeFee()
