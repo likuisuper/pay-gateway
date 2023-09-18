@@ -192,6 +192,11 @@ message AlipayTradePayReq {
   string ExternalAgreementNo = 2;
 }
 
+message CreateRefundResp {
+  string OutTradeRefundNo = 1;
+  string Desc = 2;
+}
+
 //============== service ==============================================================================
 
 service Payment {
@@ -223,7 +228,7 @@ service Payment {
   rpc AlipayPageUnSign(AlipayPageUnSignReq) returns (AlipayCommonResp);
 
   //支付宝：创建退款订单
-  rpc AlipayCreateRefund(AlipayRefundReq) returns (AlipayCommonResp);
+  rpc AlipayCreateRefund(AlipayRefundReq) returns (CreateRefundResp);
 
   //支付宝：退款
   rpc AlipayRefund(AlipayRefundReq) returns (AlipayCommonResp);

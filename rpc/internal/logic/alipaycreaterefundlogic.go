@@ -40,8 +40,7 @@ func NewAlipayCreateRefundLogic(ctx context.Context, svcCtx *svc.ServiceContext)
 }
 
 // 支付宝：创建退款订单
-func (l *AlipayCreateRefundLogic) AlipayCreateRefund(in *pb.AlipayRefundReq) (*pb.AlipayCommonResp, error) {
-	// todo: add your logic here and delete this line
+func (l *AlipayCreateRefundLogic) AlipayCreateRefund(in *pb.AlipayRefundReq) (*pb.CreateRefundResp, error) {
 
 	order, err := l.orderModel.GetOneByOutTradeNo(in.OutTradeNo)
 	if err != nil {
@@ -86,7 +85,8 @@ func (l *AlipayCreateRefundLogic) AlipayCreateRefund(in *pb.AlipayRefundReq) (*p
 		return nil, errors.New(errInfo)
 	}
 
-	return &pb.AlipayCommonResp{
-		Desc: "创建退款订单成功",
+	return &pb.CreateRefundResp{
+		OutTradeRefundNo: refund.OutTradeRefundNo,
+		Desc:             "创建退款订单成功",
 	}, nil
 }
