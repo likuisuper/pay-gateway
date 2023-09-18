@@ -61,12 +61,12 @@ func (l *HandleRefundLogic) HandleRefund(req *types.RefundReq) (resp *types.Resu
 			return nil, err
 		}
 
-		a := strconv.Itoa(table.RefundAmount / 100)
-		b := strconv.Itoa(table.RefundAmount % 100)
+		var amount float64 = float64(table.RefundAmount) / 100
+		sendAmount := strconv.FormatFloat(amount, 'f', 2, 32)
 
 		tradeRefund := alipay2.TradeRefund{
 			TradeNo:      table.OutTradeNo,
-			RefundAmount: a + "." + b,
+			RefundAmount: sendAmount,
 			RefundReason: table.Reason,
 		}
 

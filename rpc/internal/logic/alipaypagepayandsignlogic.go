@@ -85,6 +85,7 @@ func (l *AlipayPagePayAndSignLogic) AlipayPagePayAndSign(in *pb.AlipayPageSignRe
 		prepaidAmount = product.PrepaidAmount
 		period = product.SubscribePeriod
 		productType = product.ProductType
+		amount = product.Amount
 	}
 
 	if intAmount <= 0 {
