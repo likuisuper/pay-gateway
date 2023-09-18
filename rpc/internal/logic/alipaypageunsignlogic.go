@@ -20,6 +20,7 @@ type AlipayPageUnSignLogic struct {
 
 	appConfigModel       *model.PmAppConfigModel
 	payConfigAlipayModel *model.PmPayConfigAlipayModel
+	orderModel           *model.OrderModel
 }
 
 func NewAlipayPageUnSignLogic(ctx context.Context, svcCtx *svc.ServiceContext) *AlipayPageUnSignLogic {
@@ -30,6 +31,7 @@ func NewAlipayPageUnSignLogic(ctx context.Context, svcCtx *svc.ServiceContext) *
 
 		appConfigModel:       model.NewPmAppConfigModel(define.DbPayGateway),
 		payConfigAlipayModel: model.NewPmPayConfigAlipayModel(define.DbPayGateway),
+		orderModel:           model.NewOrderModel(define.DbPayGateway),
 	}
 }
 
@@ -40,9 +42,13 @@ func (l *AlipayPageUnSignLogic) AlipayPageUnSign(in *pb.AlipayPageUnSignReq) (*p
 		return nil, err
 	}
 
+	table, err := l.orderModel.GetOneByOutTradeNo(in.OutTradeNo)
+	if err != nil {
+		logx.Errorf("根据out_trade_no获取订单失败, err = %v", err.Error())
+	}
+
 	unSign := alipay2.AgreementUnsign{
-		ExternalAgreementNo: in.ExternalAgreementNo,
-		AlipayLogonId:       in.AlipayLogonId,
+		AgreementNo: table.AgreementNo,
 	}
 
 	result, err := payClient.AgreementUnsign(unSign)
