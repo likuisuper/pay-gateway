@@ -163,6 +163,7 @@ message AlipayTradeReq {
 
 message AlipayPageUnSignReq {
   string OutTradeNo = 1; //商户唯一订单号
+  string AppPkgName = 2; //应用包名
 }
 
 message AlipayPageSignResp {
