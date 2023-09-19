@@ -66,7 +66,7 @@ func GenerateOrderCode(machineNo, workerNo int64) (orderCode string) {
 func EncodeUrlParams(domain string, params map[string]string) string {
 	values := url.Values{}
 	for k, v := range params {
-		values.Set(v, k)
+		values.Set(k, v)
 	}
 	return domain + "?" + values.Encode()
 }
