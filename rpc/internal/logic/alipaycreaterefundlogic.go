@@ -76,6 +76,7 @@ func (l *AlipayCreateRefundLogic) AlipayCreateRefund(in *pb.AlipayRefundReq) (*p
 		NotifyUrl:        in.RefundNotifyUrl,
 		Operator:         in.Operator,
 		AppPkg:           order.AppPkg,
+		RefundNo:         in.TradeNo, // 支付宝退款没有退款单号
 	}
 	err = l.refundModel.Create(&refund)
 	if err != nil {

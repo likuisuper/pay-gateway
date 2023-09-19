@@ -33,7 +33,7 @@ func (l *AlipayRefundLogic) AlipayRefund(in *pb.AlipayRefundReq) (*pb.AlipayComm
 	}
 
 	tradeRefund := alipay2.TradeRefund{
-		TradeNo:      in.TradeNo,
+		OutTradeNo:   in.OutTradeNo,
 		RefundAmount: in.RefundAmount,
 		RefundReason: in.RefundReason,
 	}

@@ -11,6 +11,7 @@ type Config struct {
 	Mysql       []*db.DbConfig        `json:"Mysql"`
 	Nacos       NacosConfig           `json:"Nacos"`
 	RedisConfig []*cache.RedisConfigs `json:"RedisConfig"`
+	SnowFlake   SnowFlake             `json:"SnowFlake,optional"` //雪花算法参数
 }
 
 // nacos配置
@@ -25,4 +26,10 @@ type NacosConfig struct {
 type NacosService struct {
 	Ip   string
 	Port uint64
+}
+
+// 雪花算法参数
+type SnowFlake struct {
+	MachineNo int64 //工作ID
+	WorkerNo  int64 //数据中心ID
 }

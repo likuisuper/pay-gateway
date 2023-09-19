@@ -101,6 +101,9 @@ func (l *HandleRefundLogic) HandleRefund(req *types.RefundReq) (resp *types.Resu
 		dataMap := make(map[string]interface{})
 		dataMap["notify_type"] = code.APP_NOTIFY_TYPE_REFUND
 		dataMap["out_trade_refund_no"] = req.OutTradeRefundNo
+		dataMap["out_trade_no"] = table.OutTradeNo
+		dataMap["refund_out_side_app"] = false
+		dataMap["refund_status"] = table.RefundStatus
 		_, _ = util.HttpPost(table.NotifyUrl, dataMap, 5*time.Second)
 	}()
 
