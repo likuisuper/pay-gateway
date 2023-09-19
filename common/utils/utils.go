@@ -68,5 +68,5 @@ func EncodeUrlParams(domain string, params map[string]string) string {
 	for k, v := range params {
 		values.Set(v, k)
 	}
-	return domain + values.Encode()
+	return domain + "?" + values.Encode()
 }
