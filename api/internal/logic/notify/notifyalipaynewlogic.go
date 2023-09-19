@@ -74,6 +74,7 @@ func (l *NotifyAlipayNewLogic) NotifyAlipayNew(r *http.Request, w http.ResponseW
 	if ALI_NOTIFY_TYPE_TRADE_SYNC == notifyType {
 
 		var outTradeNo = r.Form.Get("out_trade_no")
+		var tradeNo = r.Form.Get("trade_no")
 		var tradeQuery = alipay.TradeQuery{
 			OutTradeNo: outTradeNo,
 		}
@@ -104,6 +105,7 @@ func (l *NotifyAlipayNewLogic) NotifyAlipayNew(r *http.Request, w http.ResponseW
 		//修改数据库
 		orderInfo.Status = model.PmPayOrderTablePayStatusPaid
 		orderInfo.PayType = model.PmPayOrderTablePayTypeAlipay
+		orderInfo.PlatformTradeNo = tradeNo
 		err = l.orderModel.UpdateNotify(orderInfo)
 		if err != nil {
 			err = fmt.Errorf("trade_no = %s, UpdateNotify，err:=%v", orderInfo.PlatformTradeNo, err)
