@@ -13,7 +13,6 @@ import (
 	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
 	"gitee.com/zhuyunkj/zhuyun-core/util"
 	"github.com/zeromicro/go-zero/core/logx"
-	"github.com/zeromicro/go-zero/rest/httpx"
 	"net/http"
 	"net/url"
 	"time"
@@ -114,7 +113,9 @@ func (l *NotifyAlipayLogic) NotifyAlipay(r *http.Request, w http.ResponseWriter)
 		_, _ = util.HttpPost(orderInfo.NotifyUrl, dataMap, 5*time.Second)
 	}()
 
-	httpx.OkJson(w, "success")
+	bytes := []byte("success")
+	w.Write(bytes)
+
 	return
 }
 
