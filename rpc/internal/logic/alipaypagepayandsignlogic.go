@@ -141,7 +141,7 @@ func (l *AlipayPagePayAndSignLogic) AlipayPagePayAndSign(in *pb.AlipayPageSignRe
 			AccessParams:        accessParam,
 			PeriodRuleParams:    rule,
 			ExternalAgreementNo: utils.GenerateOrderCode(l.svcCtx.Config.SnowFlake.MachineNo, l.svcCtx.Config.SnowFlake.WorkerNo),
-			SignNotifyURL:       utils.GenSignNotifyUrl(notifyUrl, orderInfo.OutTradeNo),
+			SignNotifyURL:       notifyUrl,
 		}
 
 		externalAgreementNo = signParams.ExternalAgreementNo
