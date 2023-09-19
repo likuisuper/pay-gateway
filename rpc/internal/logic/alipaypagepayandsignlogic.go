@@ -114,6 +114,7 @@ func (l *AlipayPagePayAndSignLogic) AlipayPagePayAndSign(in *pb.AlipayPageSignRe
 		OutTradeNo:     orderInfo.OutTradeNo,
 		TotalAmount:    amount,
 		TimeoutExpress: "30m",
+		QueryOptions:   []string{"out_trade_no"},
 		NotifyURL:      notifyUrl,
 	}
 
