@@ -18,11 +18,11 @@ func NotifyAlipayNewHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 		}
 
 		l := notify.NewNotifyAlipayNewLogic(r.Context(), svcCtx)
-		_, err := l.NotifyAlipayNew(r, w)
+		resp, err := l.NotifyAlipayNew(r, w)
 		if err != nil {
 			httpx.Error(w, err)
 		} else {
-			//httpx.OkJson(w, resp)
+			httpx.OkJson(w, resp)
 		}
 	}
 }

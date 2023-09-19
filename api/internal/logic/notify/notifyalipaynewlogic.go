@@ -11,7 +11,6 @@ import (
 	"gitee.com/zhuyunkj/pay-gateway/db/mysql/model"
 	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
 	"gitee.com/zhuyunkj/zhuyun-core/util"
-	"github.com/zeromicro/go-zero/rest/httpx"
 	"net/http"
 	"net/url"
 	"time"
@@ -178,7 +177,7 @@ func (l *NotifyAlipayNewLogic) NotifyAlipayNew(r *http.Request, w http.ResponseW
 
 	}
 
-	httpx.OkJson(w, "success")
+	fmt.Print("success")
 
 	return
 }
