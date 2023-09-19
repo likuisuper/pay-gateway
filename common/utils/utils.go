@@ -6,6 +6,7 @@ import (
 	"gitee.com/zhuyunkj/zhuyun-core/util"
 	"github.com/google/uuid"
 	"net"
+	"net/url"
 )
 
 func ToString(v interface{}) string {
@@ -60,4 +61,12 @@ func GenerateOrderCode(machineNo, workerNo int64) (orderCode string) {
 		}
 	}
 	return
+}
+
+func EncodeUrlParams(domain string, params map[string]string) string {
+	values := url.Values{}
+	for k, v := range params {
+		values.Set(v, k)
+	}
+	return domain + values.Encode()
 }
