@@ -177,7 +177,8 @@ func (l *NotifyAlipayNewLogic) NotifyAlipayNew(r *http.Request, w http.ResponseW
 
 	}
 
-	fmt.Print("success")
+	bytes := []byte("success")
+	w.Write(bytes)
 
 	return
 }
