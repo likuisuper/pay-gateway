@@ -80,6 +80,21 @@ func (o *OrderModel) GetOneByOutTradeNo(outTradeNo string) (info *OrderTable, er
 	return &orderInfo, nil
 }
 
+//根据协议号获取订单信息
+func (o *OrderModel) GetOneByExternalAgreementNo(externalAgreementNo string) (info *OrderTable, err error) {
+	var orderInfo OrderTable
+	err = o.DB.Where("`external_agreement_no` = ? ", externalAgreementNo).First(&orderInfo).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	if err != nil {
+		logx.Errorf("获取订单信息失败，err:=%v, external_agreement_no=%s", err, externalAgreementNo)
+		getOrderErr.CounterInc()
+		return nil, err
+	}
+	return &orderInfo, nil
+}
+
 func (o *OrderModel) UpdateNotify(info *OrderTable) error {
 	err := o.DB.Save(&info).Error
 	if err != nil {

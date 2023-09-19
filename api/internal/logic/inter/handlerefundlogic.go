@@ -99,7 +99,7 @@ func (l *HandleRefundLogic) HandleRefund(req *types.RefundReq) (resp *types.Resu
 	go func() {
 		defer exception.Recover()
 		dataMap := make(map[string]interface{})
-		dataMap["notify_type"] = code.NOTIFY_TYPE_REFUND
+		dataMap["notify_type"] = code.APP_NOTIFY_TYPE_REFUND
 		dataMap["out_trade_refund_no"] = req.OutTradeRefundNo
 		_, _ = util.HttpPost(table.NotifyUrl, dataMap, 5*time.Second)
 	}()

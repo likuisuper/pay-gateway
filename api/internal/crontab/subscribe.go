@@ -169,7 +169,7 @@ func (c *CrontabOrder) PaySubscribeFee(tb *dbmodel.OrderTable) error {
 		go func() {
 			defer exception.Recover()
 			dataMap := make(map[string]interface{})
-			dataMap["notify_type"] = code.NOTIFY_TYPE_PAY
+			dataMap["notify_type"] = code.APP_NOTIFY_TYPE_PAY
 			dataMap["external_agreement_no"] = tb.ExternalAgreementNo
 			_, _ = util.HttpPost(tb.AppNotifyUrl, dataMap, 5*time.Second)
 		}()
