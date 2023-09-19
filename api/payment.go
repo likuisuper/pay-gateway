@@ -59,7 +59,8 @@ func main() {
 		nacosInstanc, _ := RegisterInstance(&nacosConfig)
 
 		if nacosInstanc != nil {
-			crontab.InitCrontabOrder(nacosClient, nacosServerName, &c, ctx)
+			namingClient, _ := nacos.InitNamingClient(nacosConfig)
+			crontab.InitCrontabOrder(namingClient, nacosServerName, &c, ctx)
 		}
 	})
 
