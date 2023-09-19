@@ -100,7 +100,7 @@ func (l *AlipayTradePayLogic) AlipayTradePay(in *pb.AlipayTradePayReq) (*pb.Alip
 		go func() {
 			defer exception.Recover()
 			dataMap := make(map[string]interface{})
-			dataMap["notify_type"] = code.NOTIFY_TYPE_PAY
+			dataMap["notify_type"] = code.APP_NOTIFY_TYPE_PAY
 			dataMap["external_agreement_no"] = in.ExternalAgreementNo
 			_, _ = util.HttpPost(tb.AppNotifyUrl, dataMap, 5*time.Second)
 		}()
