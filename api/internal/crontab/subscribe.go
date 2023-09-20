@@ -162,6 +162,13 @@ func (c *CrontabOrder) PaySubscribeFee(tb *dbmodel.OrderTable) error {
 	if err != nil {
 		errDesc := fmt.Sprintf("订阅扣款：扣款失败 outTradeNo=%s, err=%s", result, err.Error())
 		logx.Errorf(errDesc)
+		go func() {
+			defer exception.Recover()
+			dataMap := make(map[string]interface{})
+			dataMap["notify_type"] = code.APP_NOTIFY_TYPE_SIGN_FEE_FAILED
+			dataMap["external_agreement_no"] = tb.ExternalAgreementNo
+			_, _ = util.HttpPost(tb.AppNotifyUrl, dataMap, 5*time.Second)
+		}()
 		return errors.New(errDesc)
 	} else {
 		errDesc := fmt.Sprintf("续费成功: appPkg=%v, userid=%v, outTradeNo=%v", tb.AppPkg, tb.UserID, tb.OutTradeNo)

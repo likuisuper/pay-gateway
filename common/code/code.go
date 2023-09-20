@@ -15,8 +15,9 @@ const (
 )
 
 const (
-	APP_NOTIFY_TYPE_PAY    = "pay"
-	APP_NOTIFY_TYPE_REFUND = "refund"
-	APP_NOTIFY_TYPE_SIGN   = "sign"
-	APP_NOTIFY_TYPE_UNSIGN = "unsign"
+	APP_NOTIFY_TYPE_PAY             = "pay"
+	APP_NOTIFY_TYPE_REFUND          = "refund"
+	APP_NOTIFY_TYPE_SIGN            = "sign"
+	APP_NOTIFY_TYPE_UNSIGN          = "unsign"
+	APP_NOTIFY_TYPE_SIGN_FEE_FAILED = "sign_fee_failed"
 )

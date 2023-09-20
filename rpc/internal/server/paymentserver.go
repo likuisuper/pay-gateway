@@ -93,3 +93,9 @@ func (s *PaymentServer) AlipayTradePay(ctx context.Context, in *pb.AlipayTradePa
 	l := logic.NewAlipayTradePayLogic(ctx, s.svcCtx)
 	return l.AlipayTradePay(in)
 }
+
+// 支付宝：签约延期
+func (s *PaymentServer) AlipayAgreementModify(ctx context.Context, in *pb.AlipayAgreementModifyReq) (*pb.AlipayCommonResp, error) {
+	l := logic.NewAlipayAgreementModifyLogic(ctx, s.svcCtx)
+	return l.AlipayAgreementModify(in)
+}

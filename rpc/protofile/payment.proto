@@ -204,6 +204,12 @@ message AliRefundResp {
   string OutTradeRefundNo = 4;
 }
 
+message AlipayAgreementModifyReq {
+  string DeductTime = 1;
+  string AppPkgName = 2;
+  string OutTradeNo = 3;
+}
+
 //============== service ==============================================================================
 
 service Payment {
@@ -242,4 +248,7 @@ service Payment {
 
   //支付宝：订阅扣款
   rpc AlipayTradePay(AlipayTradePayReq) returns (AlipayCommonResp);
+
+  //支付宝：签约延期
+  rpc AlipayAgreementModify(AlipayAgreementModifyReq) returns (AlipayCommonResp);
 }

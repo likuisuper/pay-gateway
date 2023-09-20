@@ -14,6 +14,7 @@ import (
 
 type (
 	AliRefundResp                 = pb.AliRefundResp
+	AlipayAgreementModifyReq      = pb.AlipayAgreementModifyReq
 	AlipayCheckAccountReq         = pb.AlipayCheckAccountReq
 	AlipayCheckAccountResp        = pb.AlipayCheckAccountResp
 	AlipayCommonResp              = pb.AlipayCommonResp
@@ -64,6 +65,8 @@ type (
 		AlipayRefund(ctx context.Context, in *AlipayRefundReq, opts ...grpc.CallOption) (*AliRefundResp, error)
 		// 支付宝：订阅扣款
 		AlipayTradePay(ctx context.Context, in *AlipayTradePayReq, opts ...grpc.CallOption) (*AlipayCommonResp, error)
+		// 支付宝：签约延期
+		AlipayAgreementModify(ctx context.Context, in *AlipayAgreementModifyReq, opts ...grpc.CallOption) (*AlipayCommonResp, error)
 	}
 
 	defaultPayment struct {
@@ -147,4 +150,10 @@ func (m *defaultPayment) AlipayRefund(ctx context.Context, in *AlipayRefundReq, 
 func (m *defaultPayment) AlipayTradePay(ctx context.Context, in *AlipayTradePayReq, opts ...grpc.CallOption) (*AlipayCommonResp, error) {
 	client := pb.NewPaymentClient(m.cli.Conn())
 	return client.AlipayTradePay(ctx, in, opts...)
+}
+
+// 支付宝：签约延期
+func (m *defaultPayment) AlipayAgreementModify(ctx context.Context, in *AlipayAgreementModifyReq, opts ...grpc.CallOption) (*AlipayCommonResp, error) {
+	client := pb.NewPaymentClient(m.cli.Conn())
+	return client.AlipayAgreementModify(ctx, in, opts...)
 }
