@@ -126,6 +126,9 @@ func (l *NotifyAlipayNewLogic) NotifyAlipayNew(r *http.Request, w http.ResponseW
 				defer exception.Recover()
 				dataMap := l.transFormDataToMap(bodyData)
 				dataMap["notify_type"] = code.APP_NOTIFY_TYPE_PAY
+				if orderInfo.ProductType == code.PRODUCT_TYPE_SUBSCRIBE_FEE {
+					dataMap["external_agreement_no"] = orderInfo.ExternalAgreementNo
+				}
 				_, _ = util.HttpPost(orderInfo.AppNotifyUrl, dataMap, 5*time.Second)
 			}()
 		} else { // 退款

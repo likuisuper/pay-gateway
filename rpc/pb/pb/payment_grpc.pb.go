@@ -43,7 +43,7 @@ type PaymentClient interface {
 	//支付宝：创建退款订单
 	AlipayCreateRefund(ctx context.Context, in *AlipayRefundReq, opts ...grpc.CallOption) (*CreateRefundResp, error)
 	//支付宝：退款
-	AlipayRefund(ctx context.Context, in *AlipayRefundReq, opts ...grpc.CallOption) (*AlipayCommonResp, error)
+	AlipayRefund(ctx context.Context, in *AlipayRefundReq, opts ...grpc.CallOption) (*AliRefundResp, error)
 	//支付宝：订阅扣款
 	AlipayTradePay(ctx context.Context, in *AlipayTradePayReq, opts ...grpc.CallOption) (*AlipayCommonResp, error)
 }
@@ -146,8 +146,8 @@ func (c *paymentClient) AlipayCreateRefund(ctx context.Context, in *AlipayRefund
 	return out, nil
 }
 
-func (c *paymentClient) AlipayRefund(ctx context.Context, in *AlipayRefundReq, opts ...grpc.CallOption) (*AlipayCommonResp, error) {
-	out := new(AlipayCommonResp)
+func (c *paymentClient) AlipayRefund(ctx context.Context, in *AlipayRefundReq, opts ...grpc.CallOption) (*AliRefundResp, error) {
+	out := new(AliRefundResp)
 	err := c.cc.Invoke(ctx, "/payment.Payment/AlipayRefund", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -189,7 +189,7 @@ type PaymentServer interface {
 	//支付宝：创建退款订单
 	AlipayCreateRefund(context.Context, *AlipayRefundReq) (*CreateRefundResp, error)
 	//支付宝：退款
-	AlipayRefund(context.Context, *AlipayRefundReq) (*AlipayCommonResp, error)
+	AlipayRefund(context.Context, *AlipayRefundReq) (*AliRefundResp, error)
 	//支付宝：订阅扣款
 	AlipayTradePay(context.Context, *AlipayTradePayReq) (*AlipayCommonResp, error)
 	mustEmbedUnimplementedPaymentServer()
@@ -229,7 +229,7 @@ func (UnimplementedPaymentServer) AlipayPageUnSign(context.Context, *AlipayPageU
 func (UnimplementedPaymentServer) AlipayCreateRefund(context.Context, *AlipayRefundReq) (*CreateRefundResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AlipayCreateRefund not implemented")
 }
-func (UnimplementedPaymentServer) AlipayRefund(context.Context, *AlipayRefundReq) (*AlipayCommonResp, error) {
+func (UnimplementedPaymentServer) AlipayRefund(context.Context, *AlipayRefundReq) (*AliRefundResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AlipayRefund not implemented")
 }
 func (UnimplementedPaymentServer) AlipayTradePay(context.Context, *AlipayTradePayReq) (*AlipayCommonResp, error) {

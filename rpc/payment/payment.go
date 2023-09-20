@@ -13,6 +13,7 @@ import (
 )
 
 type (
+	AliRefundResp                 = pb.AliRefundResp
 	AlipayCheckAccountReq         = pb.AlipayCheckAccountReq
 	AlipayCheckAccountResp        = pb.AlipayCheckAccountResp
 	AlipayCommonResp              = pb.AlipayCommonResp
@@ -60,7 +61,7 @@ type (
 		// 支付宝：创建退款订单
 		AlipayCreateRefund(ctx context.Context, in *AlipayRefundReq, opts ...grpc.CallOption) (*CreateRefundResp, error)
 		// 支付宝：退款
-		AlipayRefund(ctx context.Context, in *AlipayRefundReq, opts ...grpc.CallOption) (*AlipayCommonResp, error)
+		AlipayRefund(ctx context.Context, in *AlipayRefundReq, opts ...grpc.CallOption) (*AliRefundResp, error)
 		// 支付宝：订阅扣款
 		AlipayTradePay(ctx context.Context, in *AlipayTradePayReq, opts ...grpc.CallOption) (*AlipayCommonResp, error)
 	}
@@ -137,7 +138,7 @@ func (m *defaultPayment) AlipayCreateRefund(ctx context.Context, in *AlipayRefun
 }
 
 // 支付宝：退款
-func (m *defaultPayment) AlipayRefund(ctx context.Context, in *AlipayRefundReq, opts ...grpc.CallOption) (*AlipayCommonResp, error) {
+func (m *defaultPayment) AlipayRefund(ctx context.Context, in *AlipayRefundReq, opts ...grpc.CallOption) (*AliRefundResp, error) {
 	client := pb.NewPaymentClient(m.cli.Conn())
 	return client.AlipayRefund(ctx, in, opts...)
 }

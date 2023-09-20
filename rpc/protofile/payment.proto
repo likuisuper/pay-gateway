@@ -197,6 +197,13 @@ message CreateRefundResp {
   string Desc = 2;
 }
 
+message AliRefundResp {
+  int64  Status = 1;
+  string RefundFee = 2;
+  string Desc = 3;
+  string OutTradeRefundNo = 4;
+}
+
 //============== service ==============================================================================
 
 service Payment {
@@ -231,7 +238,7 @@ service Payment {
   rpc AlipayCreateRefund(AlipayRefundReq) returns (CreateRefundResp);
 
   //支付宝：退款
-  rpc AlipayRefund(AlipayRefundReq) returns (AlipayCommonResp);
+  rpc AlipayRefund(AlipayRefundReq) returns (AliRefundResp);
 
   //支付宝：订阅扣款
   rpc AlipayTradePay(AlipayTradePayReq) returns (AlipayCommonResp);

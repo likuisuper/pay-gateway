@@ -83,7 +83,7 @@ func (s *PaymentServer) AlipayCreateRefund(ctx context.Context, in *pb.AlipayRef
 }
 
 // 支付宝：退款
-func (s *PaymentServer) AlipayRefund(ctx context.Context, in *pb.AlipayRefundReq) (*pb.AlipayCommonResp, error) {
+func (s *PaymentServer) AlipayRefund(ctx context.Context, in *pb.AlipayRefundReq) (*pb.AliRefundResp, error) {
 	l := logic.NewAlipayRefundLogic(ctx, s.svcCtx)
 	return l.AlipayRefund(in)
 }
