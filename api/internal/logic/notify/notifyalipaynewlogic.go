@@ -2,6 +2,7 @@ package notify
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"gitee.com/yan-yixin0612/alipay/v3"
@@ -129,6 +130,8 @@ func (l *NotifyAlipayNewLogic) NotifyAlipayNew(r *http.Request, w http.ResponseW
 				if orderInfo.ProductType == code.PRODUCT_TYPE_SUBSCRIBE_FEE {
 					dataMap["external_agreement_no"] = orderInfo.ExternalAgreementNo
 				}
+				jsonstr, _ := json.Marshal(dataMap)
+				logx.Slowf("支付成功发起回调: %s, data=%v", outTradeNo, jsonstr)
 				_, _ = util.HttpPost(orderInfo.AppNotifyUrl, dataMap, 5*time.Second)
 			}()
 		} else { // 退款
