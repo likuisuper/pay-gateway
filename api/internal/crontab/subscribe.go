@@ -38,7 +38,7 @@ type CrontabOrder struct {
 }
 
 const (
-	payOrderTime = "0 15 1 * * ?"
+	payOrderTime = "0 23 1 * * ?"
 )
 
 var crontabOrder *CrontabOrder
