@@ -38,7 +38,7 @@ type CrontabOrder struct {
 }
 
 const (
-	payOrderTime = "0 30 23 * * ?"
+	payOrderTime = "0 15 1 * * ?"
 )
 
 var crontabOrder *CrontabOrder
@@ -62,8 +62,7 @@ func InitCrontabOrder(namingClient *nacos.Instance, svcName string, c *config.Co
 	}
 
 	cronTask.Start()
-	defer cronTask.Stop()
-
+	logx.Info("InitCrontabOrder success")
 }
 
 var orderModel *dbmodel.OrderModel
@@ -117,9 +116,8 @@ func (c *CrontabOrder) PayOrder() {
 			if err != nil {
 				PaySubscribeFeeErrNum.CounterInc()
 			}
+			time.Sleep(50 * time.Millisecond)
 		}
-
-		time.Sleep(1 * time.Second)
 	}
 }
 
