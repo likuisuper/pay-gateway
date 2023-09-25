@@ -124,7 +124,7 @@ func (o *OrderModel) GetFirstUnpaidSubscribeFee() (table *OrderTable, err error)
 const VIP_DATA_ONCE_LIMIT = 100
 
 func (o *OrderModel) GetRangeData(id int) (records []*OrderTable, err error) {
-	err = o.DB.Where("product_type = ? and status = 0 and id > ? and updated_at > ? and deduct_time < ?", code.PRODUCT_TYPE_SUBSCRIBE_FEE, id, time.Now().Add(-time.Hour*25), time.Now(), time.Now()).
+	err = o.DB.Where("product_type = ? and status = 0 and id > ? and updated_at > ? and deduct_time < ?", code.PRODUCT_TYPE_SUBSCRIBE_FEE, id, time.Now().Add(-time.Hour*25), time.Now()).
 		Order("id asc").
 		Limit(VIP_DATA_ONCE_LIMIT).
 		Find(&records).Error
