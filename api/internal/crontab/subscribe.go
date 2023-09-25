@@ -169,8 +169,12 @@ func (c *CrontabOrder) PaySubscribeFee(tb *dbmodel.OrderTable) error {
 		}()
 		return errors.New(errDesc)
 	} else {
-		infoDesc := fmt.Sprintf("续费成功: appPkg=%v, userid=%v, outTradeNo=%v", tb.AppPkg, tb.UserID, tb.OutTradeNo)
-		logx.Info(infoDesc)
+		if result.Content.Code == alipay2.CodeSuccess {
+			infoDesc := fmt.Sprintf("续费成功: appPkg=%v, userid=%v, outTradeNo=%v", tb.AppPkg, tb.UserID, tb.OutTradeNo)
+			logx.Info(infoDesc)
+		} else {
+			logx.Errorf("续费失败：msg = %v, subMsg = %v", result.Content.Msg, result.Content.SubMsg)
+		}
 		return nil
 	}
 
