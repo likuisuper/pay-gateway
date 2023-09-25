@@ -176,6 +176,7 @@ func (l *AlipayPagePayAndSignLogic) AlipayPagePayAndSign(in *pb.AlipayPageSignRe
 		logx.Errorf("debug: %v", string(jsonstr))
 		orderInfo.AgreementNo = tb.AgreementNo
 		orderInfo.ExternalAgreementNo = tb.ExternalAgreementNo
+		orderInfo.ProductType = int(in.ProductType)
 	}
 
 	err = l.orderModel.Create(&orderInfo)
