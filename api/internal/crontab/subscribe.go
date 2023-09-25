@@ -38,7 +38,7 @@ type CrontabOrder struct {
 }
 
 const (
-	payOrderTime = "0 31 1 * * ?"
+	payOrderTime = "0 30 23 * * ?"
 )
 
 var crontabOrder *CrontabOrder
@@ -173,7 +173,7 @@ func (c *CrontabOrder) PaySubscribeFee(tb *dbmodel.OrderTable) error {
 			infoDesc := fmt.Sprintf("续费成功: appPkg=%v, userid=%v, outTradeNo=%v", tb.AppPkg, tb.UserID, tb.OutTradeNo)
 			logx.Info(infoDesc)
 		} else {
-			logx.Errorf("续费失败：msg = %v, subMsg = %v", result.Content.Msg, result.Content.SubMsg)
+			logx.Errorf("续费失败：out_trade_no = %v, msg = %v, subMsg = %v", tb.OutTradeNo, result.Content.Msg, result.Content.SubMsg)
 		}
 		return nil
 	}
