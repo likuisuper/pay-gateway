@@ -21,6 +21,7 @@ const (
 	//支付状态
 	PmPayOrderTablePayStatusNo     = 0
 	PmPayOrderTablePayStatusPaid   = 1
+	PmPayOrderTablePayStatusFailed = 2
 	PmPayOrderTablePayStatusRefund = 3
 	//支付方式
 	PmPayOrderTablePayTypeWechatPayUni = 1

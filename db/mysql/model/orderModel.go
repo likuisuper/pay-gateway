@@ -21,24 +21,25 @@ var (
 // 用户订单表
 type OrderTable struct {
 	ID                  int       `gorm:"column:id;primary_key;AUTO_INCREMENT"`
-	AppPkg              string    `gorm:"column:app_pkg;NOT NULL"`                              // 包名
-	UserID              int       `gorm:"column:user_id;default:0;NOT NULL"`                    // 业务程序中的用户编号
-	OutTradeNo          string    `gorm:"column:out_trade_no;NOT NULL"`                         // 内部订单号
-	PlatformTradeNo     string    `gorm:"column:platform_trade_no;NOT NULL"`                    // 支付宝/微信等平台的订单号
-	Amount              int       `gorm:"column:amount;default:0;NOT NULL"`                     // 支付金额
-	Status              int       `gorm:"column:status;default:0;NOT NULL"`                     // -1:关闭，0:未支付，1:已支付，2:支付失败，3:已退款
-	PayType             int       `gorm:"column:pay_type;default:0;NOT NULL"`                   // 支付类型（1:支付宝，2微信）
-	PayTime             time.Time `gorm:"column:pay_time;default:0000-00-00 00:00:00;NOT NULL"` // 支付时间
-	Subject             string    `gorm:"column:subject;NOT NULL"`                              // 订单标题
-	ProductType         int       `gorm:"column:product_type;default:0;NOT NULL"`               // 商品类型，0:普通商品，1:会员商品，2:订阅商品，3:订阅商品续费
-	ProductID           int       `gorm:"column:product_id;NOT NULL"`                           // 商品id
-	ProductDesc         string    `gorm:"column:product_desc;NOT NULL"`                         // 商品信息描述(例如，使用AB配置的商品，可以将商品信息写在这)
-	AppNotifyUrl        string    `gorm:"column:app_notify_url;NOT NULL"`                       // 业务回调通知
-	AgreementNo         string    `gorm:"column:agreement_no;NOT NULL"`                         // 支付宝/微信平台订阅协议号
-	ExternalAgreementNo string    `gorm:"column:external_agreement_no;NOT NULL"`                // 内部协议号
-	PayAppID            string    `gorm:"column:pay_app_id;NOT NULL"`                           // 第三方支付的appid
-	CreatedAt           time.Time `gorm:"column:created_at;default:CURRENT_TIMESTAMP;NOT NULL"` // 创建时间
-	UpdatedAt           time.Time `gorm:"column:updated_at;default:CURRENT_TIMESTAMP;NOT NULL"` // 修改时间
+	AppPkg              string    `gorm:"column:app_pkg;NOT NULL"`                                 // 包名
+	UserID              int       `gorm:"column:user_id;default:0;NOT NULL"`                       // 业务程序中的用户编号
+	OutTradeNo          string    `gorm:"column:out_trade_no;NOT NULL"`                            // 内部订单号
+	PlatformTradeNo     string    `gorm:"column:platform_trade_no;NOT NULL"`                       // 支付宝/微信等平台的订单号
+	Amount              int       `gorm:"column:amount;default:0;NOT NULL"`                        // 支付金额
+	Status              int       `gorm:"column:status;default:0;NOT NULL"`                        // -1:关闭，0:未支付，1:已支付，2:支付失败，3:已退款
+	PayType             int       `gorm:"column:pay_type;default:0;NOT NULL"`                      // 支付类型（1:支付宝，2微信）
+	PayTime             time.Time `gorm:"column:pay_time;default:0000-00-00 00:00:00;NOT NULL"`    // 支付时间
+	Subject             string    `gorm:"column:subject;NOT NULL"`                                 // 订单标题
+	ProductType         int       `gorm:"column:product_type;default:0;NOT NULL"`                  // 商品类型，0:普通商品，1:会员商品，2:订阅商品，3:订阅商品续费
+	ProductID           int       `gorm:"column:product_id;NOT NULL"`                              // 商品id
+	ProductDesc         string    `gorm:"column:product_desc;NOT NULL"`                            // 商品信息描述(例如，使用AB配置的商品，可以将商品信息写在这)
+	AppNotifyUrl        string    `gorm:"column:app_notify_url;NOT NULL"`                          // 业务回调通知
+	AgreementNo         string    `gorm:"column:agreement_no;NOT NULL"`                            // 支付宝/微信平台订阅协议号
+	ExternalAgreementNo string    `gorm:"column:external_agreement_no;NOT NULL"`                   // 内部协议号
+	PayAppID            string    `gorm:"column:pay_app_id;NOT NULL"`                              // 第三方支付的appid
+	CreatedAt           time.Time `gorm:"column:created_at;default:CURRENT_TIMESTAMP;NOT NULL"`    // 创建时间
+	UpdatedAt           time.Time `gorm:"column:updated_at;default:CURRENT_TIMESTAMP;NOT NULL"`    // 修改时间
+	DeductTime          time.Time `gorm:"column:deduct_time;default:0000-00-00 00:00:00;NOT NULL"` // 可开始扣款时间(默认是0,不需要关注,只是为了满足产品延迟扣款的需求)
 }
 
 func (m *OrderTable) TableName() string {
@@ -123,7 +124,7 @@ func (o *OrderModel) GetFirstUnpaidSubscribeFee() (table *OrderTable, err error)
 const VIP_DATA_ONCE_LIMIT = 100
 
 func (o *OrderModel) GetRangeData(id int) (records []*OrderTable, err error) {
-	err = o.DB.Where("product_type = ? and status = 0 and id > ? and updated_at > ? and updated_at < ?", code.PRODUCT_TYPE_SUBSCRIBE_FEE, id, time.Now().Add(-time.Hour*25), time.Now()).
+	err = o.DB.Where("product_type = ? and status = 0 and id > ? and updated_at > ? and deduct_time < ?", code.PRODUCT_TYPE_SUBSCRIBE_FEE, id, time.Now().Add(-time.Hour*25), time.Now(), time.Now()).
 		Order("id asc").
 		Limit(VIP_DATA_ONCE_LIMIT).
 		Find(&records).Error

@@ -208,6 +208,7 @@ message AlipayAgreementModifyReq {
   string DeductTime = 1;
   string AppPkgName = 2;
   string OutTradeNo = 3;
+  string DeductOutTradeNo = 4; // 续费扣款单
 }
 
 //============== service ==============================================================================

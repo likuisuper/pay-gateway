@@ -8,6 +8,7 @@ import (
 	"gitee.com/zhuyunkj/pay-gateway/common/code"
 	"gitee.com/zhuyunkj/pay-gateway/common/define"
 	"gitee.com/zhuyunkj/pay-gateway/db/mysql/model"
+	"time"
 
 	"gitee.com/zhuyunkj/pay-gateway/rpc/internal/svc"
 	"gitee.com/zhuyunkj/pay-gateway/rpc/pb/pb"
@@ -63,10 +64,41 @@ func (l *AlipayAgreementModifyLogic) AlipayAgreementModify(in *pb.AlipayAgreemen
 	}
 
 	if result.Content.Code == alipay.CodeSuccess {
+		deductOrder, err := l.orderModel.GetOneByOutTradeNo(in.DeductOutTradeNo)
+		if err != nil {
+			logx.Errorf(err.Error())
+			return nil, err
+		}
+
+		deductTime, _ := time.Parse("2006-01-02", in.DeductTime)
+
+		deductOrder.DeductTime = deductTime.AddDate(0, 0, -5) // 新的截止日期的前5天可以开始扣款
+
+		err = l.orderModel.UpdateNotify(deductOrder)
+		if err != nil {
+			logx.Errorf("延期扣款：更新扣款订单失败 agreementNo=%s err=%s", err.Error())
+			return nil, err
+		}
+
 		return &pb.AlipayCommonResp{
 			Status: code.ALI_PAY_SUCCESS,
 		}, nil
 	} else {
+
+		deductOrder, err := l.orderModel.GetOneByOutTradeNo(in.DeductOutTradeNo)
+		if err != nil {
+			logx.Errorf(err.Error())
+			return nil, err
+		}
+
+		deductOrder.Status = model.PmPayOrderTablePayStatusFailed
+
+		err = l.orderModel.UpdateNotify(deductOrder)
+		if err != nil {
+			logx.Errorf("延期扣款：更新扣款订单失败 agreementNo=%s err=%s", err.Error())
+			return nil, err
+		}
+
 		return &pb.AlipayCommonResp{
 			Status: code.ALI_PAY_FAIL,
 			Desc:   "Msg: " + result.Content.Msg + " SubMsg: " + result.Content.SubMsg,
