@@ -77,6 +77,17 @@ func (l *NotifyAlipayNewLogic) NotifyAlipayNew(r *http.Request, w http.ResponseW
 	}
 
 	notifyType := r.Form.Get("notify_type")
+
+	if ok, signErr := client.VerifySign(r.Form); !ok || signErr != nil {
+		desc := "支付宝回调验签失败!!"
+		if signErr != nil {
+			desc += signErr.Error()
+		}
+		logx.Errorf(desc)
+		notifyAlipayErrNum.CounterInc()
+		return
+	}
+
 	if ALI_NOTIFY_TYPE_TRADE_SYNC == notifyType {
 
 		var outTradeNo = r.Form.Get("out_trade_no")
@@ -201,9 +212,8 @@ func (l *NotifyAlipayNewLogic) NotifyAlipayNew(r *http.Request, w http.ResponseW
 
 		agreementNo := r.Form.Get("agreement_no")
 		externalAgreementNo := r.Form.Get("external_agreement_no")
-		outTradeNo := r.Form.Get("out_trade_no")
 
-		if agreementNo == "" || externalAgreementNo == "" || outTradeNo == "" {
+		if agreementNo == "" || externalAgreementNo == "" {
 			logx.Errorf("签约回调参数异常, %s", bodyData)
 			return
 		}
@@ -214,9 +224,15 @@ func (l *NotifyAlipayNewLogic) NotifyAlipayNew(r *http.Request, w http.ResponseW
 			return
 		}
 
-		order, dbErr := l.orderModel.GetOneByOutTradeNo(outTradeNo)
+		order, dbErr := l.orderModel.GetOneByExternalAgreementNo(externalAgreementNo)
 		if dbErr != nil {
 			logx.Errorf("获取订单详情失败: %v", dbErr.Error())
+			notifyAlipaySignErrNum.CounterInc()
+			return
+		}
+
+		if order.AgreementNo != "" {
+			logx.Errorf("已经签约成功: agreementNo=%v, externalAgreementNo=%v", agreementNo, externalAgreementNo)
 			notifyAlipaySignErrNum.CounterInc()
 			return
 		}
@@ -239,7 +255,7 @@ func (l *NotifyAlipayNewLogic) NotifyAlipayNew(r *http.Request, w http.ResponseW
 
 	} else if ALI_NOTIFY_TYPE_UNSIGN == notifyType {
 		externalAgreement := r.Form.Get("external_agreement_no")
-		order, dbErr := l.orderModel.GetOneByOutTradeNo(externalAgreement)
+		order, dbErr := l.orderModel.GetOneByExternalAgreementNo(externalAgreement)
 		if dbErr != nil {
 			logx.Errorf("根据external_agreement_no获取订单失败: %v", dbErr.Error())
 			notifyAlipayUnSignErrNum.CounterInc()

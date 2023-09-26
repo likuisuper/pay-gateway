@@ -141,9 +141,7 @@ func (l *AlipayPagePayAndSignLogic) AlipayPagePayAndSign(in *pb.AlipayPageSignRe
 			AccessParams:        accessParam,
 			PeriodRuleParams:    rule,
 			ExternalAgreementNo: utils.GenerateOrderCode(l.svcCtx.Config.SnowFlake.MachineNo, l.svcCtx.Config.SnowFlake.WorkerNo),
-			SignNotifyURL: utils.EncodeUrlParams(notifyUrl, map[string]string{
-				"out_trade_no": orderInfo.OutTradeNo,
-			}),
+			SignNotifyURL:       notifyUrl,
 		}
 
 		externalAgreementNo = signParams.ExternalAgreementNo
@@ -172,8 +170,6 @@ func (l *AlipayPagePayAndSignLogic) AlipayPagePayAndSign(in *pb.AlipayPageSignRe
 			logx.Errorf("创建续费订单异常：获取所属的签约订单失败， err = %s", err.Error())
 			return nil, errors.New("创建订单异常")
 		}
-		jsonstr, _ := json.Marshal(tb)
-		logx.Errorf("debug: %v", string(jsonstr))
 		orderInfo.AgreementNo = tb.AgreementNo
 		orderInfo.ExternalAgreementNo = tb.ExternalAgreementNo
 		orderInfo.ProductType = int(in.ProductType)
