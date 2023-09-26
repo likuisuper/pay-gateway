@@ -249,6 +249,7 @@ func (l *NotifyAlipayNewLogic) NotifyAlipayNew(r *http.Request, w http.ResponseW
 		go func() {
 			defer exception.Recover()
 			dataMap := l.transFormDataToMap(bodyData)
+			dataMap["out_trade_no"] = order.OutTradeNo
 			dataMap["notify_type"] = code.APP_NOTIFY_TYPE_SIGN
 			_, _ = util.HttpPost(order.AppNotifyUrl, dataMap, 5*time.Second)
 		}()
