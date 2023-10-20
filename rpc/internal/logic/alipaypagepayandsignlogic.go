@@ -70,9 +70,10 @@ func (l *AlipayPagePayAndSignLogic) AlipayPagePayAndSign(in *pb.AlipayPageSignRe
 		}
 
 		intAmount = int(product.Amount * 100)
-		prepaidAmount = product.PrepaidAmount
 		period = product.SubscribePeriod
 		productType = product.ProductType
+
+		prepaidAmount =fmt.Sprintf("%f",product.PrepaidAmount)
 		amount =fmt.Sprintf("%f",product.Amount)
 	}
 
@@ -119,9 +120,7 @@ func (l *AlipayPagePayAndSignLogic) AlipayPagePayAndSign(in *pb.AlipayPageSignRe
 			ExecuteTime:  time.Now().Format("2006-01-02"),
 			SingleAmount: amount,
 		}
-
 		trade.TotalAmount = prepaidAmount // 订阅商品，首次付款的金额是预付金额
-
 		signParams := &alipay2.SignParams{
 			SignScene:           "INDUSTRY|DEFAULT_SCENE", // 固定参数
 			ProductCode:         "GENERAL_WITHHOLDING",    // 固定参数
@@ -131,9 +130,7 @@ func (l *AlipayPagePayAndSignLogic) AlipayPagePayAndSign(in *pb.AlipayPageSignRe
 			ExternalAgreementNo: utils.GenerateOrderCode(l.svcCtx.Config.SnowFlake.MachineNo, l.svcCtx.Config.SnowFlake.WorkerNo),
 			SignNotifyURL:       notifyUrl,
 		}
-
 		externalAgreementNo = signParams.ExternalAgreementNo
-
 		orderInfo.ExternalAgreementNo = externalAgreementNo
 
 		trade.AgreementSignParams = signParams

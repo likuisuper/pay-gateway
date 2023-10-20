@@ -5,7 +5,7 @@ type Product struct {
 	ProductName     string  `json:"product_name"`
 	ProductType     int     `json:"product_type"`
 	Amount          float64 `json:"amount"`
-	PrepaidAmount   string  `json:"prepaid_amount"`
+	PrepaidAmount   float64  `json:"prepaid_amount"`
 	SubscribePeriod int     `json:"subscribe_period"`
 	VipDays         int     `json:"vip_day"`
 	TopText         string  `json:"top_text"`
