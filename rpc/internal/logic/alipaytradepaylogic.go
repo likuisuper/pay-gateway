@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	alipay2 "gitee.com/yan-yixin0612/alipay/v3"
 	"gitee.com/zhuyunkj/pay-gateway/common/clientMgr"
 	"gitee.com/zhuyunkj/pay-gateway/common/code"
@@ -75,7 +76,7 @@ func (l *AlipayTradePayLogic) AlipayTradePay(in *pb.AlipayTradePayReq) (*pb.Alip
 
 	trade := alipay2.Trade{
 		OutTradeNo:     utils.GenerateOrderCode(l.svcCtx.Config.SnowFlake.MachineNo, l.svcCtx.Config.SnowFlake.WorkerNo),
-		TotalAmount:    product.Amount,
+		TotalAmount:    fmt.Sprintf("%f",product.Amount),
 		Subject:        product.TopText,
 		ProductCode:    "GENERAL_WITHHOLDING",
 		TimeoutExpress: "30m",
