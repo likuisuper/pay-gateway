@@ -124,6 +124,8 @@ func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (out *pb.OrderPayResp, err 
 		payAppId = pkgCfg.TiktokPayAppID
 	case pb.PayType_KsUniApp:
 		payAppId = pkgCfg.KsPayAppID
+	case pb.PayType_WxH5:
+		payAppId = pkgCfg.WechatPayAppID
 	}
 	err = l.payOrderModel.UpdatePayAppID(orderInfo.OrderSn, payAppId)
 	if err != nil {
@@ -180,8 +182,15 @@ func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (out *pb.OrderPayResp, err 
 		}
 		payOrder.KsTypeId = 1273
 		out.KsUniApp, err = l.createKsOrder(in, payOrder, payCfg.TransClientConfig())
+	case pb.PayType_WxH5:
+		payCfg, cfgErr := l.payConfigWechatModel.GetOneByAppID(pkgCfg.WechatPayAppID)
+		if cfgErr != nil {
+			err = fmt.Errorf("pkgName= %s, 读取微信支付配置失败，err:=%v", in.AppPkgName, cfgErr)
+			util.CheckError(err.Error())
+			return
+		}
+		out.WxH5, err = l.createWeChatH5Order(in, payOrder, payCfg.TransClientConfig())
 	}
-
 	return
 }
 
@@ -288,6 +297,21 @@ func (l *OrderPayLogic) createWeChatNativeOrder(in *pb.OrderPayReq, info *client
 	reply = &pb.WxNativePayReply{
 		CodeUrl:    *res.CodeUrl,
 		CodeBase64: baseEncode,
+	}
+	return
+}
+
+//微信h5支付
+func (l *OrderPayLogic) createWeChatH5Order(in *pb.OrderPayReq, info *client.PayOrder, payConf *client.WechatPayConfig) (reply *pb.WxH5PayReply, err error) {
+	payClient := client.NewWeChatCommPay(*payConf)
+	res, err := payClient.WechatPayV3H5(info)
+	if err != nil {
+		wechatNativePayFailNum.CounterInc()
+		util.CheckError("pkgName= %s, wechatUniPay，err:=%v", in.AppPkgName, err)
+		return
+	}
+	reply = &pb.WxH5PayReply{
+		Url: *res.H5Url,
 	}
 	return
 }

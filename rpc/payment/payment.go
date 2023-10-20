@@ -37,6 +37,7 @@ type (
 	OrderStatusResp               = pb.OrderStatusResp
 	PayeeInfo                     = pb.PayeeInfo
 	TiktokEcPayReply              = pb.TiktokEcPayReply
+	WxH5PayReply                  = pb.WxH5PayReply
 	WxNativePayReply              = pb.WxNativePayReply
 	WxUniAppPayReply              = pb.WxUniAppPayReply
 

@@ -12,6 +12,7 @@ import (
 	"github.com/wechatpay-apiv3/wechatpay-go/core/notify"
 	"github.com/wechatpay-apiv3/wechatpay-go/core/option"
 	"github.com/wechatpay-apiv3/wechatpay-go/services/payments"
+	"github.com/wechatpay-apiv3/wechatpay-go/services/payments/h5"
 	"github.com/wechatpay-apiv3/wechatpay-go/services/payments/jsapi"
 	"github.com/wechatpay-apiv3/wechatpay-go/services/payments/native"
 	"github.com/wechatpay-apiv3/wechatpay-go/utils"
@@ -222,6 +223,34 @@ func (l *WeChatCommPay) WechatPayV3Native(info *PayOrder) (resp *native.PrepayRe
 			},
 		},
 	)
+	if err != nil {
+		weChatHttpRequestErr.CounterInc()
+		logx.Errorf("请求微信支付发生错误,err =%v", err)
+		return
+	}
+	logx.Infof("请求微信支付成功！result = %v", result)
+	return
+}
+
+//支付请求v3  web
+func (l *WeChatCommPay) WechatPayV3H5(info *PayOrder) (resp *h5.PrepayResponse, err error) {
+	attach := fmt.Sprintf(`{"order_sn":"%s","value":%d}`, info.OrderSn, info.Amount)
+	client, err := l.getClient()
+	if err != nil {
+		logx.Errorf("请求微信支付发生错误,err =%v", err)
+		return
+	}
+	body := info.Subject
+	svc := h5.H5ApiService{Client: client}
+	request := h5.PrepayRequest{
+		Appid:       core.String(l.Config.AppId),
+		Mchid:       core.String(l.Config.MchId),
+		Description: core.String(body),
+		OutTradeNo:  core.String(info.OrderSn),
+		Attach:      core.String(attach),
+		NotifyUrl:   core.String(l.Config.NotifyUrl),
+	}
+	resp, result, err := svc.Prepay(l.Ctx, request)
 	if err != nil {
 		weChatHttpRequestErr.CounterInc()
 		logx.Errorf("请求微信支付发生错误,err =%v", err)

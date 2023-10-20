@@ -24,7 +24,7 @@ enum PayType {
   AlipayWeb = 3; //支付宝web支付
   WxWeb = 4; //微信web支付
   KsUniApp = 5; //快手小程序支付-有收银台
-  AlipayApp = 6; //支付宝app支付
+  WxH5     = 6; //微信h5支付
 }
 
 //创建支付订单返回
@@ -38,6 +38,7 @@ message OrderPayResp {
   string AlipayWeb = 7; //支付宝web支付
   WxNativePayReply WxNative = 8; //微信web支付
   KsUniAppReply KsUniApp = 9; //快手小程序
+  WxH5PayReply  WxH5  = 10;    ///微信H5支付
 }
 
 //微信uniapp支付返回
@@ -55,6 +56,11 @@ message WxNativePayReply {
   string CodeUrl = 1; //二维码链接
   string CodeBase64 = 2; //二维码的base64
 }
+
+message WxH5PayReply {
+  string Url = 1; //h5地址
+}
+
 
 //抖音小程序支付返回
 message TiktokEcPayReply {
