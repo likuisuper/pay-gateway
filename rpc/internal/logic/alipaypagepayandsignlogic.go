@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	alipay2 "gitee.com/yan-yixin0612/alipay/v3"
 	"gitee.com/zhuyunkj/pay-gateway/common/clientMgr"
 	"gitee.com/zhuyunkj/pay-gateway/common/code"
@@ -68,24 +69,11 @@ func (l *AlipayPagePayAndSignLogic) AlipayPagePayAndSign(in *pb.AlipayPageSignRe
 			return nil, errors.New("商品信息错误")
 		}
 
-		if !product.ProductSwitch {
-			parseProductDescErr.CounterInc()
-			logx.Errorf("创建订单异常：商品不允许购买 product = %s", in.ProductDesc)
-			return nil, errors.New("商品信息错误")
-		}
-
-		floatAmount, parseErr := strconv.ParseFloat(product.Amount, 64)
-		if parseErr != nil {
-			parseProductDescErr.CounterInc()
-			logx.Errorf("创建订单异常：商品金额异常 product = %s", in.ProductDesc)
-			return nil, errors.New("商品信息错误")
-		}
-
-		intAmount = int(floatAmount * 100)
+		intAmount = int(product.Amount * 100)
 		prepaidAmount = product.PrepaidAmount
 		period = product.SubscribePeriod
 		productType = product.ProductType
-		amount = product.Amount
+		amount =fmt.Sprintf("%f",product.Amount)
 	}
 
 	if intAmount <= 0 {
