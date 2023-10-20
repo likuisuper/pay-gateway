@@ -242,6 +242,10 @@ func (l *WeChatCommPay) WechatPayV3H5(info *PayOrder) (resp *h5.PrepayResponse, 
 	}
 	body := info.Subject
 	svc := h5.H5ApiService{Client: client}
+	total := int64(info.Amount)
+	amount := &h5.Amount{
+		Total: &total,
+	}
 	request := h5.PrepayRequest{
 		Appid:       core.String(l.Config.AppId),
 		Mchid:       core.String(l.Config.MchId),
@@ -249,6 +253,7 @@ func (l *WeChatCommPay) WechatPayV3H5(info *PayOrder) (resp *h5.PrepayResponse, 
 		OutTradeNo:  core.String(info.OrderSn),
 		Attach:      core.String(attach),
 		NotifyUrl:   core.String(l.Config.NotifyUrl),
+		Amount:      amount,
 	}
 	resp, result, err := svc.Prepay(l.Ctx, request)
 	if err != nil {
