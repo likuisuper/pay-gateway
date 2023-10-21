@@ -37,6 +37,7 @@ type (
 	OrderStatusResp               = pb.OrderStatusResp
 	PayeeInfo                     = pb.PayeeInfo
 	TiktokEcPayReply              = pb.TiktokEcPayReply
+	WechatRefundOrderReq          = pb.WechatRefundOrderReq
 	WxNativePayReply              = pb.WxNativePayReply
 	WxUniAppPayReply              = pb.WxUniAppPayReply
 	WxUnifiedPayReply             = pb.WxUnifiedPayReply
@@ -70,6 +71,8 @@ type (
 		AlipayAgreementModify(ctx context.Context, in *AlipayAgreementModifyReq, opts ...grpc.CallOption) (*AlipayCommonResp, error)
 		// 微信统一下单接口
 		WechatUnifiedOrder(ctx context.Context, in *AlipayPageSignReq, opts ...grpc.CallOption) (*WxUnifiedPayReply, error)
+		// 微信统一支付退款
+		WechatRefundOrder(ctx context.Context, in *WechatRefundOrderReq, opts ...grpc.CallOption) (*CreateRefundResp, error)
 	}
 
 	defaultPayment struct {
@@ -165,4 +168,10 @@ func (m *defaultPayment) AlipayAgreementModify(ctx context.Context, in *AlipayAg
 func (m *defaultPayment) WechatUnifiedOrder(ctx context.Context, in *AlipayPageSignReq, opts ...grpc.CallOption) (*WxUnifiedPayReply, error) {
 	client := pb.NewPaymentClient(m.cli.Conn())
 	return client.WechatUnifiedOrder(ctx, in, opts...)
+}
+
+// 微信统一支付退款
+func (m *defaultPayment) WechatRefundOrder(ctx context.Context, in *WechatRefundOrderReq, opts ...grpc.CallOption) (*CreateRefundResp, error) {
+	client := pb.NewPaymentClient(m.cli.Conn())
+	return client.WechatRefundOrder(ctx, in, opts...)
 }

@@ -105,3 +105,9 @@ func (s *PaymentServer) WechatUnifiedOrder(ctx context.Context, in *pb.AlipayPag
 	l := logic.NewWechatUnifiedOrderLogic(ctx, s.svcCtx)
 	return l.WechatUnifiedOrder(in)
 }
+
+// 微信统一支付退款
+func (s *PaymentServer) WechatRefundOrder(ctx context.Context, in *pb.WechatRefundOrderReq) (*pb.CreateRefundResp, error) {
+	l := logic.NewWechatRefundOrderLogic(ctx, s.svcCtx)
+	return l.WechatRefundOrder(in)
+}

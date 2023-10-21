@@ -33,6 +33,7 @@ const (
 	Payment_AlipayTradePay_FullMethodName             = "/payment.Payment/AlipayTradePay"
 	Payment_AlipayAgreementModify_FullMethodName      = "/payment.Payment/AlipayAgreementModify"
 	Payment_WechatUnifiedOrder_FullMethodName         = "/payment.Payment/WechatUnifiedOrder"
+	Payment_WechatRefundOrder_FullMethodName          = "/payment.Payment/WechatRefundOrder"
 )
 
 // PaymentClient is the client API for Payment service.
@@ -67,6 +68,8 @@ type PaymentClient interface {
 	AlipayAgreementModify(ctx context.Context, in *AlipayAgreementModifyReq, opts ...grpc.CallOption) (*AlipayCommonResp, error)
 	//微信统一下单接口
 	WechatUnifiedOrder(ctx context.Context, in *AlipayPageSignReq, opts ...grpc.CallOption) (*WxUnifiedPayReply, error)
+	//微信统一支付退款
+	WechatRefundOrder(ctx context.Context, in *WechatRefundOrderReq, opts ...grpc.CallOption) (*CreateRefundResp, error)
 }
 
 type paymentClient struct {
@@ -203,6 +206,15 @@ func (c *paymentClient) WechatUnifiedOrder(ctx context.Context, in *AlipayPageSi
 	return out, nil
 }
 
+func (c *paymentClient) WechatRefundOrder(ctx context.Context, in *WechatRefundOrderReq, opts ...grpc.CallOption) (*CreateRefundResp, error) {
+	out := new(CreateRefundResp)
+	err := c.cc.Invoke(ctx, Payment_WechatRefundOrder_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PaymentServer is the server API for Payment service.
 // All implementations must embed UnimplementedPaymentServer
 // for forward compatibility
@@ -235,6 +247,8 @@ type PaymentServer interface {
 	AlipayAgreementModify(context.Context, *AlipayAgreementModifyReq) (*AlipayCommonResp, error)
 	//微信统一下单接口
 	WechatUnifiedOrder(context.Context, *AlipayPageSignReq) (*WxUnifiedPayReply, error)
+	//微信统一支付退款
+	WechatRefundOrder(context.Context, *WechatRefundOrderReq) (*CreateRefundResp, error)
 	mustEmbedUnimplementedPaymentServer()
 }
 
@@ -283,6 +297,9 @@ func (UnimplementedPaymentServer) AlipayAgreementModify(context.Context, *Alipay
 }
 func (UnimplementedPaymentServer) WechatUnifiedOrder(context.Context, *AlipayPageSignReq) (*WxUnifiedPayReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method WechatUnifiedOrder not implemented")
+}
+func (UnimplementedPaymentServer) WechatRefundOrder(context.Context, *WechatRefundOrderReq) (*CreateRefundResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method WechatRefundOrder not implemented")
 }
 func (UnimplementedPaymentServer) mustEmbedUnimplementedPaymentServer() {}
 
@@ -549,6 +566,24 @@ func _Payment_WechatUnifiedOrder_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Payment_WechatRefundOrder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(WechatRefundOrderReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PaymentServer).WechatRefundOrder(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Payment_WechatRefundOrder_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PaymentServer).WechatRefundOrder(ctx, req.(*WechatRefundOrderReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Payment_ServiceDesc is the grpc.ServiceDesc for Payment service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -611,6 +646,10 @@ var Payment_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "WechatUnifiedOrder",
 			Handler:    _Payment_WechatUnifiedOrder_Handler,
+		},
+		{
+			MethodName: "WechatRefundOrder",
+			Handler:    _Payment_WechatRefundOrder_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

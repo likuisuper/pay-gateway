@@ -21,3 +21,13 @@ const (
 	APP_NOTIFY_TYPE_UNSIGN          = "unsign"
 	APP_NOTIFY_TYPE_SIGN_FEE_FAILED = "sign_fee_failed"
 )
+
+//订单状态  1:关闭，0:未支付，1:已支付，2:支付失败，3:已退款 4：退款中
+const (
+	ORDER_CLOSE     = -1
+	ORDER_NO_PAY    = 0
+	ORDER_SUCCESS   = 1
+	ORDER_FAIL      = 2
+	ORDER_REFUNDED  = 3
+	ORDER_REFUNDING = 4
+)

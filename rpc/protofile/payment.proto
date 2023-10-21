@@ -221,6 +221,18 @@ message AlipayAgreementModifyReq {
   string DeductOutTradeNo = 4; // 续费扣款单
 }
 
+//微信支付退款
+message WechatRefundOrderReq {
+  string	OutTradeNo  =1;  //内部订单号
+  int64	TotalFee    =2;  //订单总金额，单位为分
+  int64	RefundFee   =3;  //退款总金额，订单总金额，单位为分
+  string RefundReason = 4; //退款理由
+}
+
+
+
+
+
 //============== service ==============================================================================
 
 service Payment {
@@ -265,5 +277,8 @@ service Payment {
 
   //微信统一下单接口
   rpc WechatUnifiedOrder(AlipayPageSignReq) returns (WxUnifiedPayReply);
+
+  //微信统一支付退款
+  rpc WechatRefundOrder(WechatRefundOrderReq) returns (CreateRefundResp);
 
 }

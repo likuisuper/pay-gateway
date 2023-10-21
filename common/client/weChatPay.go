@@ -18,6 +18,7 @@ import (
 	"github.com/wechatpay-apiv3/wechatpay-go/services/payments/h5"
 	"github.com/wechatpay-apiv3/wechatpay-go/services/payments/jsapi"
 	"github.com/wechatpay-apiv3/wechatpay-go/services/payments/native"
+	"github.com/wechatpay-apiv3/wechatpay-go/services/refunddomestic"
 	"github.com/wechatpay-apiv3/wechatpay-go/utils"
 	"github.com/zeromicro/go-zero/core/logx"
 	"io/ioutil"
@@ -465,4 +466,43 @@ func (l *WeChatCommPay) CloseOrder(orderCode string) error {
 	}
 	logx.Slowf("关闭订单返回信息状态:，%d", result.Response.StatusCode)
 	return nil
+}
+
+const refundReason = "用户退款"
+
+//订单退款
+func (l *WeChatCommPay)RefundOrder (refundOrder *RefundOrder) ( *refunddomestic.Refund, error)  {
+	client, err := l.getClient()
+	if err != nil {
+		logx.Errorf("关闭订单发生错误,err =%v", err)
+		return nil,err
+	}
+	svc := refunddomestic.RefundsApiService{Client: client}
+	resp, result, err := svc.Create(l.Ctx,
+		refunddomestic.CreateRequest{
+			SubMchid:      core.String(l.Config.MchId),
+			OutTradeNo:    core.String(refundOrder.OutTradeNo),
+			OutRefundNo:   core.String(refundOrder.OutRefundNo),
+			Reason:        core.String(refundReason),
+			NotifyUrl:     core.String(l.Config.NotifyUrl),
+			FundsAccount:  refunddomestic.REQFUNDSACCOUNT_AVAILABLE.Ptr(),
+			Amount: &refunddomestic.AmountReq{
+				Currency: core.String("CNY"),
+				From: []refunddomestic.FundsFromItem{refunddomestic.FundsFromItem{
+					Account: refunddomestic.ACCOUNT_AVAILABLE.Ptr(),
+					Amount:  core.Int64(444),
+				}},
+				Refund: core.Int64(refundOrder.RefundFee),
+				Total:  core.Int64(refundOrder.TotalFee),
+			},
+		},
+	)
+	if err != nil {
+		// 处理错误
+		logx.Errorf("退款 call Create err:%s", err)
+	} else {
+		// 处理返回结果
+		logx.Infof("退款 status=%d resp=%s", result.Response.StatusCode, resp)
+	}
+	return resp,nil
 }

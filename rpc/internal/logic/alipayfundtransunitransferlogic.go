@@ -110,6 +110,5 @@ func (l *AlipayFundTransUniTransferLogic) AlipayFundTransUniTransfer(in *pb.Alip
 		err = fmt.Errorf("fundTransOrderModel Create err: %v", err)
 		util.CheckError(err.Error())
 	}
-
 	return &pb.Empty{}, nil
 }

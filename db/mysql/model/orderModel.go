@@ -130,3 +130,14 @@ func (o *OrderModel) GetRangeData(id int) (records []*OrderTable, err error) {
 		Find(&records).Error
 	return
 }
+
+func (o *OrderModel) UpdateStatusByOutTradeNo(outTradeNo string, status int) error {
+	err := o.DB.Table("order").Where("`out_trade_no` = ? ", outTradeNo).Updates(map[string]interface{}{
+		"status": status,
+	})
+	if err != nil {
+		logx.Errorf("UpdateStatusByOutTradeNo，err=%v", err)
+		updateOrderNotifyErr.CounterInc()
+	}
+	return nil
+}
