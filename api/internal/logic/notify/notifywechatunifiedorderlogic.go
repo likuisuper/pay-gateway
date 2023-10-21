@@ -114,9 +114,9 @@ func (l *NotifyWechatUnifiedOrderLogic) NotifyWechatUnifiedOrder(r *http.Request
 		//回调业务方接口
 		go func() {
 			defer exception.Recover()
-			dataMap :=make(map[string]interface{})
+			dataMap := make(map[string]interface{})
 			dataMap["notify_type"] = code.APP_NOTIFY_TYPE_PAY
-			dataMap["notify_type"] = code.APP_NOTIFY_TYPE_PAY
+			dataMap["out_trade_no"] = orderInfo.OutTradeNo
 			_, _ = util.HttpPost(orderInfo.AppNotifyUrl, dataMap, 5*time.Second)
 		}()
 
