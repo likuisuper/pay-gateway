@@ -104,8 +104,9 @@ func (l *WechatUnifiedOrderLogic) createWeChatUnifiedOrder(orderInfo *model.Orde
 		return
 	}
 	reply = &pb.WxUnifiedPayReply{
-		Prepayid: res.PrepayID,
-		MwebUrl:  res.MwebURL,
+		Prepayid:   res.PrepayID,
+		MwebUrl:    res.MwebURL,
+		OutTradeNo: orderInfo.OutTradeNo,
 	}
 	return
 }

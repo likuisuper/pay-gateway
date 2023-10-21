@@ -49,6 +49,11 @@ type WeChatResp struct {
 	Message string `json:"message,optional"`
 }
 
+type WeChatUnifiedResp struct {
+	ReturnCode string `json:"return_code,optional"`
+	ReturnMsg  string `json:"return_msg,optional"`
+}
+
 type KsResp struct {
 	Result    int    `json:"result"`     //1-成功，其他-失败。失败小程序平台会尝试重推此消息
 	MessageId string `json:"message_id"` //当前消息的message_id

@@ -55,6 +55,11 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 				Path:    "/notify/alipayNew/sign",
 				Handler: notify.NotifyAlipaySignHandler(serverCtx),
 			},
+			{
+				Method:  http.MethodPost,
+				Path:    "/notify/unified/wechat",
+				Handler: notify.NotifyWechatUnifiedOrderHandler(serverCtx),
+			},
 		},
 	)
 

@@ -23,6 +23,10 @@ type (
         Code string `json:"code,optional"`
         Message string `json:"message,optional"`
     }
+    WeChatUnifiedResp{
+        ReturnCode string `json:"return_code,optional"`
+        ReturnMsg  string `json:"return_msg,optional"`
+    }
 )
 
 type (
@@ -71,4 +75,10 @@ service payment {
     )
     @handler notifyAlipaySign
     post /notify/alipayNew/sign (EmptyReq) returns (EmptyReq)
+
+    @doc(
+        summary: "微信统一支付回调"
+    )
+    @handler notifyWechatUnifiedOrder
+    post /notify/unified/wechat (EmptyReq) returns (WeChatResp)
 }

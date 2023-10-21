@@ -145,7 +145,7 @@ func (c *CrontabOrder) PaySubscribeFee(tb *dbmodel.OrderTable) error {
 
 	trade := alipay2.Trade{
 		OutTradeNo:     tb.OutTradeNo,
-		TotalAmount:    product.Amount,
+		TotalAmount:    fmt.Sprintf("%f", product.Amount),
 		Subject:        product.TopText,
 		ProductCode:    "GENERAL_WITHHOLDING",
 		TimeoutExpress: "30m",

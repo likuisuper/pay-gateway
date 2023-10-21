@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/md5"
 	"encoding/hex"
+	"encoding/json"
 	"encoding/xml"
 	"errors"
 	"fmt"
@@ -236,7 +237,8 @@ func (l *WeChatCommPay) WechatPayV3Native(info *PayOrder) (resp *native.PrepayRe
 
 //支付请求  统一下单
 func (l *WeChatCommPay) WechatPayUnified(info *PayOrder) (resp *WXOrderReply, err error) {
-	attach := fmt.Sprintf(`{"order_sn":"%s","value":%d}`, info.OrderSn, info.Amount)
+	attchByte,_:= json.Marshal(info)
+	attach := string(attchByte)
 	scenInfo := fmt.Sprintf(`{"h5_info": {"type":"Wap","wap_url": "","wap_name": "会员充值"}}`)
 	NonceStr := getRandStr(32)
 	params := &WXOrderParam{
