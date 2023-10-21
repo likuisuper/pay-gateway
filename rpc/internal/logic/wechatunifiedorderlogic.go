@@ -24,6 +24,7 @@ type WechatUnifiedOrderLogic struct {
 	logx.Logger
 	appConfigModel       *model.PmAppConfigModel
 	payConfigWechatModel *model.PmPayConfigWechatModel
+	orderModel           *model.OrderModel
 }
 
 func NewWechatUnifiedOrderLogic(ctx context.Context, svcCtx *svc.ServiceContext) *WechatUnifiedOrderLogic {
@@ -33,6 +34,7 @@ func NewWechatUnifiedOrderLogic(ctx context.Context, svcCtx *svc.ServiceContext)
 		Logger:               logx.WithContext(ctx),
 		appConfigModel:       model.NewPmAppConfigModel(define.DbPayGateway),
 		payConfigWechatModel: model.NewPmPayConfigWechatModel(define.DbPayGateway),
+		orderModel:           model.NewOrderModel(define.DbPayGateway),
 	}
 }
 
@@ -80,6 +82,14 @@ func (l *WechatUnifiedOrderLogic) WechatUnifiedOrder(in *pb.AlipayPageSignReq) (
 	if err != nil {
 		return nil, err
 	}
+
+	err = l.orderModel.Create(orderInfo)
+	if err != nil {
+		payAndSignCreateOrderErr.CounterInc()
+		logx.Errorf("创建订单异常：创建订单表失败， err = %s", err.Error())
+		return nil, errors.New("创建订单异常")
+	}
+
 	return data, nil
 }
 
