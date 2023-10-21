@@ -3,6 +3,8 @@ package client
 import (
 	"context"
 	"crypto/md5"
+	"encoding/hex"
+	"encoding/xml"
 	"errors"
 	"fmt"
 	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
@@ -17,9 +19,9 @@ import (
 	"github.com/wechatpay-apiv3/wechatpay-go/services/payments/native"
 	"github.com/wechatpay-apiv3/wechatpay-go/utils"
 	"github.com/zeromicro/go-zero/core/logx"
+	"io/ioutil"
 	"math/rand"
 	"net/http"
-	"reflect"
 	"sort"
 	"strings"
 	"time"
@@ -48,14 +50,14 @@ type WechatPayConfig struct {
 
 //WXOrderParam	微信请求参数
 type WXOrderParam struct {
-	APPID          string `xml:"appid"`     //公众账号ID
-	MchID          string `xml:"mch_id"`    //商户号
-	NonceStr       string `xml:"nonce_str"` //随机字符串
-	SignType       string `xml:"sign_type"`
+	APPID          string `xml:"appid"`            //公众账号ID
+	MchID          string `xml:"mch_id"`           //商户号
+	NonceStr       string `xml:"nonce_str"`        //随机字符串
+	Attach         string `xml:"attach"`           //附加数据
 	Sign           string `xml:"sign"`             //签名
 	Body           string `xml:"body"`             //商品描述
 	OutTradeNo     string `xml:"out_trade_no"`     //商户订单号
-	TotalFee       string `xml:"total_fee"`        //总金额
+	TotalFee       int    `xml:"total_fee"`        //总金额
 	SpbillCreateIP string `xml:"spbill_create_ip"` //终端IP
 	NotifyUrl      string `xml:"notify_url"`       //通知地址
 	TradeType      string `xml:"trade_type"`       //交易类型
@@ -117,37 +119,36 @@ func NewWeChatCommPay(config WechatPayConfig) *WeChatCommPay {
 	}
 }
 
-/*
-*	WXmd5Sign 微信 md5 签名
-*	param  data		interface{}
-*	reply	sign	生成的签名
- */
-func (w *WeChatCommPay) WXmd5Sign(data interface{}) (sign string) {
-	val := make(map[string]string)
-	datavalue := reflect.ValueOf(data)
-	if datavalue.Kind() != reflect.Struct {
-		return ""
+func WxPayCalcSign(mReq map[string]interface{}, key string) (sign string) {
+	//STEP 1, 对key进行升序排序.
+	sorted_keys := make([]string, 0)
+	for k, _ := range mReq {
+		sorted_keys = append(sorted_keys, k)
 	}
-	var keys []string
-	for i := 0; i < datavalue.NumField(); i++ {
-		k := datavalue.Type().Field(i)
-		kl := k.Tag.Get("xml")
-		v := fmt.Sprintf("%v", datavalue.Field(i))
-		if v != "" && v != "0" && kl != "sign" {
-			val[kl] = v
-			keys = append(keys, kl)
+	sort.Strings(sorted_keys)
+
+	//STEP2, 对key=value的键值对用&连接起来，略过空值
+	var signStrings string
+	for _, k := range sorted_keys {
+		value := fmt.Sprintf("%v", mReq[k])
+		if value != "" {
+			signStrings = signStrings + k + "=" + value + "&"
 		}
 	}
-	sort.Strings(keys)
-	var stra string
-	for _, v := range keys {
-		stra = stra + v + "=" + val[v] + "&"
+
+	//STEP3, 在键值对的最后加上key=API_KEY
+	if key != "" {
+		signStrings = signStrings + "key=" + key
 	}
-	strb := stra + "key=" + w.Config.ApiKey
-	hstr := md5.Sum([]byte(strb))
-	sum := fmt.Sprintf("%x", hstr)
-	sign = strings.ToUpper(sum)
-	return sign
+
+
+	//STEP4, 进行MD5签名并且将所有字符转为大写.
+	md5Ctx := md5.New()
+	md5Ctx.Write([]byte(signStrings)) //
+	cipherStr := md5Ctx.Sum(nil)
+	upperSign := strings.ToUpper(hex.EncodeToString(cipherStr))
+
+	return upperSign
 }
 
 /*
@@ -208,6 +209,7 @@ func (l *WeChatCommPay) WechatPayV3Native(info *PayOrder) (resp *native.PrepayRe
 		logx.Errorf("请求微信支付发生错误,err =%v", err)
 		return
 	}
+
 	body := info.Subject
 	svc := native.NativeApiService{Client: client}
 	resp, result, err := svc.Prepay(l.Ctx,
@@ -232,7 +234,74 @@ func (l *WeChatCommPay) WechatPayV3Native(info *PayOrder) (resp *native.PrepayRe
 	return
 }
 
-//支付请求v3  web
+//支付请求  统一下单
+func (l *WeChatCommPay) WechatPayUnified(info *PayOrder) (resp *WXOrderReply, err error) {
+	attach := fmt.Sprintf(`{"order_sn":"%s","value":%d}`, info.OrderSn, info.Amount)
+	scenInfo := fmt.Sprintf(`{"h5_info": {"type":"Wap","wap_url": "","wap_name": "会员充值"}}`)
+	NonceStr := getRandStr(32)
+	params := &WXOrderParam{
+		APPID:          l.Config.AppId,
+		MchID:          l.Config.MchId,
+		NonceStr:       NonceStr,
+		TradeType:      WechatTradeType,
+		Body:           info.Subject,
+		OutTradeNo:     info.OrderSn,
+		TotalFee:       info.Amount,
+		SpbillCreateIP: "117.28.134.220",
+		NotifyUrl:      l.Config.NotifyUrl,
+		SceneInfo:      scenInfo,
+		Attach:         attach,
+	}
+	var m map[string]interface{}
+	m = make(map[string]interface{}, 12)
+	m["appid"] = params.APPID
+	m["mch_id"] = params.MchID
+	m["nonce_str"] = params.NonceStr
+	m["trade_type"] = params.TradeType
+	m["body"] = params.Body
+	m["out_trade_no"] = params.OutTradeNo
+	m["total_fee"] = params.TotalFee
+	m["spbill_create_ip"] = params.SpbillCreateIP
+	m["notify_url"] = params.NotifyUrl
+	m["scene_info"] = params.SceneInfo
+	m["attach"] = params.Attach
+	params.Sign = WxPayCalcSign(m, l.Config.ApiKey)
+	bytes_req, err := xml.Marshal(params)
+	if err != nil {
+		logx.Errorf("以xml形式编码发送错误,原因:%v",err)
+		return
+	}
+	str_req := string(bytes_req)
+	str_req = strings.Replace(str_req, "WXOrderParam", "xml", -1)
+	req, err := http.NewRequest("POST", WeChatRequestUri, strings.NewReader(str_req))
+	if err != nil {
+		logx.Errorf("http.NewRequest错误,原因:%v",err)
+		return nil,err
+	}
+	req.Header.Set("Content-Type", "text/xml;charset=utf-8")
+	c := http.Client{}
+	httpResp, _err := c.Do(req)
+	if _err != nil {
+		logx.Errorf("http请求错误错误,原因:%v",err)
+		return nil,_err
+
+	}
+	defer httpResp.Body.Close()
+	body, bodyErr := ioutil.ReadAll(httpResp.Body)
+	if bodyErr != nil {
+		logx.Errorf("ReaddBody Error,原因:%v",err)
+		return nil, err
+	}
+	var wechatReply WXOrderReply
+	xmlErr := xml.Unmarshal(body, &wechatReply)
+	if xmlErr != nil {
+		logx.Errorf("ReaddBody Error,原因:%v",err)
+		return nil, xmlErr
+	}
+	return &wechatReply, nil
+}
+
+//支付请求v3  h5
 func (l *WeChatCommPay) WechatPayV3H5(info *PayOrder) (resp *h5.PrepayResponse, err error) {
 	attach := fmt.Sprintf(`{"order_sn":"%s","value":%d}`, info.OrderSn, info.Amount)
 	client, err := l.getClient()

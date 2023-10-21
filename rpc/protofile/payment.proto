@@ -24,7 +24,7 @@ enum PayType {
   AlipayWeb = 3; //支付宝web支付
   WxWeb = 4; //微信web支付
   KsUniApp = 5; //快手小程序支付-有收银台
-  WxH5     = 6; //微信h5支付
+  WxUnified  = 6; //微信统一下单接口
 }
 
 //创建支付订单返回
@@ -38,7 +38,7 @@ message OrderPayResp {
   string AlipayWeb = 7; //支付宝web支付
   WxNativePayReply WxNative = 8; //微信web支付
   KsUniAppReply KsUniApp = 9; //快手小程序
-  WxH5PayReply  WxH5  = 10;    ///微信H5支付
+  WxUnifiedPayReply  WxUnified  = 10;    ///微信统一下单支付
 }
 
 //微信uniapp支付返回
@@ -57,8 +57,9 @@ message WxNativePayReply {
   string CodeBase64 = 2; //二维码的base64
 }
 
-message WxH5PayReply {
-  string Url = 1; //h5地址
+message WxUnifiedPayReply {
+  string Prepayid = 1; //h5地址
+  string MwebUrl = 2; //h5地址
 }
 
 
@@ -154,7 +155,7 @@ message AlipayPageSignReq {
   string Subject = 2; //订单标题
   string NotifyURL = 3; //通知回调
   string AppPkgName = 4; //应用包名
-  int64 ProductType = 5;    //商品类型
+  int64 ProductType = 5; //商品类型
   int64 ProductId = 6;  //商品id
   string ProductDesc = 7; //商品详情
   string BelongSignOrder = 8; //对应的签约订单单号（订阅续费时需要）
@@ -172,6 +173,7 @@ message AlipayPageUnSignReq {
   string OutTradeNo = 1; //商户唯一订单号
   string AppPkgName = 2; //应用包名
 }
+
 
 message AlipayPageSignResp {
   string URL = 1;
@@ -259,4 +261,8 @@ service Payment {
 
   //支付宝：签约延期
   rpc AlipayAgreementModify(AlipayAgreementModifyReq) returns (AlipayCommonResp);
+
+  //微信统一下单接口
+  rpc WechatUnifiedOrder(AlipayPageSignReq) returns (WxUnifiedPayReply);
+
 }

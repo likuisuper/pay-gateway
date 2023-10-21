@@ -99,3 +99,9 @@ func (s *PaymentServer) AlipayAgreementModify(ctx context.Context, in *pb.Alipay
 	l := logic.NewAlipayAgreementModifyLogic(ctx, s.svcCtx)
 	return l.AlipayAgreementModify(in)
 }
+
+// 微信统一下单接口
+func (s *PaymentServer) WechatUnifiedOrder(ctx context.Context, in *pb.AlipayPageSignReq) (*pb.WxUnifiedPayReply, error) {
+	l := logic.NewWechatUnifiedOrderLogic(ctx, s.svcCtx)
+	return l.WechatUnifiedOrder(in)
+}

@@ -37,9 +37,9 @@ type (
 	OrderStatusResp               = pb.OrderStatusResp
 	PayeeInfo                     = pb.PayeeInfo
 	TiktokEcPayReply              = pb.TiktokEcPayReply
-	WxH5PayReply                  = pb.WxH5PayReply
 	WxNativePayReply              = pb.WxNativePayReply
 	WxUniAppPayReply              = pb.WxUniAppPayReply
+	WxUnifiedPayReply             = pb.WxUnifiedPayReply
 
 	Payment interface {
 		// 创建支付订单
@@ -68,6 +68,8 @@ type (
 		AlipayTradePay(ctx context.Context, in *AlipayTradePayReq, opts ...grpc.CallOption) (*AlipayCommonResp, error)
 		// 支付宝：签约延期
 		AlipayAgreementModify(ctx context.Context, in *AlipayAgreementModifyReq, opts ...grpc.CallOption) (*AlipayCommonResp, error)
+		// 微信统一下单接口
+		WechatUnifiedOrder(ctx context.Context, in *AlipayPageSignReq, opts ...grpc.CallOption) (*WxUnifiedPayReply, error)
 	}
 
 	defaultPayment struct {
@@ -157,4 +159,10 @@ func (m *defaultPayment) AlipayTradePay(ctx context.Context, in *AlipayTradePayR
 func (m *defaultPayment) AlipayAgreementModify(ctx context.Context, in *AlipayAgreementModifyReq, opts ...grpc.CallOption) (*AlipayCommonResp, error) {
 	client := pb.NewPaymentClient(m.cli.Conn())
 	return client.AlipayAgreementModify(ctx, in, opts...)
+}
+
+// 微信统一下单接口
+func (m *defaultPayment) WechatUnifiedOrder(ctx context.Context, in *AlipayPageSignReq, opts ...grpc.CallOption) (*WxUnifiedPayReply, error) {
+	client := pb.NewPaymentClient(m.cli.Conn())
+	return client.WechatUnifiedOrder(ctx, in, opts...)
 }
