@@ -257,7 +257,13 @@ func (l *WeChatCommPay) WechatPayUnified(info *PayOrder) (resp *WXOrderReply, er
 	requireUri := WeChatRequestUri
 	attchByte, _ := json.Marshal(info)
 	attach := string(attchByte)
-	scenInfo := `{"h5_info": {"type":"Wap","wap_name": "会员充值"}}`
+	sceneInfo := `{
+	"h5_info": {
+		"type": "Wap",
+		"wap_url": "https://kuaikanju-h5.yunjuhudong.com",
+		"wap_name": "快看剧"
+	}
+}`
 	NonceStr := getRandStr(32)
 	params := &WXOrderParam{
 		APPID:          l.Config.AppId,
@@ -269,7 +275,7 @@ func (l *WeChatCommPay) WechatPayUnified(info *PayOrder) (resp *WXOrderReply, er
 		TotalFee:       info.Amount,
 		SpbillCreateIP: info.IP,
 		NotifyUrl:      l.Config.NotifyUrl,
-		SceneInfo:      scenInfo,
+		SceneInfo:      sceneInfo,
 		Attach:         attach,
 	}
 	var m map[string]interface{}
