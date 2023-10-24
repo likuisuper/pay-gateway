@@ -267,7 +267,7 @@ func (l *WeChatCommPay) WechatPayUnified(info *PayOrder) (resp *WXOrderReply, er
 		Body:           info.Subject,
 		OutTradeNo:     info.OrderSn,
 		TotalFee:       info.Amount,
-		SpbillCreateIP: "117.28.134.220",
+		SpbillCreateIP: info.IP,
 		NotifyUrl:      l.Config.NotifyUrl,
 		SceneInfo:      scenInfo,
 		Attach:         attach,

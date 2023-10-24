@@ -78,7 +78,7 @@ func (l *WechatUnifiedOrderLogic) WechatUnifiedOrder(in *pb.AlipayPageSignReq) (
 		ProductID:    int(in.ProductId),
 		Subject:      in.Subject,
 	}
-	data, err := l.createWeChatUnifiedOrder(orderInfo)
+	data, err := l.createWeChatUnifiedOrder(orderInfo,in.Ip)
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +94,7 @@ func (l *WechatUnifiedOrderLogic) WechatUnifiedOrder(in *pb.AlipayPageSignReq) (
 }
 
 //微信统一支付
-func (l *WechatUnifiedOrderLogic) createWeChatUnifiedOrder(orderInfo *model.OrderTable) (reply *pb.WxUnifiedPayReply, err error) {
+func (l *WechatUnifiedOrderLogic) createWeChatUnifiedOrder(orderInfo *model.OrderTable,ip string) (reply *pb.WxUnifiedPayReply, err error) {
 	payCfg, cfgErr := l.payConfigWechatModel.GetOneByAppID(orderInfo.PayAppID)
 	if cfgErr != nil {
 		err = fmt.Errorf("pkgName= %s, 读取微信支付配置失败，err:=%v", orderInfo.AppPkg, cfgErr)
@@ -106,6 +106,7 @@ func (l *WechatUnifiedOrderLogic) createWeChatUnifiedOrder(orderInfo *model.Orde
 		OrderSn: orderInfo.OutTradeNo,
 		Amount:  orderInfo.Amount,
 		Subject: orderInfo.Subject,
+		IP: ip,
 	}
 	res, err := payClient.WechatPayUnified(payInfo)
 	if err != nil {

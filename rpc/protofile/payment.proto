@@ -160,6 +160,7 @@ message AlipayPageSignReq {
   int64 ProductId = 6;  //商品id
   string ProductDesc = 7; //商品详情
   string BelongSignOrder = 8; //对应的签约订单单号（订阅续费时需要）
+  string Ip   = 9;            //客户端ip地址
 }
 
 message AlipayTradeReq {
