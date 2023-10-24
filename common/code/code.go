@@ -9,8 +9,8 @@ const (
 
 const (
 	PRODUCT_TYPE_COMMON        = 0 // 普通商品
-	PRODUCT_TYPE_VIP           = 1 // 会员商品
-	PRODUCT_TYPE_SUBSCRIBE     = 2 // 订阅商品
+	PRODUCT_TYPE_SUBSCRIBE     = 1 // 订阅商品
+	PRODUCT_TYPE_VIP           = 2 // 会员商品
 	PRODUCT_TYPE_SUBSCRIBE_FEE = 3 // 订阅商品续费
 )
 

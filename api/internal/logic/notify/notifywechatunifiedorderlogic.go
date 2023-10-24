@@ -92,7 +92,6 @@ func (l *NotifyWechatUnifiedOrderLogic) NotifyWechatUnifiedOrder(r *http.Request
 		return nil, err
 	}
 	logx.Slow("NotifyWechatUnifiedOrder:", string(body))
-
 	var data wechatCallbackRepay
 	err = xml.Unmarshal(body, &data)
 	if err != nil {
@@ -134,6 +133,8 @@ func (l *NotifyWechatUnifiedOrderLogic) NotifyWechatUnifiedOrder(r *http.Request
 				l.refundModel.Update(refundReply.OutRefundNo, orderInfo)
 				resp.Code = "SUCCESS"
 				resp.Message = "OK"
+			} else {
+				logx.Errorf("未获取到退款单信息:RefundId:%s,OutTradeNo:%s", refundReply.RefundId, refundReply.OutTradeNo)
 			}
 		} else {
 			var attachInfo AttachInfo
@@ -147,6 +148,10 @@ func (l *NotifyWechatUnifiedOrderLogic) NotifyWechatUnifiedOrder(r *http.Request
 			if dbErr != nil {
 				dbErr = fmt.Errorf("获取订单失败！err=%v,order_code = %s", dbErr, attachInfo.OrderSn)
 				util.CheckError(dbErr.Error())
+				return
+			}
+			if orderInfo.PayAppID != data.Appid || orderInfo.Amount != data.CashFee {
+				logx.Errorf("当前回调的订单信息不匹配", attachInfo.OrderSn)
 				return
 			}
 			if orderInfo.Status != model.PmPayOrderTablePayStatusNo {
@@ -174,9 +179,7 @@ func (l *NotifyWechatUnifiedOrderLogic) NotifyWechatUnifiedOrder(r *http.Request
 				dataMap["out_trade_no"] = orderInfo.OutTradeNo
 				_, _ = util.HttpPost(orderInfo.AppNotifyUrl, dataMap, 5*time.Second)
 			}()
-
 		}
-
 	}
 	return
 }

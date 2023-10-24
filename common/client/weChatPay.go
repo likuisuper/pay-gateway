@@ -38,6 +38,8 @@ const (
 	WeChatRequestUri = "https://api.mch.weixin.qq.com/pay/unifiedorder"
 	WechatTradeType  = "MWEB"
 	WechatSignType   = "MD5"
+	WechatSandboxUri = "https://api.mch.weixin.qq.com/xdc/apiv2sandbox/pay/unifiedorder"
+	SandboxUriSign   = "https://api.mch.weixin.qq.com/xdc/apiv2getsignkey/sign/getsignkey"
 )
 
 //微信支付配置
@@ -81,6 +83,21 @@ type WXOrderReply struct {
 	TradeType  string `xml:"trade_type"`   //交易类型
 	PrepayID   string `xml:"prepay_id"`    //预支付交易会话标识
 	MwebURL    string `xml:"mweb_url"`     //支付跳转链接
+}
+
+//沙箱请求体
+type ShaBoxSignReq struct {
+	MchID    string `xml:"mch_id"`    //商户号
+	NonceStr string `xml:"nonce_str"` //随机字符串
+	Sign     string `xml:"sign"`      //签名
+}
+
+//沙箱signKey返回体
+
+type ShaBoxSignResp struct {
+	ReturnCode     string `xml:"return_code"`
+	ReturnMsg      string `xml:"return_msg"`
+	SandboxSignkey string `xml:"sandbox_signkey"`
 }
 
 //nuiApp调起支付参数
@@ -142,7 +159,6 @@ func WxPayCalcSign(mReq map[string]interface{}, key string) (sign string) {
 	if key != "" {
 		signStrings = signStrings + "key=" + key
 	}
-
 
 	//STEP4, 进行MD5签名并且将所有字符转为大写.
 	md5Ctx := md5.New()
@@ -238,9 +254,10 @@ func (l *WeChatCommPay) WechatPayV3Native(info *PayOrder) (resp *native.PrepayRe
 
 //支付请求  统一下单
 func (l *WeChatCommPay) WechatPayUnified(info *PayOrder) (resp *WXOrderReply, err error) {
-	attchByte,_:= json.Marshal(info)
+	requireUri := WeChatRequestUri
+	attchByte, _ := json.Marshal(info)
 	attach := string(attchByte)
-	scenInfo := fmt.Sprintf(`{"h5_info": {"type":"Wap","wap_url": "","wap_name": "会员充值"}}`)
+	scenInfo := `{"h5_info": {"type":"Wap","wap_name": "会员充值"}}`
 	NonceStr := getRandStr(32)
 	params := &WXOrderParam{
 		APPID:          l.Config.AppId,
@@ -269,39 +286,60 @@ func (l *WeChatCommPay) WechatPayUnified(info *PayOrder) (resp *WXOrderReply, er
 	m["scene_info"] = params.SceneInfo
 	m["attach"] = params.Attach
 	params.Sign = WxPayCalcSign(m, l.Config.ApiKey)
-	bytes_req, err := xml.Marshal(params)
+	//开启沙箱测试
+	//	shaBoxSign := WxPayCalcSign(map[string]interface{}{
+	//		"mch_id":    params.MchID,
+	//		"nonce_str": params.NonceStr,
+	//	}, l.Config.ApiKey)
+	//	shaBoxReq := fmt.Sprintf(`<xml><mch_id>%s</mch_id><nonce_str>%s</nonce_str><sign>%s</sign></xml>`, params.MchID, params.NonceStr, shaBoxSign)
+	//	shaBoxBody, _ := XmlHttpPost(SandboxUriSign, shaBoxReq)
+	//	var shaBoxSignResp ShaBoxSignResp
+	//	xml.Unmarshal(shaBoxBody, &shaBoxSignResp)
+	//	requireUri = WechatSandboxUri
+	//	params.Sign = shaBoxSignResp.SandboxSignkey
+
+	bytesReq, err := xml.Marshal(params)
 	if err != nil {
-		logx.Errorf("以xml形式编码发送错误,原因:%v",err)
+		logx.Errorf("以xml形式编码发送错误,原因:%v", err)
 		return
 	}
-	str_req := string(bytes_req)
-	str_req = strings.Replace(str_req, "WXOrderParam", "xml", -1)
-	req, err := http.NewRequest("POST", WeChatRequestUri, strings.NewReader(str_req))
+	strReq := string(bytesReq)
+	strReq = strings.Replace(strReq, "WXOrderParam", "xml", -1)
+	resBody, err := XmlHttpPost(requireUri, strReq)
 	if err != nil {
-		logx.Errorf("http.NewRequest错误,原因:%v",err)
-		return nil,err
+		return nil, err
+	}
+	var wechatReply WXOrderReply
+	xmlErr := xml.Unmarshal(resBody, &wechatReply)
+	if xmlErr != nil {
+		logx.Errorf("ReaddBody Error,原因:%v", err)
+		return nil, xmlErr
+	}
+	return &wechatReply, nil
+}
+
+//微信xmlHttp请求
+func XmlHttpPost(uri string, params string) ([]byte, error) {
+	req, err := http.NewRequest("POST", uri, strings.NewReader(params))
+	if err != nil {
+		logx.Errorf("http.NewRequest错误,原因:%v", err)
+		return nil, err
 	}
 	req.Header.Set("Content-Type", "text/xml;charset=utf-8")
 	c := http.Client{}
 	httpResp, _err := c.Do(req)
 	if _err != nil {
-		logx.Errorf("http请求错误错误,原因:%v",err)
-		return nil,_err
+		logx.Errorf("http请求错误错误,原因:%v", err)
+		return nil, _err
 
 	}
 	defer httpResp.Body.Close()
 	body, bodyErr := ioutil.ReadAll(httpResp.Body)
 	if bodyErr != nil {
-		logx.Errorf("ReaddBody Error,原因:%v",err)
+		logx.Errorf("ReaddBody Error,原因:%v", err)
 		return nil, err
 	}
-	var wechatReply WXOrderReply
-	xmlErr := xml.Unmarshal(body, &wechatReply)
-	if xmlErr != nil {
-		logx.Errorf("ReaddBody Error,原因:%v",err)
-		return nil, xmlErr
-	}
-	return &wechatReply, nil
+	return body, nil
 }
 
 //支付请求v3  h5
@@ -471,21 +509,21 @@ func (l *WeChatCommPay) CloseOrder(orderCode string) error {
 const refundReason = "用户退款"
 
 //订单退款
-func (l *WeChatCommPay)RefundOrder (refundOrder *RefundOrder) ( *refunddomestic.Refund, error)  {
+func (l *WeChatCommPay) RefundOrder(refundOrder *RefundOrder) (*refunddomestic.Refund, error) {
 	client, err := l.getClient()
 	if err != nil {
 		logx.Errorf("关闭订单发生错误,err =%v", err)
-		return nil,err
+		return nil, err
 	}
 	svc := refunddomestic.RefundsApiService{Client: client}
 	resp, result, err := svc.Create(l.Ctx,
 		refunddomestic.CreateRequest{
-			SubMchid:      core.String(l.Config.MchId),
-			OutTradeNo:    core.String(refundOrder.OutTradeNo),
-			OutRefundNo:   core.String(refundOrder.OutRefundNo),
-			Reason:        core.String(refundReason),
-			NotifyUrl:     core.String(l.Config.NotifyUrl),
-			FundsAccount:  refunddomestic.REQFUNDSACCOUNT_AVAILABLE.Ptr(),
+			SubMchid:     core.String(l.Config.MchId),
+			OutTradeNo:   core.String(refundOrder.OutTradeNo),
+			OutRefundNo:  core.String(refundOrder.OutRefundNo),
+			Reason:       core.String(refundReason),
+			NotifyUrl:    core.String(l.Config.NotifyUrl),
+			FundsAccount: refunddomestic.REQFUNDSACCOUNT_AVAILABLE.Ptr(),
 			Amount: &refunddomestic.AmountReq{
 				Currency: core.String("CNY"),
 				From: []refunddomestic.FundsFromItem{refunddomestic.FundsFromItem{
@@ -504,5 +542,5 @@ func (l *WeChatCommPay)RefundOrder (refundOrder *RefundOrder) ( *refunddomestic.
 		// 处理返回结果
 		logx.Infof("退款 status=%d resp=%s", result.Response.StatusCode, resp)
 	}
-	return resp,nil
+	return resp, nil
 }

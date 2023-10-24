@@ -61,18 +61,19 @@ func (l *AlipayPagePayAndSignLogic) AlipayPagePayAndSign(in *pb.AlipayPageSignRe
 
 	if in.ProductId == 0 { // 目前没有商品的配置，通过解析商品详情来获取商品的内容
 		product := types.Product{}
-
 		err = json.Unmarshal([]byte(in.ProductDesc), &product)
 		if err != nil {
 			parseProductDescErr.CounterInc()
 			logx.Errorf("创建订单异常：商品信息错误 err = %s product = %s", err.Error(), in.ProductDesc)
 			return nil, errors.New("商品信息错误")
 		}
-
-		intAmount = int(product.Amount * 100)
-		period = product.SubscribePeriod
 		productType = product.ProductType
-
+		if productType == code.PRODUCT_TYPE_SUBSCRIBE{
+			intAmount = int(product.PrepaidAmount * 100)
+		}else{
+			intAmount = int(product.Amount * 100)
+		}
+		period = product.SubscribePeriod
 		prepaidAmount =fmt.Sprintf("%f",product.PrepaidAmount)
 		amount =fmt.Sprintf("%f",product.Amount)
 	}
