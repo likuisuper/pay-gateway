@@ -100,7 +100,6 @@ func (l *NotifyWechatUnifiedOrderLogic) NotifyWechatUnifiedOrder(r *http.Request
 	}
 	//回调支付成功
 	if data.ResultCode == "SUCCESS" {
-
 		//退款回调
 		if data.ReqInfo != "" {
 			//解密
@@ -131,8 +130,6 @@ func (l *NotifyWechatUnifiedOrderLogic) NotifyWechatUnifiedOrder(r *http.Request
 				orderInfo.NotifyData = strReq
 				//修改退款订单信息
 				l.refundModel.Update(refundReply.OutRefundNo, orderInfo)
-				resp.Code = "SUCCESS"
-				resp.Message = "OK"
 			} else {
 				logx.Errorf("未获取到退款单信息:RefundId:%s,OutTradeNo:%s", refundReply.RefundId, refundReply.OutTradeNo)
 			}
@@ -148,16 +145,16 @@ func (l *NotifyWechatUnifiedOrderLogic) NotifyWechatUnifiedOrder(r *http.Request
 			if dbErr != nil {
 				dbErr = fmt.Errorf("获取订单失败！err=%v,order_code = %s", dbErr, attachInfo.OrderSn)
 				util.CheckError(dbErr.Error())
-				return
+				return nil, err
 			}
 			if orderInfo.PayAppID != data.Appid || orderInfo.Amount != data.CashFee {
 				logx.Errorf("当前回调的订单信息不匹配", attachInfo.OrderSn)
-				return
+				return nil, err
 			}
 			if orderInfo.Status != model.PmPayOrderTablePayStatusNo {
 				notifyOrderHasDispose.CounterInc()
 				err = fmt.Errorf("订单已处理")
-				return
+				return nil, err
 			}
 			//修改数据库
 			orderInfo.Status = model.PmPayOrderTablePayStatusPaid
@@ -167,10 +164,8 @@ func (l *NotifyWechatUnifiedOrderLogic) NotifyWechatUnifiedOrder(r *http.Request
 			if err != nil {
 				err = fmt.Errorf("trade_no = %s, UpdateNotify，err:=%v", orderInfo.PlatformTradeNo, err)
 				util.CheckError(err.Error())
-				return
+				return nil, err
 			}
-			resp.Code = "SUCCESS"
-			resp.Message = "OK"
 			//回调业务方接口
 			go func() {
 				defer exception.Recover()
@@ -180,6 +175,14 @@ func (l *NotifyWechatUnifiedOrderLogic) NotifyWechatUnifiedOrder(r *http.Request
 				_, _ = util.HttpPost(orderInfo.AppNotifyUrl, dataMap, 5*time.Second)
 			}()
 		}
+	} else {
+		return &types.WeChatResp{
+			Code:    data.ResultCode,
+			Message: data.ErrCodeDes,
+		}, nil
 	}
-	return
+	return &types.WeChatResp{
+		Code:    "SUCCESS",
+		Message: "OK",
+	}, nil
 }
