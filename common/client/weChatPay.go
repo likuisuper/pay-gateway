@@ -326,6 +326,7 @@ func (l *WeChatCommPay) WechatPayUnified(info *PayOrder) (resp *WXOrderReply, er
 
 //微信xmlHttp请求
 func XmlHttpPost(uri string, params string) ([]byte, error) {
+	logx.Infof("微信支付请求,地址：%s 参数:%s", uri, params)
 	req, err := http.NewRequest("POST", uri, strings.NewReader(params))
 	if err != nil {
 		logx.Errorf("http.NewRequest错误,原因:%v", err)
