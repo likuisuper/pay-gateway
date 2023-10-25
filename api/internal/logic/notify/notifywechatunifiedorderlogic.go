@@ -130,6 +130,19 @@ func (l *NotifyWechatUnifiedOrderLogic) NotifyWechatUnifiedOrder(r *http.Request
 				orderInfo.NotifyData = strReq
 				//修改退款订单信息
 				l.refundModel.Update(refundReply.OutRefundNo, orderInfo)
+				// 回调退款成功
+				go func() {
+					defer exception.Recover()
+					dataMap := make(map[string]interface{})
+					dataMap["notify_type"] = code.APP_NOTIFY_TYPE_REFUND
+					dataMap["out_trade_refund_no"] = refundReply.RefundId
+					dataMap["out_trade_no"] = orderInfo.OutTradeNo
+					dataMap["refund_out_side_app"] = false
+					dataMap["refund_status"] = model.REFUND_STATUS_SUCCESS
+					dataMap["refund_fee"] = refundReply.RefundFee
+					_, _ = util.HttpPost(orderInfo.NotifyUrl, dataMap, 5*time.Second)
+				}()
+
 			} else {
 				logx.Errorf("未获取到退款单信息:RefundId:%s,OutTradeNo:%s", refundReply.RefundId, refundReply.OutTradeNo)
 			}
