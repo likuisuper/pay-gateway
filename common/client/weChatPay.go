@@ -455,7 +455,6 @@ func (l *WeChatCommPay) GetOrderStatus(codeCode string) (orderInfo *payments.Tra
 
 //通知权限验证。及解析内容
 func (l *WeChatCommPay) Notify(r *http.Request) (orderInfo *payments.Transaction, err error) {
-
 	//获取私钥
 	mchPrivateKey, err := utils.LoadPrivateKeyWithPath(l.Config.PrivateKeyPath)
 	if err != nil {
@@ -476,7 +475,9 @@ func (l *WeChatCommPay) Notify(r *http.Request) (orderInfo *payments.Transaction
 	certificateVisitor := downloader.MgrInstance().GetCertificateVisitor(l.Config.MchId)
 	// 3. 使用证书访问器初始化 `notify.Handler`
 	handler := notify.NewNotifyHandler(l.Config.ApiKey, verifiers.NewSHA256WithRSAVerifier(certificateVisitor))
+	//支付回调
 	transaction := new(payments.Transaction)
+
 	notifyReq, err := handler.ParseNotifyRequest(l.Ctx, r, transaction)
 	// 如果验签未通过，或者解密失败
 	if err != nil {
@@ -489,9 +490,53 @@ func (l *WeChatCommPay) Notify(r *http.Request) (orderInfo *payments.Transaction
 	// 处理通知内容
 	logx.Slowf("Wechat notifyReq=%v", notifyReq.Summary)
 	logx.Slowf("Wechat content=%v", transaction)
-
 	return transaction, nil
 }
+
+
+
+//退款支付回调
+func (l *WeChatCommPay) RefundNotify(r *http.Request) (orderInfo map[string]interface{}, err error) {
+	//获取私钥
+	mchPrivateKey, err := utils.LoadPrivateKeyWithPath(l.Config.PrivateKeyPath)
+	if err != nil {
+		weChatNotifyErr.CounterInc()
+		logx.Errorf("获取私钥发生错误！err=%v", err)
+		err = errors.New(`{"code": "FAIL","message": "获取入私钥发生错误"}`)
+		return nil, err
+	}
+	// 1. 使用 `RegisterDownloaderWithPrivateKey` 注册下载器
+	err = downloader.MgrInstance().RegisterDownloaderWithPrivateKey(l.Ctx, mchPrivateKey, l.Config.SerialNumber, l.Config.MchId, l.Config.ApiKey)
+	if err != nil {
+		weChatNotifyErr.CounterInc()
+		logx.Errorf("下载解密器失败！err=%v", err)
+		err = errors.New(`{"code": "FAIL","message": "下载解密器失败"}`)
+		return nil, err
+	}
+	// 2. 获取商户号对应的微信支付平台证书访问器
+	certificateVisitor := downloader.MgrInstance().GetCertificateVisitor(l.Config.MchId)
+	// 3. 使用证书访问器初始化 `notify.Handler`
+	handler := notify.NewNotifyHandler(l.Config.ApiKey, verifiers.NewSHA256WithRSAVerifier(certificateVisitor))
+	//支付回调
+	transaction := make(map[string]interface{},0)
+	notifyReq, err := handler.ParseNotifyRequest(l.Ctx, r, transaction)
+	// 如果验签未通过，或者解密失败
+	if err != nil {
+		weChatNotifyErr.CounterInc()
+		err = fmt.Errorf("验签未通过，或者解密失败！err=%w", err)
+		logx.Error(err.Error())
+		//err = errors.New(`{"code": "FAIL","message": "验签未通过，或者解密失败"}`)
+		return nil, err
+	}
+	json,_ := json.Marshal(transaction)
+	logx.Slowf("Wechat 解密后内容=%s",string(json) )
+	// 处理通知内容
+	logx.Slowf("Wechat notifyReq=%v", notifyReq.Summary)
+	logx.Slowf("Wechat content=%v", transaction)
+	return transaction, nil
+}
+
+
 
 //关闭订单
 type CloserReq struct {
@@ -522,24 +567,23 @@ const refundReason = "用户退款"
 func (l *WeChatCommPay) RefundOrder(refundOrder *RefundOrder) (*refunddomestic.Refund, error) {
 	client, err := l.getClient()
 	if err != nil {
-        weChatRefundOrderErr.CounterInc()
+		weChatRefundOrderErr.CounterInc()
 		logx.Errorf("退款发生错误,err =%v", err)
 		return nil, err
 	}
 	svc := refunddomestic.RefundsApiService{Client: client}
 	resp, result, err := svc.Create(l.Ctx,
 		refunddomestic.CreateRequest{
-			SubMchid:     core.String(l.Config.MchId),
-			OutTradeNo:   core.String(refundOrder.OutTradeNo),
-			OutRefundNo:  core.String(refundOrder.OutRefundNo),
+			OutTradeNo:    core.String(refundOrder.OutTradeNo),
+			OutRefundNo:   core.String(refundOrder.OutRefundNo),
 			TransactionId: core.String(refundOrder.TransactionId),
-			Reason:       core.String(refundReason),
-			NotifyUrl:    core.String(l.Config.NotifyUrl),
-			FundsAccount: refunddomestic.REQFUNDSACCOUNT_AVAILABLE.Ptr(),
+			Reason:        core.String(refundReason),
+			NotifyUrl:     core.String(l.Config.NotifyUrl),
+			FundsAccount:  refunddomestic.REQFUNDSACCOUNT_AVAILABLE.Ptr(),
 			Amount: &refunddomestic.AmountReq{
 				Currency: core.String("CNY"),
-				Refund: core.Int64(refundOrder.RefundFee),
-				Total:  core.Int64(refundOrder.TotalFee),
+				Refund:   core.Int64(refundOrder.RefundFee),
+				Total:    core.Int64(refundOrder.TotalFee),
 			},
 		},
 	)

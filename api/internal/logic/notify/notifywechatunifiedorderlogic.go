@@ -2,18 +2,18 @@ package notify
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
-	"gitee.com/zhuyunkj/pay-gateway/api/common/gocrypto"
 	"gitee.com/zhuyunkj/pay-gateway/api/internal/svc"
 	"gitee.com/zhuyunkj/pay-gateway/api/internal/types"
+	"gitee.com/zhuyunkj/pay-gateway/common/client"
 	"gitee.com/zhuyunkj/pay-gateway/common/code"
 	"gitee.com/zhuyunkj/pay-gateway/common/define"
 	"gitee.com/zhuyunkj/pay-gateway/common/exception"
 	"gitee.com/zhuyunkj/pay-gateway/db/mysql/model"
 	"gitee.com/zhuyunkj/zhuyun-core/util"
+	jsoniter "github.com/json-iterator/go"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -86,68 +86,25 @@ type wechatRefundReply struct {
 }
 
 func (l *NotifyWechatUnifiedOrderLogic) NotifyWechatUnifiedOrder(r *http.Request) (resp *types.WeChatResp, err error) {
-
+	header := r.Header
+	logx.Slow("微信回调请求头", header)
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		logx.Errorf("获取请求体错误！err:=%v", err)
 		return nil, err
 	}
 	logx.Slow("NotifyWechatUnifiedOrder:", string(body))
-	var data wechatCallbackRepay
-	err = xml.Unmarshal(body, &data)
-	if err != nil {
-		logx.Errorf("xml.Unmarshal err:=%v", err)
-		return nil, err
-	}
-	//回调支付成功
-	if data.ResultCode == "SUCCESS" {
-		//退款回调
-		if data.ReqInfo != "" {
-			//解密
-			reqInfo, _ := base64.StdEncoding.DecodeString(data.ReqInfo)
-			//获取key
-			payCfg, _ := l.payConfigWechatModel.GetOneByAppID(data.Appid)
-			gocrypto.SetAesKey(strings.ToLower(util.Md5(payCfg.ApiKey)))
-			plaintext, ecbErr := gocrypto.AesECBDecrypt(reqInfo)
-			if ecbErr != nil {
-				logx.Errorf("gocrypto.AesECBDecrypt err:=%v", ecbErr)
-				return nil, err
-			}
-			strReq := strings.Replace(string(plaintext), "root", "xml", -1)
-			var refundReply wechatRefundReply
-			xmlErr := xml.Unmarshal([]byte(strReq), &refundReply)
-			if xmlErr != nil {
-				logx.Errorf("xml.Unmarshal err:=%v", xmlErr)
-				return nil, err
-			}
-			logx.Infof("退款回调详情:%s", string(plaintext))
-
-			orderInfo, _ := l.refundModel.GetOneByOutTradeRefundNo(refundReply.OutRefundNo)
-			if orderInfo != nil {
-				//修改订单退款状态
-				l.orderModel.UpdateStatusByOutTradeNo(refundReply.OutTradeNo, code.ORDER_REFUNDED)
-				orderInfo.RefundStatus = code.ORDER_SUCCESS
-				orderInfo.RefundNo = refundReply.RefundId
-				orderInfo.NotifyData = strReq
-				//修改退款订单信息
-				l.refundModel.Update(refundReply.OutRefundNo, orderInfo)
-				// 回调退款成功
-				go func() {
-					defer exception.Recover()
-					dataMap := make(map[string]interface{})
-					dataMap["notify_type"] = code.APP_NOTIFY_TYPE_REFUND
-					dataMap["out_trade_refund_no"] = refundReply.RefundId
-					dataMap["out_trade_no"] = orderInfo.OutTradeNo
-					dataMap["refund_out_side_app"] = false
-					dataMap["refund_status"] = model.REFUND_STATUS_SUCCESS
-					dataMap["refund_fee"] = refundReply.RefundFee
-					_, _ = util.HttpPost(orderInfo.NotifyUrl, dataMap, 5*time.Second)
-				}()
-
-			} else {
-				logx.Errorf("未获取到退款单信息:RefundId:%s,OutTradeNo:%s", refundReply.RefundId, refundReply.OutTradeNo)
-			}
-		} else {
+	//支付回调
+	if strings.Contains(string(body), "<xml>") {
+		var data wechatCallbackRepay
+		err = xml.Unmarshal(body, &data)
+		if err != nil {
+			logx.Errorf("xml Unmarshal！err:=%v", err)
+			return nil, err
+		}
+		//回调支付成功
+		if data.ResultCode == "SUCCESS" {
+			//退款回调
 			var attachInfo AttachInfo
 			unJsonErr := json.Unmarshal([]byte(data.Attach), &attachInfo)
 			if unJsonErr != nil {
@@ -188,15 +145,93 @@ func (l *NotifyWechatUnifiedOrderLogic) NotifyWechatUnifiedOrder(r *http.Request
 				dataMap["out_trade_no"] = orderInfo.OutTradeNo
 				_, _ = util.HttpPost(orderInfo.AppNotifyUrl, dataMap, 5*time.Second)
 			}()
+
+		} else {
+			return &types.WeChatResp{
+				Code:    data.ResultCode,
+				Message: data.ErrCodeDes,
+			}, nil
 		}
+
 	} else {
-		return &types.WeChatResp{
-			Code:    data.ResultCode,
-			Message: data.ErrCodeDes,
-		}, nil
+		l.RefundOrder(r)
 	}
 	return &types.WeChatResp{
 		Code:    "SUCCESS",
 		Message: "OK",
 	}, nil
 }
+
+func (l *NotifyWechatUnifiedOrderLogic) RefundOrder(r *http.Request) error {
+
+	appId := r.Header.Get("AppId")
+	logx.Slowf("WechatNotifyRefund AppId: %s", appId)
+
+	payCfg, err := l.payConfigWechatModel.GetOneByAppID(appId)
+	if err != nil {
+		err = fmt.Errorf("pkgName= %s, 读取微信支付配置失败，err:=%v", "all", err)
+		util.CheckError(err.Error())
+		return err
+	}
+	var wxCli *client.WeChatCommPay
+	wxCli = client.NewWeChatCommPay(*payCfg.TransClientConfig())
+	transaction, err := wxCli.RefundNotify(r)
+	if err != nil {
+		err = fmt.Errorf("解析及验证内容失败！err=%v ", err)
+		logx.Errorf(err.Error())
+		return err
+	}
+	jsonStr, _ := jsoniter.MarshalToString(transaction)
+	logx.Slowf("wechat支付回调异常: %s", jsonStr)
+	return err
+}
+
+//var data wechatCallbackRepay
+//_ = xml.Unmarshal(nil, &data)
+//if data.ReqInfo != "" {
+//	//解密
+//	reqInfo, _ := base64.StdEncoding.DecodeString(data.ReqInfo)
+//	//获取key
+//	payCfg, _ := l.payConfigWechatModel.GetOneByAppID(data.Appid)
+//	gocrypto.SetAesKey(strings.ToLower(util.Md5(payCfg.ApiKey)))
+//	plaintext, ecbErr := gocrypto.AesECBDecrypt(reqInfo)
+//	if ecbErr != nil {
+//		logx.Errorf("gocrypto.AesECBDecrypt err:=%v", ecbErr)
+//		return nil
+//	}
+//	strReq := strings.Replace(string(plaintext), "root", "xml", -1)
+//	var refundReply wechatRefundReply
+//	xmlErr := xml.Unmarshal([]byte(strReq), &refundReply)
+//	if xmlErr != nil {
+//		logx.Errorf("xml.Unmarshal err:=%v", xmlErr)
+//		return nil
+//	}
+//	logx.Infof("退款回调详情:%s", string(plaintext))
+//
+//	orderInfo, _ := l.refundModel.GetOneByOutTradeRefundNo(refundReply.OutRefundNo)
+//	if orderInfo != nil {
+//		//修改订单退款状态
+//		l.orderModel.UpdateStatusByOutTradeNo(refundReply.OutTradeNo, code.ORDER_REFUNDED)
+//		orderInfo.RefundStatus = code.ORDER_SUCCESS
+//		orderInfo.RefundNo = refundReply.RefundId
+//		orderInfo.NotifyData = strReq
+//		//修改退款订单信息
+//		l.refundModel.Update(refundReply.OutRefundNo, orderInfo)
+//		// 回调退款成功
+//		go func() {
+//			defer exception.Recover()
+//			dataMap := make(map[string]interface{})
+//			dataMap["notify_type"] = code.APP_NOTIFY_TYPE_REFUND
+//			dataMap["out_trade_refund_no"] = refundReply.RefundId
+//			dataMap["out_trade_no"] = orderInfo.OutTradeNo
+//			dataMap["refund_out_side_app"] = false
+//			dataMap["refund_status"] = model.REFUND_STATUS_SUCCESS
+//			dataMap["refund_fee"] = refundReply.RefundFee
+//			_, _ = util.HttpPost(orderInfo.NotifyUrl, dataMap, 5*time.Second)
+//		}()
+//
+//	} else {
+//		logx.Errorf("未获取到退款单信息:RefundId:%s,OutTradeNo:%s", refundReply.RefundId, refundReply.OutTradeNo)
+//	}
+//}
+//return nil
