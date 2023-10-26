@@ -510,7 +510,7 @@ func (l *WeChatCommPay) RefundNotify(r *http.Request) (orderInfo map[string]inte
 	err = downloader.MgrInstance().RegisterDownloaderWithPrivateKey(l.Ctx, mchPrivateKey, l.Config.SerialNumber, l.Config.MchId, l.Config.ApiKey)
 	if err != nil {
 		weChatNotifyErr.CounterInc()
-		logx.Errorf("下载解密器失败！err=%v,mchPrivateKey:%s SerialNumber:%s MchId:%s ,ApiKey:%s", err,mchPrivateKey,l.Config.SerialNumber, l.Config.MchId,l.Config.ApiKey)
+		logx.Errorf("下载解密器失败！err=%v,PrivateKeyPath:%s SerialNumber:%s MchId:%s ,ApiKey:%s", err,l.Config.PrivateKeyPath,l.Config.SerialNumber, l.Config.MchId,l.Config.ApiKey)
 		err = errors.New(`{"code": "FAIL","message": "下载解密器失败"}`)
 		return nil, err
 	}

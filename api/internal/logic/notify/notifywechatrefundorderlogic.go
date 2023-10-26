@@ -8,7 +8,6 @@ import (
 	"gitee.com/zhuyunkj/pay-gateway/db/mysql/model"
 	"gitee.com/zhuyunkj/zhuyun-core/util"
 	jsoniter "github.com/json-iterator/go"
-	"io/ioutil"
 	"net/http"
 
 	"gitee.com/zhuyunkj/pay-gateway/api/internal/svc"
@@ -38,18 +37,8 @@ func NewNotifyWechatRefundOrderLogic(ctx context.Context, svcCtx *svc.ServiceCon
 }
 
 func (l *NotifyWechatRefundOrderLogic) NotifyWechatRefundOrder(req *types.WechatRefundReq,r *http.Request) (resp *types.WeChatResp, err error) {
-
-	header := r.Header
-	logx.Slow("微信退款回调请求头", header)
-	body, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		logx.Errorf("获取请求体错误！err:=%v", err)
-		return nil, err
-	}
-	logx.Slow("NotifyWechatRefundOrder:", string(body))
-	appId := req.Appid
-	logx.Slowf("WechatNotifyRefund AppId: %s", appId)
-	payCfg, err := l.payConfigWechatModel.GetOneByAppID(appId)
+	logx.Slowf("WechatNotifyRefund AppId: %s", req.Appid)
+	payCfg, err := l.payConfigWechatModel.GetOneByAppID(req.Appid)
 	if err != nil {
 		err = fmt.Errorf("pkgName= %s, 读取微信支付配置失败，err:=%v", "all", err)
 		util.CheckError(err.Error())
