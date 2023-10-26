@@ -455,46 +455,58 @@ func (l *WeChatCommPay) GetOrderStatus(codeCode string) (orderInfo *payments.Tra
 }
 
 //通知权限验证。及解析内容
-func (l *WeChatCommPay) Notify(r *http.Request) (orderInfo *payments.Transaction, err error) {
+func (l *WeChatCommPay) Notify(r *http.Request, notifyType int) (orderInfo *payments.Transaction, data map[string]interface{}, err error) {
 	//获取私钥
 	mchPrivateKey, err := utils.LoadPrivateKeyWithPath(l.Config.PrivateKeyPath)
 	if err != nil {
 		weChatNotifyErr.CounterInc()
 		logx.Errorf("获取私钥发生错误！err=%v", err)
 		err = errors.New(`{"code": "FAIL","message": "获取入私钥发生错误"}`)
-		return nil, err
+		return nil, nil, err
 	}
 	// 1. 使用 `RegisterDownloaderWithPrivateKey` 注册下载器
-	err = downloader.MgrInstance().RegisterDownloaderWithPrivateKey(l.Ctx, mchPrivateKey, l.Config.SerialNumber, l.Config.MchId, l.Config.ApiKey)
-	if err != nil {
+	downloadErr := downloader.MgrInstance().RegisterDownloaderWithPrivateKey(l.Ctx, mchPrivateKey, l.Config.SerialNumber, l.Config.MchId, l.Config.ApiKey)
+	if downloadErr != nil {
 		weChatNotifyErr.CounterInc()
 		logx.Errorf("下载解密器失败！err=%v", err)
 		err = errors.New(`{"code": "FAIL","message": "下载解密器失败"}`)
-		return nil, err
+		return nil, nil, err
 	}
 	// 2. 获取商户号对应的微信支付平台证书访问器
 	certificateVisitor := downloader.MgrInstance().GetCertificateVisitor(l.Config.MchId)
 	// 3. 使用证书访问器初始化 `notify.Handler`
 	handler := notify.NewNotifyHandler(l.Config.ApiKey, verifiers.NewSHA256WithRSAVerifier(certificateVisitor))
-	//支付回调
-	transaction := new(payments.Transaction)
-
-	notifyReq, err := handler.ParseNotifyRequest(l.Ctx, r, transaction)
-	// 如果验签未通过，或者解密失败
-	if err != nil {
-		weChatNotifyErr.CounterInc()
-		err = fmt.Errorf("验签未通过，或者解密失败！err=%w", err)
-		logx.Error(err.Error())
-		//err = errors.New(`{"code": "FAIL","message": "验签未通过，或者解密失败"}`)
-		return nil, err
+	if notifyType == 1 {
+		//支付回调
+		transaction := new(payments.Transaction)
+		notifyReq, err := handler.ParseNotifyRequest(l.Ctx, r, transaction)
+		// 如果验签未通过，或者解密失败
+		if err != nil {
+			weChatNotifyErr.CounterInc()
+			err = fmt.Errorf("验签未通过，或者解密失败！err=%w", err)
+			logx.Error(err.Error())
+			//err = errors.New(`{"code": "FAIL","message": "验签未通过，或者解密失败"}`)
+			return nil, nil, err
+		}
+		// 处理通知内容
+		logx.Slowf("Wechat notifyReq=%v", notifyReq.Summary)
+		logx.Slowf("Wechat content=%v", transaction)
+		return transaction, nil, nil
+	} else {
+		//支付回调
+		content := make(map[string]interface{})
+		notifyReq, err := handler.ParseNotifyRequest(context.Background(), r, &content)
+		// 如果验签未通过，或者解密失败
+		if err != nil {
+			return nil, nil, err
+		}
+		// 处理通知内容
+		logx.Slowf("Wechat notifyReq=%v", notifyReq.Summary)
+		logx.Slowf("Wechat content=%v", content)
+		return nil, content, nil
 	}
-	// 处理通知内容
-	logx.Slowf("Wechat notifyReq=%v", notifyReq.Summary)
-	logx.Slowf("Wechat content=%v", transaction)
-	return transaction, nil
+
 }
-
-
 
 //退款支付回调
 func (l *WeChatCommPay) RefundNotify(r *http.Request) (orderInfo map[string]interface{}, err error) {
@@ -504,7 +516,7 @@ func (l *WeChatCommPay) RefundNotify(r *http.Request) (orderInfo map[string]inte
 		logx.Errorf("mchPrivateKey！err=%v", err)
 	}
 	// 1. 使用 `RegisterDownloaderWithPrivateKey` 注册下载器
-	err = downloader.MgrInstance().RegisterDownloaderWithPrivateKey(l.Ctx, mchPrivateKey,l.Config.SerialNumber, l.Config.MchId, l.Config.ApiKey)
+	err = downloader.MgrInstance().RegisterDownloaderWithPrivateKey(l.Ctx, mchPrivateKey, l.Config.SerialNumber, l.Config.MchId, l.Config.ApiKey)
 	if err != nil {
 		weChatNotifyErr.CounterInc()
 		logx.Errorf("注册下载器失败！err=%v", err)
@@ -526,15 +538,13 @@ func (l *WeChatCommPay) RefundNotify(r *http.Request) (orderInfo map[string]inte
 		//err = errors.New(`{"code": "FAIL","message": "验签未通过，或者解密失败"}`)
 		return nil, err
 	}
-	jsonData,_ := json.Marshal(content)
-	logx.Slowf("Wechat 解密后内容=%s",string(jsonData) )
+	jsonData, _ := json.Marshal(content)
+	logx.Slowf("Wechat 解密后内容=%s", string(jsonData))
 	// 处理通知内容
 	logx.Slowf("Wechat notifyReq=%v", notifyReq.Summary)
 	logx.Slowf("Wechat content=%v", content)
 	return content, nil
 }
-
-
 
 //关闭订单
 type CloserReq struct {
@@ -569,8 +579,8 @@ func (l *WeChatCommPay) RefundOrder(refundOrder *RefundOrder) (*refunddomestic.R
 		logx.Errorf("退款发生错误,err =%v", err)
 		return nil, err
 	}
-	params,_ := url.Parse(l.Config.NotifyUrl)
-	notifyUri := fmt.Sprintf( "%s://%s/notify/refund/wechat/%s" ,params.Scheme,params.Host, l.Config.AppId)
+	params, _ := url.Parse(l.Config.NotifyUrl)
+	notifyUri := fmt.Sprintf("%s://%s/notify/refund/wechat/%s", params.Scheme, params.Host, l.Config.AppId)
 	svc := refunddomestic.RefundsApiService{Client: client}
 	resp, result, err := svc.Create(l.Ctx,
 		refunddomestic.CreateRequest{

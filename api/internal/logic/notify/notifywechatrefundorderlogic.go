@@ -46,7 +46,7 @@ func (l *NotifyWechatRefundOrderLogic) NotifyWechatRefundOrder(req *types.Wechat
 	}
 	var wxCli *client.WeChatCommPay
 	wxCli = client.NewWeChatCommPay(*payCfg.TransClientConfig())
-	transaction, err := wxCli.RefundNotify(r)
+	_,transaction, err := wxCli.Notify(r,2)
 	if err != nil {
 		err = fmt.Errorf("解析及验证内容失败！err=%v ", err)
 		logx.Errorf(err.Error())
