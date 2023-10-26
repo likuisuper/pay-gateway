@@ -36,6 +36,11 @@ type (
     }
 )
 
+
+type WechatRefundReq {
+	Appid string `path:"appid,optional"`
+}
+
 @server(
     group: notify
 )
@@ -81,4 +86,11 @@ service payment {
     )
     @handler notifyWechatUnifiedOrder
     post /notify/unified/wechat (EmptyReq) returns (WeChatResp)
+
+    @doc(
+        summary: "微信统一退款回调（V3）"
+    )
+    @handler notifyWechatRefundOrder
+    post /notify/wechat/refund/:appid (WechatRefundReq) returns (WeChatResp)
+
 }

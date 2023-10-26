@@ -24,6 +24,7 @@ import (
 	"io/ioutil"
 	"math/rand"
 	"net/http"
+	"net/url"
 	"sort"
 	"strings"
 	"time"
@@ -528,8 +529,8 @@ func (l *WeChatCommPay) RefundNotify(r *http.Request) (orderInfo map[string]inte
 		//err = errors.New(`{"code": "FAIL","message": "验签未通过，或者解密失败"}`)
 		return nil, err
 	}
-	json,_ := json.Marshal(transaction)
-	logx.Slowf("Wechat 解密后内容=%s",string(json) )
+	jsonData,_ := json.Marshal(transaction)
+	logx.Slowf("Wechat 解密后内容=%s",string(jsonData) )
 	// 处理通知内容
 	logx.Slowf("Wechat notifyReq=%v", notifyReq.Summary)
 	logx.Slowf("Wechat content=%v", transaction)
@@ -571,6 +572,8 @@ func (l *WeChatCommPay) RefundOrder(refundOrder *RefundOrder) (*refunddomestic.R
 		logx.Errorf("退款发生错误,err =%v", err)
 		return nil, err
 	}
+	params,_ := url.Parse(l.Config.NotifyUrl)
+	notifyUri := fmt.Sprintf( "%s://%s/notify/wechat/refund/%s" ,params.Scheme,params.Host, l.Config.AppId)
 	svc := refunddomestic.RefundsApiService{Client: client}
 	resp, result, err := svc.Create(l.Ctx,
 		refunddomestic.CreateRequest{
@@ -578,7 +581,7 @@ func (l *WeChatCommPay) RefundOrder(refundOrder *RefundOrder) (*refunddomestic.R
 			OutRefundNo:   core.String(refundOrder.OutRefundNo),
 			TransactionId: core.String(refundOrder.TransactionId),
 			Reason:        core.String(refundReason),
-			NotifyUrl:     core.String(l.Config.NotifyUrl),
+			NotifyUrl:     core.String(notifyUri),
 			FundsAccount:  refunddomestic.REQFUNDSACCOUNT_AVAILABLE.Ptr(),
 			Amount: &refunddomestic.AmountReq{
 				Currency: core.String("CNY"),

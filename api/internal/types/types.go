@@ -59,6 +59,10 @@ type KsResp struct {
 	MessageId string `json:"message_id"` //当前消息的message_id
 }
 
+type WechatRefundReq struct {
+	Appid string `path:"appid,optional"`
+}
+
 type CrtUploadReq struct {
 	AlipayAppCertPublicKeyPath string `form:"alipayAppCertPublicKeyPath,optional"`
 	AlipayPublicKeyPath        string `form:"alipayPublicKeyPath,optional"`
