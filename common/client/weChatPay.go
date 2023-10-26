@@ -532,6 +532,7 @@ func (l *WeChatCommPay) RefundOrder(refundOrder *RefundOrder) (*refunddomestic.R
 			SubMchid:     core.String(l.Config.MchId),
 			OutTradeNo:   core.String(refundOrder.OutTradeNo),
 			OutRefundNo:  core.String(refundOrder.OutRefundNo),
+			TransactionId: core.String(refundOrder.TransactionId),
 			Reason:       core.String(refundReason),
 			NotifyUrl:    core.String(l.Config.NotifyUrl),
 			FundsAccount: refunddomestic.REQFUNDSACCOUNT_AVAILABLE.Ptr(),

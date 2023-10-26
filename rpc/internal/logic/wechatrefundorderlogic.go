@@ -65,6 +65,7 @@ func (l *WechatRefundOrderLogic) WechatRefundOrder(in *pb.WechatRefundOrderReq) 
 		OutRefundNo: "t" + utils.GenerateOrderCode(l.svcCtx.Config.SnowFlake.MachineNo, l.svcCtx.Config.SnowFlake.WorkerNo),
 		TotalFee:    in.TotalFee,
 		RefundFee:   in.RefundFee,
+		TransactionId: order.PlatformTradeNo,
 	}
 
 	refundRes, refundErr := payClient.RefundOrder(data)

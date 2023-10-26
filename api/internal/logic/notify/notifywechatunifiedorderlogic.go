@@ -44,22 +44,23 @@ func NewNotifyWechatUnifiedOrderLogic(ctx context.Context, svcCtx *svc.ServiceCo
 
 //微信支付回调解析
 type wechatCallbackRepay struct {
-	Appid      string `xml:"appid"`
-	Attach     string `xml:"attach"`
-	BankType   string `xml:"bank_type"`
-	TotalFee   int    `xml:"total_fee"`
-	TradeType  string `xml:"trade_type"`
-	CashFee    int    `xml:"cash_fee"`
-	OutTradeNo string `xml:"out_trade_no"`
-	TimeEnd    string `xml:"time_end"`
-	Sign       string `xml:"sign"`
-	NonceStr   string `xml:"nonce_str"`
-	SignType   string `xml:"sign_type"`
-	ResultCode string `xml:"result_code"`
-	ErrCode    string `xml:"err_code"`
-	ErrCodeDes string `xml:"err_code_des"`
-	MchId      string `xml:"mch_id"`
-	ReqInfo    string `xml:"req_info"`
+	Appid         string `xml:"appid"`
+	Attach        string `xml:"attach"`
+	BankType      string `xml:"bank_type"`
+	TotalFee      int    `xml:"total_fee"`
+	TradeType     string `xml:"trade_type"`
+	CashFee       int    `xml:"cash_fee"`
+	OutTradeNo    string `xml:"out_trade_no"`
+	TimeEnd       string `xml:"time_end"`
+	Sign          string `xml:"sign"`
+	NonceStr      string `xml:"nonce_str"`
+	SignType      string `xml:"sign_type"`
+	ResultCode    string `xml:"result_code"`
+	ErrCode       string `xml:"err_code"`
+	ErrCodeDes    string `xml:"err_code_des"`
+	MchId         string `xml:"mch_id"`
+	ReqInfo       string `xml:"req_info"`
+	TransactionId string `xml:"transaction_id"`
 }
 
 //orderInfo结构
@@ -172,7 +173,7 @@ func (l *NotifyWechatUnifiedOrderLogic) NotifyWechatUnifiedOrder(r *http.Request
 			//修改数据库
 			orderInfo.Status = model.PmPayOrderTablePayStatusPaid
 			orderInfo.PayType = 2
-			orderInfo.PlatformTradeNo = data.OutTradeNo
+			orderInfo.PlatformTradeNo = data.TransactionId
 			err = l.orderModel.UpdateNotify(orderInfo)
 			if err != nil {
 				err = fmt.Errorf("trade_no = %s, UpdateNotify，err:=%v", orderInfo.PlatformTradeNo, err)
