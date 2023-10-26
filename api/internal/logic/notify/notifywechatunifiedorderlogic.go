@@ -123,7 +123,6 @@ func (l *NotifyWechatUnifiedOrderLogic) NotifyWechatUnifiedOrder(r *http.Request
 		}
 		//修改数据库
 		orderInfo.Status = model.PmPayOrderTablePayStatusPaid
-		orderInfo.PayType = 2
 		orderInfo.PlatformTradeNo = data.TransactionId
 		err = l.orderModel.UpdateNotify(orderInfo)
 		if err != nil {
