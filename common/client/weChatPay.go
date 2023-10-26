@@ -50,6 +50,7 @@ type WechatPayConfig struct {
 	PrivateKeyPath string //apiV3密钥
 	SerialNumber   string //商户证书序列号
 	NotifyUrl      string //通知地址
+	ApiKeyV2       string //apiKeyV2密钥
 }
 
 //WXOrderParam	微信请求参数
@@ -291,7 +292,7 @@ func (l *WeChatCommPay) WechatPayUnified(info *PayOrder) (resp *WXOrderReply, er
 	m["notify_url"] = params.NotifyUrl
 	m["scene_info"] = params.SceneInfo
 	m["attach"] = params.Attach
-	params.Sign = WxPayCalcSign(m, l.Config.ApiKey)
+	params.Sign = WxPayCalcSign(m, l.Config.ApiKeyV2)
 	//开启沙箱测试
 	//	shaBoxSign := WxPayCalcSign(map[string]interface{}{
 	//		"mch_id":    params.MchID,
