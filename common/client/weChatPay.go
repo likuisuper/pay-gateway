@@ -498,25 +498,8 @@ func (l *WeChatCommPay) Notify(r *http.Request) (orderInfo *payments.Transaction
 
 //退款支付回调
 func (l *WeChatCommPay) RefundNotify(r *http.Request) (orderInfo map[string]interface{}, err error) {
-	//获取私钥
-	mchPrivateKey, err := utils.LoadPrivateKeyWithPath(l.Config.PrivateKeyPath)
-	if err != nil {
-		weChatNotifyErr.CounterInc()
-		logx.Errorf("获取私钥发生错误！err=%v", err)
-		err = errors.New(`{"code": "FAIL","message": "获取入私钥发生错误"}`)
-		return nil, err
-	}
-	// 1. 使用 `RegisterDownloaderWithPrivateKey` 注册下载器
-	err = downloader.MgrInstance().RegisterDownloaderWithPrivateKey(l.Ctx, mchPrivateKey, l.Config.SerialNumber, l.Config.MchId, l.Config.ApiKey)
-	if err != nil {
-		weChatNotifyErr.CounterInc()
-		logx.Errorf("下载解密器失败！err=%v,PrivateKeyPath:%s SerialNumber:%s MchId:%s ,ApiKey:%s", err,l.Config.PrivateKeyPath,l.Config.SerialNumber, l.Config.MchId,l.Config.ApiKey)
-		err = errors.New(`{"code": "FAIL","message": "下载解密器失败"}`)
-		return nil, err
-	}
-	// 2. 获取商户号对应的微信支付平台证书访问器
+	_, _= l.getClient()
 	certificateVisitor := downloader.MgrInstance().GetCertificateVisitor(l.Config.MchId)
-	// 3. 使用证书访问器初始化 `notify.Handler`
 	handler := notify.NewNotifyHandler(l.Config.ApiKey, verifiers.NewSHA256WithRSAVerifier(certificateVisitor))
 	//支付回调
 	transaction := make(map[string]interface{},0)
