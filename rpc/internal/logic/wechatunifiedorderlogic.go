@@ -68,7 +68,7 @@ func (l *WechatUnifiedOrderLogic) WechatUnifiedOrder(in *pb.AlipayPageSignReq) (
 		AppPkg:       in.AppPkgName,
 		UserID:       int(in.UserId),
 		OutTradeNo:   utils.GenerateOrderCode(l.svcCtx.Config.SnowFlake.MachineNo, l.svcCtx.Config.SnowFlake.WorkerNo),
-		PayType:      2,
+		PayType:      model.PmPayOrderTablePayTypeWechatPayUni,
 		Status:       0,
 		PayAppID:     pkgCfg.WechatPayAppID,
 		AppNotifyUrl: in.NotifyURL,
