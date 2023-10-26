@@ -32,6 +32,7 @@ import (
 var (
 	weChatHttpRequestErr = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "weChatHttpRequestErr", nil, "weChat请求错误", nil})}
 	weChatNotifyErr      = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "weChatNotifyErr", nil, "weChat回调通知错误", nil})}
+	weChatRefundOrderErr = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "weChatRefundOrderErr", nil, "weCha退款失败次数", nil})}
 )
 
 const (
@@ -314,12 +315,13 @@ func (l *WeChatCommPay) WechatPayUnified(info *PayOrder) (resp *WXOrderReply, er
 	strReq = strings.Replace(strReq, "WXOrderParam", "xml", -1)
 	resBody, err := XmlHttpPost(requireUri, strReq)
 	if err != nil {
+		weChatHttpRequestErr.CounterInc()
 		return nil, err
 	}
 	var wechatReply WXOrderReply
 	xmlErr := xml.Unmarshal(resBody, &wechatReply)
 	if xmlErr != nil {
-		logx.Errorf("ReaddBody Error,原因:%v", err)
+		logx.Errorf("wechatReply xmlErr,原因:%v", err)
 		return nil, xmlErr
 	}
 	return &wechatReply, nil
@@ -520,7 +522,8 @@ const refundReason = "用户退款"
 func (l *WeChatCommPay) RefundOrder(refundOrder *RefundOrder) (*refunddomestic.Refund, error) {
 	client, err := l.getClient()
 	if err != nil {
-		logx.Errorf("关闭订单发生错误,err =%v", err)
+        weChatRefundOrderErr.CounterInc()
+		logx.Errorf("退款发生错误,err =%v", err)
 		return nil, err
 	}
 	svc := refunddomestic.RefundsApiService{Client: client}
@@ -545,7 +548,9 @@ func (l *WeChatCommPay) RefundOrder(refundOrder *RefundOrder) (*refunddomestic.R
 	)
 	if err != nil {
 		// 处理错误
+		weChatRefundOrderErr.CounterInc()
 		logx.Errorf("退款 call Create err:%s", err)
+		return nil, err
 	} else {
 		// 处理返回结果
 		logx.Infof("退款 status=%d resp=%s", result.Response.StatusCode, resp)
