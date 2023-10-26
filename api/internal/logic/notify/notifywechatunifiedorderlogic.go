@@ -83,8 +83,6 @@ type wechatRefundReply struct {
 }
 
 func (l *NotifyWechatUnifiedOrderLogic) NotifyWechatUnifiedOrder(r *http.Request) (resp *types.WeChatResp, err error) {
-	header := r.Header
-	logx.Slow("微信回调请求头", header)
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		logx.Errorf("获取请求体错误！err:=%v", err)

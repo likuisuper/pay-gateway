@@ -91,6 +91,6 @@ service payment {
         summary: "微信统一退款回调（V3）"
     )
     @handler notifyWechatRefundOrder
-    post /notify/wechat/refund/:appid (WechatRefundReq) returns (WeChatResp)
+    post /notify/refund/wechat/:appid (WechatRefundReq) returns (WeChatResp)
 
 }

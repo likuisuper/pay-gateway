@@ -573,7 +573,7 @@ func (l *WeChatCommPay) RefundOrder(refundOrder *RefundOrder) (*refunddomestic.R
 		return nil, err
 	}
 	params,_ := url.Parse(l.Config.NotifyUrl)
-	notifyUri := fmt.Sprintf( "%s://%s/notify/wechat/refund/%s" ,params.Scheme,params.Host, l.Config.AppId)
+	notifyUri := fmt.Sprintf( "%s://%s/notify/refund/wechat/%s" ,params.Scheme,params.Host, l.Config.AppId)
 	svc := refunddomestic.RefundsApiService{Client: client}
 	resp, result, err := svc.Create(l.Ctx,
 		refunddomestic.CreateRequest{

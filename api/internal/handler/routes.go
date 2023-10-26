@@ -62,7 +62,7 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 			},
 			{
 				Method:  http.MethodPost,
-				Path:    "/notify/wechat/refund/:appid",
+				Path:    "/notify/refund/wechat/:appid",
 				Handler: notify.NotifyWechatRefundOrderHandler(serverCtx),
 			},
 		},
