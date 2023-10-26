@@ -498,12 +498,26 @@ func (l *WeChatCommPay) Notify(r *http.Request) (orderInfo *payments.Transaction
 
 //退款支付回调
 func (l *WeChatCommPay) RefundNotify(r *http.Request) (orderInfo map[string]interface{}, err error) {
-	_, _= l.getClient()
+
+	mchPrivateKey, err := utils.LoadPrivateKeyWithPath(l.Config.PrivateKeyPath)
+	if err != nil {
+		logx.Errorf("mchPrivateKey！err=%v", err)
+	}
+	// 1. 使用 `RegisterDownloaderWithPrivateKey` 注册下载器
+	err = downloader.MgrInstance().RegisterDownloaderWithPrivateKey(l.Ctx, mchPrivateKey,l.Config.SerialNumber, l.Config.MchId, l.Config.ApiKey)
+	if err != nil {
+		weChatNotifyErr.CounterInc()
+		logx.Errorf("注册下载器失败！err=%v", err)
+		err = errors.New(`{"code": "FAIL","message": "注册下载器"}`)
+		return nil, err
+	}
+	// 2. 获取商户号对应的微信支付平台证书访问器
 	certificateVisitor := downloader.MgrInstance().GetCertificateVisitor(l.Config.MchId)
+	// 3. 使用证书访问器初始化 `notify.Handler`
 	handler := notify.NewNotifyHandler(l.Config.ApiKey, verifiers.NewSHA256WithRSAVerifier(certificateVisitor))
 	//支付回调
-	transaction := make(map[string]interface{},0)
-	notifyReq, err := handler.ParseNotifyRequest(l.Ctx, r, transaction)
+	content := make(map[string]interface{})
+	notifyReq, err := handler.ParseNotifyRequest(l.Ctx, r, &content)
 	// 如果验签未通过，或者解密失败
 	if err != nil {
 		weChatNotifyErr.CounterInc()
@@ -512,12 +526,12 @@ func (l *WeChatCommPay) RefundNotify(r *http.Request) (orderInfo map[string]inte
 		//err = errors.New(`{"code": "FAIL","message": "验签未通过，或者解密失败"}`)
 		return nil, err
 	}
-	jsonData,_ := json.Marshal(transaction)
+	jsonData,_ := json.Marshal(content)
 	logx.Slowf("Wechat 解密后内容=%s",string(jsonData) )
 	// 处理通知内容
 	logx.Slowf("Wechat notifyReq=%v", notifyReq.Summary)
-	logx.Slowf("Wechat content=%v", transaction)
-	return transaction, nil
+	logx.Slowf("Wechat content=%v", content)
+	return content, nil
 }
 
 
