@@ -537,10 +537,6 @@ func (l *WeChatCommPay) RefundOrder(refundOrder *RefundOrder) (*refunddomestic.R
 			FundsAccount: refunddomestic.REQFUNDSACCOUNT_AVAILABLE.Ptr(),
 			Amount: &refunddomestic.AmountReq{
 				Currency: core.String("CNY"),
-				From: []refunddomestic.FundsFromItem{refunddomestic.FundsFromItem{
-					Account: refunddomestic.ACCOUNT_AVAILABLE.Ptr(),
-					Amount:  core.Int64(444),
-				}},
 				Refund: core.Int64(refundOrder.RefundFee),
 				Total:  core.Int64(refundOrder.TotalFee),
 			},
