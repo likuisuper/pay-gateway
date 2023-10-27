@@ -57,7 +57,7 @@ func (l *NotifyWechatLogic) NotifyWechat(request *http.Request) (resp *types.WeC
 	var transaction *payments.Transaction
 	var wxCli *client.WeChatCommPay
 	wxCli = client.NewWeChatCommPay(*payCfg.TransClientConfig())
-	transaction,_, err = wxCli.Notify(request,1)
+	transaction,_, err = wxCli.Notify(request)
 	if err != nil {
 		err = fmt.Errorf("解析及验证内容失败！err=%v ", err)
 		logx.Errorf(err.Error())
