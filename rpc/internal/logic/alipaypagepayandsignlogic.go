@@ -74,8 +74,8 @@ func (l *AlipayPagePayAndSignLogic) AlipayPagePayAndSign(in *pb.AlipayPageSignRe
 			intAmount = int(product.Amount * 100)
 		}
 		period = product.SubscribePeriod
-		prepaidAmount = fmt.Sprintf("%f", product.PrepaidAmount)
-		amount = fmt.Sprintf("%f", product.Amount)
+		prepaidAmount = fmt.Sprintf("%.2f", product.PrepaidAmount)
+		amount = fmt.Sprintf("%.2f", product.Amount)
 	}
 
 	if intAmount <= 0 {
