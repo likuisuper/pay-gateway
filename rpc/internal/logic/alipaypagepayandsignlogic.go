@@ -68,14 +68,14 @@ func (l *AlipayPagePayAndSignLogic) AlipayPagePayAndSign(in *pb.AlipayPageSignRe
 			return nil, errors.New("商品信息错误")
 		}
 		productType = product.ProductType
-		if productType == code.PRODUCT_TYPE_SUBSCRIBE{
+		if productType == code.PRODUCT_TYPE_SUBSCRIBE {
 			intAmount = int(product.PrepaidAmount * 100)
-		}else{
+		} else {
 			intAmount = int(product.Amount * 100)
 		}
 		period = product.SubscribePeriod
-		prepaidAmount =fmt.Sprintf("%f",product.PrepaidAmount)
-		amount =fmt.Sprintf("%f",product.Amount)
+		prepaidAmount = fmt.Sprintf("%f", product.PrepaidAmount)
+		amount = fmt.Sprintf("%f", product.Amount)
 	}
 
 	if intAmount <= 0 {
@@ -99,7 +99,7 @@ func (l *AlipayPagePayAndSignLogic) AlipayPagePayAndSign(in *pb.AlipayPageSignRe
 	}
 
 	trade := alipay2.Trade{
-		ProductCode:    "CYCLE_PAY_AUTH", // 固定参数
+		ProductCode:    "QUICK_MSECURITY_PAY", // 固定参数
 		Subject:        in.Subject,
 		OutTradeNo:     orderInfo.OutTradeNo,
 		TotalAmount:    amount,
@@ -122,6 +122,7 @@ func (l *AlipayPagePayAndSignLogic) AlipayPagePayAndSign(in *pb.AlipayPageSignRe
 			SingleAmount: amount,
 		}
 		trade.TotalAmount = prepaidAmount // 订阅商品，首次付款的金额是预付金额
+		trade.ProductCode = "CYCLE_PAY_AUTH"
 		signParams := &alipay2.SignParams{
 			SignScene:           "INDUSTRY|DEFAULT_SCENE", // 固定参数
 			ProductCode:         "GENERAL_WITHHOLDING",    // 固定参数
