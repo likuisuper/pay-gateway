@@ -38,7 +38,7 @@ func (m *PmPayConfigWechatTable) TransClientConfig() (clientCfg *client.WechatPa
 		AppId:          m.AppID,
 		MchId:          m.MchID,
 		ApiKey:         m.ApiKey,
-		PrivateKeyPath: m.PrivateKeyPath,
+		PrivateKeyPath: "D:\\WeChat\\pem\\wechatpk.pem",
 		SerialNumber:   m.SerialNumber,
 		NotifyUrl:      m.NotifyUrl,
 		ApiKeyV2:       m.ApiKeyV2,

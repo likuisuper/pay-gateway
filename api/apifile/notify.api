@@ -36,10 +36,26 @@ type (
     }
 )
 
+type Resource {
+    	OriginalType   string `json:"original_type"`
+    	Algorithm      string `json:"algorithm"`
+    	Ciphertext     string `json:"ciphertext"`
+    	AssociatedData string `json:"associated_data"`
+    	Nonce          string `json:"nonce"`
+}
 
 type WechatRefundReq {
-	Appid string `path:"appid,optional"`
+	OutTradeNo string `path:"OutTradeNo,optional"`
+	EventType    string   `json:"event_type"`
+	Id           string   `json:"id"`
+	CreateTime   string   `json:"create_time"`
+	ResourceType string   `json:"resource_type"`
+	Summary      string   `json:"summary"`
+	Resource     Resource `json:"resource"`
 }
+
+
+
 
 @server(
     group: notify
@@ -91,6 +107,6 @@ service payment {
         summary: "微信统一退款回调（V3）"
     )
     @handler notifyWechatRefundOrder
-    post /notify/refund/wechat/:appid (WechatRefundReq) returns (WeChatResp)
+    post /notify/refund/wechat/:OutTradeNo (WechatRefundReq) returns (WeChatResp)
 
 }
