@@ -54,7 +54,6 @@ var (
 	notifyAlipayUnSignErrNum = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "notifyAlipayUnSignErrNum", nil, "支付宝解约回调失败", nil})}
 )
 
-// TODO: 验签
 func (l *NotifyAlipayNewLogic) NotifyAlipayNew(r *http.Request, w http.ResponseWriter) (resp *types.EmptyReq, err error) {
 	// todo: add your logic here and delete this line
 
@@ -165,6 +164,10 @@ func (l *NotifyAlipayNewLogic) NotifyAlipayNew(r *http.Request, w http.ResponseW
 			}
 
 			table, err := l.refundModel.GetOneByOutTradeNo(outTradeNo)
+			if table != nil { // 已经有退款单，是用户主动退款，不在这处理
+				return
+			}
+
 			refundOutSideApp := false
 			if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 				err = fmt.Errorf("退款回调db服务异常， out_trade_no = %s, err:=%v", outTradeNo, err)
@@ -194,7 +197,7 @@ func (l *NotifyAlipayNewLogic) NotifyAlipayNew(r *http.Request, w http.ResponseW
 				}
 			}
 
-			// 回调通知续约成功
+			// 回调通知退款成功
 			go func() {
 				defer exception.Recover()
 				dataMap := make(map[string]interface{})

@@ -50,46 +50,47 @@ func (l *AlipayRefundLogic) AlipayRefund(in *pb.AlipayRefundReq) (*pb.AliRefundR
 		RefundReason: in.RefundReason,
 	}
 
+	order, err := l.orderModel.GetOneByOutTradeNo(in.OutTradeNo)
+	if err != nil {
+		errInfo := fmt.Sprintf("创建退款订单：获取订单失败!!! %s", in.OutTradeNo)
+		logx.Errorf(errInfo)
+		createRefundErr.CounterInc()
+		return nil, errors.New(errInfo)
+	}
+
+	refund := model.RefundTable{
+		PayType:          order.PayType,
+		OutTradeNo:       order.OutTradeNo,
+		OutTradeRefundNo: utils.GenerateOrderCode(l.svcCtx.Config.SnowFlake.MachineNo, l.svcCtx.Config.SnowFlake.WorkerNo),
+		Reason:           in.RefundReason,
+		NotifyUrl:        in.RefundNotifyUrl,
+		Operator:         in.Operator,
+		AppPkg:           order.AppPkg,
+		RefundNo:         in.TradeNo, // 支付宝退款没有退款单号
+		ReviewerComment:  "自动退款",
+		RefundedAt:       time.Now(),
+	}
+
+	err = l.refundModel.Create(&refund)
+	if err != nil {
+		errInfo := fmt.Sprintf("创建退款订单失败!!! %s", in.OutTradeNo)
+		logx.Errorf(errInfo)
+		createRefundErr.CounterInc()
+		return nil, errors.New(errInfo)
+	}
+
 	result, err := payClient.TradeRefund(tradeRefund)
 	if err != nil {
 		logx.Errorf(err.Error())
 	}
 
-	if result.Content.Code == alipay2.CodeSuccess {
-
-		order, err := l.orderModel.GetOneByOutTradeNo(in.OutTradeNo)
-		if err != nil {
-			errInfo := fmt.Sprintf("创建退款订单：获取订单失败!!! %s", in.OutTradeNo)
-			logx.Errorf(errInfo)
-			createRefundErr.CounterInc()
-			return nil, errors.New(errInfo)
-		}
+	if result.Content.Code == alipay2.CodeSuccess && result.Content.FundChange == "Y" {
 
 		floatAmount, _ := strconv.ParseFloat(result.Content.RefundFee, 64)
-
 		intAmount := int(floatAmount * 100)
-
-		refund := model.RefundTable{
-			PayType:          order.PayType,
-			OutTradeNo:       order.OutTradeNo,
-			OutTradeRefundNo: utils.GenerateOrderCode(l.svcCtx.Config.SnowFlake.MachineNo, l.svcCtx.Config.SnowFlake.WorkerNo),
-			Reason:           in.RefundReason,
-			RefundAmount:     intAmount,
-			NotifyUrl:        in.RefundNotifyUrl,
-			Operator:         in.Operator,
-			AppPkg:           order.AppPkg,
-			RefundNo:         in.TradeNo, // 支付宝退款没有退款单号
-			ReviewerComment:  "自动退款",
-			RefundedAt:       time.Now(),
-		}
-
-		err = l.refundModel.Create(&refund)
-		if err != nil {
-			errInfo := fmt.Sprintf("创建退款订单失败!!! %s", in.OutTradeNo)
-			logx.Errorf(errInfo)
-			createRefundErr.CounterInc()
-			return nil, errors.New(errInfo)
-		}
+		refund.RefundAmount = intAmount
+		refund.RefundStatus = model.REFUND_STATUS_SUCCESS
+		l.refundModel.Update(in.OutTradeNo, &refund)
 
 		return &pb.AliRefundResp{
 			Status:           code.ALI_PAY_SUCCESS,
