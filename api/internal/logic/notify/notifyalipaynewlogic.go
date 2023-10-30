@@ -163,7 +163,11 @@ func (l *NotifyAlipayNewLogic) NotifyAlipayNew(r *http.Request, w http.ResponseW
 				return
 			}
 
-			table, err := l.refundModel.GetOneByOutTradeNo(outTradeNo)
+			table, dbErr := l.refundModel.GetOneByOutTradeNo(outTradeNo)
+			if dbErr != nil && !errors.Is(dbErr, gorm.ErrRecordNotFound) {
+				err = fmt.Errorf("退款回调db服务异常， out_trade_no = %s, err:=%v", outTradeNo, dbErr)
+				util.CheckError(err.Error())
+			}
 			if table != nil { // 已经有退款单，是用户主动退款，不在这处理
 				return
 			}
