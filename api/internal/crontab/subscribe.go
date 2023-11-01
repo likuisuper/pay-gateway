@@ -41,10 +41,10 @@ const (
 	payOrderTime = "0 30 23 * * ?"
 )
 
-var C *CrontabOrder
+var crontabOrder *CrontabOrder
 
 func InitCrontabOrder(namingClient *nacos.Instance, svcName string, c *config.Config, s *svc.ServiceContext) {
-	C = &CrontabOrder{
+	crontabOrder = &CrontabOrder{
 		Nacos:   namingClient,
 		SvcName: svcName,
 		Conf:    c,
@@ -55,7 +55,7 @@ func InitCrontabOrder(namingClient *nacos.Instance, svcName string, c *config.Co
 	cronTask := cron.New()
 
 	err := cronTask.AddFunc(payOrderTime, func() {
-		C.PayOrder()
+		crontabOrder.PayOrder()
 	})
 	if err != nil {
 		logx.Errorf("创建支付订单任务定时任务失败，err= %v", err)
@@ -68,17 +68,17 @@ func InitCrontabOrder(namingClient *nacos.Instance, svcName string, c *config.Co
 var orderModel *dbmodel.OrderModel
 
 func (c *CrontabOrder) PayOrder() {
-	//instances, err := c.Nacos.SelectAllInstances(&c.SvcName)
-	//if err != nil {
-	//	logx.Errorf("获取dsp服务 %s 的注册实例失败, err= %v", c.SvcName, err)
-	//	return
-	//}
+	instances, err := c.Nacos.SelectAllInstances(&c.SvcName)
+	if err != nil {
+		logx.Errorf("获取dsp服务 %s 的注册实例失败, err= %v", c.SvcName, err)
+		return
+	}
 
-	//// 判断是否在此服务执行定时任务
-	//localDo := c.CheckLocalMachineDo(&instances)
-	//if !localDo {
-	//	return
-	//}
+	// 判断是否在此服务执行定时任务
+	localDo := c.CheckLocalMachineDo(&instances)
+	if !localDo {
+		return
+	}
 
 	orderModel = dbmodel.NewOrderModel(define.DbPayGateway)
 
@@ -145,7 +145,7 @@ func (c *CrontabOrder) PaySubscribeFee(tb *dbmodel.OrderTable) error {
 
 	trade := alipay2.Trade{
 		OutTradeNo:     tb.OutTradeNo,
-		TotalAmount:    fmt.Sprintf("%.2f", product.Amount),
+		TotalAmount:    fmt.Sprintf("%f", product.Amount),
 		Subject:        product.TopText,
 		ProductCode:    "GENERAL_WITHHOLDING",
 		TimeoutExpress: "30m",
