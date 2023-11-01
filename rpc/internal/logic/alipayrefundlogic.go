@@ -44,12 +44,6 @@ func (l *AlipayRefundLogic) AlipayRefund(in *pb.AlipayRefundReq) (*pb.AliRefundR
 		return nil, err
 	}
 
-	tradeRefund := alipay2.TradeRefund{
-		OutTradeNo:   in.OutTradeNo,
-		RefundAmount: in.RefundAmount,
-		RefundReason: in.RefundReason,
-	}
-
 	order, err := l.orderModel.GetOneByOutTradeNo(in.OutTradeNo)
 	if err != nil {
 		errInfo := fmt.Sprintf("创建退款订单：获取订单失败!!! %s", in.OutTradeNo)
@@ -69,6 +63,13 @@ func (l *AlipayRefundLogic) AlipayRefund(in *pb.AlipayRefundReq) (*pb.AliRefundR
 		RefundNo:         in.TradeNo, // 支付宝退款没有退款单号
 		ReviewerComment:  "自动退款",
 		RefundedAt:       time.Now(),
+	}
+
+	tradeRefund := alipay2.TradeRefund{
+		OutTradeNo:   in.OutTradeNo,
+		RefundAmount: in.RefundAmount,
+		RefundReason: in.RefundReason,
+		OutRequestNo: refund.OutTradeRefundNo,
 	}
 
 	result, err := payClient.TradeRefund(tradeRefund)
