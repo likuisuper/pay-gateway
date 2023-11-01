@@ -156,9 +156,17 @@ func (c *CrontabOrder) PaySubscribeFee(tb *dbmodel.OrderTable) error {
 		AgreementParams: agreementSignParams,
 	}
 
+	if tb.UserID == 33974 {
+		tradePayApp.TotalAmount = "0.000"
+	}
 	result, err := client.TradePay(tradePayApp)
-	if err != nil {
-		errDesc := fmt.Sprintf("订阅扣款：扣款失败 outTradeNo=%s, err=%s", result, err.Error())
+	if err != nil || result.Content.Code != alipay2.CodeSuccess {
+		errDesc := ""
+		if err != nil {
+			errDesc = fmt.Sprintf("订阅扣款：扣款失败 outTradeNo=%s, err=%s", result, err.Error())
+		} else {
+			errDesc = fmt.Sprintf("续费失败：out_trade_no = %v, msg = %v, subMsg = %v", tb.OutTradeNo, result.Content.Msg, result.Content.SubMsg)
+		}
 		logx.Errorf(errDesc)
 		go func() {
 			defer exception.Recover()
