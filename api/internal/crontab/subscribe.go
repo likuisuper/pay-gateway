@@ -156,9 +156,6 @@ func (c *CrontabOrder) PaySubscribeFee(tb *dbmodel.OrderTable) error {
 		AgreementParams: agreementSignParams,
 	}
 
-	if tb.UserID == 33974 {
-		tradePayApp.TotalAmount = "0.000"
-	}
 	result, err := client.TradePay(tradePayApp)
 	if err != nil || result.Content.Code != alipay2.CodeSuccess {
 		errDesc := ""
