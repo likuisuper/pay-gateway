@@ -139,7 +139,7 @@ func (l *NotifyAlipayNewLogic) NotifyAlipayNew(r *http.Request, w http.ResponseW
 				if orderInfo.ProductType == code.PRODUCT_TYPE_SUBSCRIBE_FEE {
 					dataMap["external_agreement_no"] = orderInfo.ExternalAgreementNo
 				}
-				_, _ = util.HttpPost(orderInfo.AppNotifyUrl, dataMap, 5*time.Second)
+				utils.CallbackWithRetry(orderInfo.AppNotifyUrl, dataMap, 5*time.Second)
 			}()
 		} else { // 退款
 
@@ -211,7 +211,7 @@ func (l *NotifyAlipayNewLogic) NotifyAlipayNew(r *http.Request, w http.ResponseW
 				dataMap["refund_out_side_app"] = refundOutSideApp
 				dataMap["refund_status"] = model.REFUND_STATUS_SUCCESS
 				dataMap["refund_fee"] = refundAmount
-				_, _ = util.HttpPost(table.NotifyUrl, dataMap, 5*time.Second)
+				utils.CallbackWithRetry(table.NotifyUrl, dataMap, 5*time.Second)
 			}()
 		}
 
@@ -258,7 +258,7 @@ func (l *NotifyAlipayNewLogic) NotifyAlipayNew(r *http.Request, w http.ResponseW
 			dataMap := l.transFormDataToMap(bodyData)
 			dataMap["out_trade_no"] = order.OutTradeNo
 			dataMap["notify_type"] = code.APP_NOTIFY_TYPE_SIGN
-			_, _ = util.HttpPost(order.AppNotifyUrl, dataMap, 5*time.Second)
+			utils.CallbackWithRetry(order.AppNotifyUrl, dataMap, 5*time.Second)
 		}()
 
 	} else if ALI_NOTIFY_TYPE_UNSIGN == notifyType {
@@ -273,7 +273,7 @@ func (l *NotifyAlipayNewLogic) NotifyAlipayNew(r *http.Request, w http.ResponseW
 			defer exception.Recover()
 			dataMap := l.transFormDataToMap(bodyData)
 			dataMap["notify_type"] = code.APP_NOTIFY_TYPE_UNSIGN
-			_, _ = util.HttpPost(order.AppNotifyUrl, dataMap, 5*time.Second)
+			utils.CallbackWithRetry(order.AppNotifyUrl, dataMap, 5*time.Second)
 		}()
 
 	}

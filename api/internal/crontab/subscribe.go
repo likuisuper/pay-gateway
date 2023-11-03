@@ -10,6 +10,7 @@ import (
 	"gitee.com/zhuyunkj/pay-gateway/common/define"
 	"gitee.com/zhuyunkj/pay-gateway/common/exception"
 	"gitee.com/zhuyunkj/pay-gateway/common/types"
+	"gitee.com/zhuyunkj/pay-gateway/common/utils"
 	"strconv"
 	"time"
 
@@ -171,7 +172,7 @@ func (c *CrontabOrder) PaySubscribeFee(tb *dbmodel.OrderTable) error {
 			dataMap["notify_type"] = code.APP_NOTIFY_TYPE_SIGN_FEE_FAILED
 			dataMap["external_agreement_no"] = tb.ExternalAgreementNo
 			dataMap["out_trade_no"] = tb.OutTradeNo
-			_, _ = util.HttpPost(tb.AppNotifyUrl, dataMap, 5*time.Second)
+			utils.CallbackWithRetry(tb.AppNotifyUrl, dataMap, 5*time.Second)
 		}()
 		return errors.New(errDesc)
 	} else {
