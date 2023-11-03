@@ -180,26 +180,26 @@ func (l *NotifyAlipayNewLogic) NotifyAlipayNew(r *http.Request, w http.ResponseW
 
 			refundAmount := int(amountFloat * 100)
 
-			if table == nil { // 支付网关中没有，可能是用户自己通过申诉退款，不走我们的退款途径，创建一个退款单
-				refundOutSideApp = true
-				table = &model.RefundTable{
-					PayType:          orderInfo.PayType,
-					OutTradeNo:       orderInfo.OutTradeNo,
-					OutTradeRefundNo: utils.GenerateOrderCode(l.svcCtx.Config.SnowFlake.MachineNo, l.svcCtx.Config.SnowFlake.WorkerNo),
-					Reason:           "用户通过支付宝退款",
-					RefundAmount:     refundAmount,
-					NotifyUrl:        orderInfo.AppNotifyUrl,
-					Operator:         "user",
-					AppPkg:           orderInfo.AppPkg,
-					RefundedAt:       time.Now(),
-					RefundNo:         orderInfo.PlatformTradeNo, // 支付宝没有退款单号，先用支付单号
-				}
-				err = l.refundModel.Create(table)
-				if err != nil {
-					err = fmt.Errorf("退款回调：创建退款单失败， out_trade_no = %s, err:=%v", outTradeNo, err)
-					util.CheckError(err.Error())
-				}
-			}
+			//if table == nil { // 支付网关中没有，可能是用户自己通过申诉退款，不走我们的退款途径，创建一个退款单
+			//	refundOutSideApp = true
+			//	table = &model.RefundTable{
+			//		PayType:          orderInfo.PayType,
+			//		OutTradeNo:       orderInfo.OutTradeNo,
+			//		OutTradeRefundNo: utils.GenerateOrderCode(l.svcCtx.Config.SnowFlake.MachineNo, l.svcCtx.Config.SnowFlake.WorkerNo),
+			//		Reason:           "用户通过支付宝退款",
+			//		RefundAmount:     refundAmount,
+			//		NotifyUrl:        orderInfo.AppNotifyUrl,
+			//		Operator:         "user",
+			//		AppPkg:           orderInfo.AppPkg,
+			//		RefundedAt:       time.Now(),
+			//		RefundNo:         orderInfo.PlatformTradeNo, // 支付宝没有退款单号，先用支付单号
+			//	}
+			//	err = l.refundModel.Create(table)
+			//	if err != nil {
+			//		err = fmt.Errorf("退款回调：创建退款单失败， out_trade_no = %s, err:=%v", outTradeNo, err)
+			//		util.CheckError(err.Error())
+			//	}
+			//}
 
 			// 回调通知退款成功
 			go func() {
