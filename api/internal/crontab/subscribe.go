@@ -170,6 +170,7 @@ func (c *CrontabOrder) PaySubscribeFee(tb *dbmodel.OrderTable) error {
 			dataMap := make(map[string]interface{})
 			dataMap["notify_type"] = code.APP_NOTIFY_TYPE_SIGN_FEE_FAILED
 			dataMap["external_agreement_no"] = tb.ExternalAgreementNo
+			dataMap["out_trade_no"] = tb.OutTradeNo
 			_, _ = util.HttpPost(tb.AppNotifyUrl, dataMap, 5*time.Second)
 		}()
 		return errors.New(errDesc)
