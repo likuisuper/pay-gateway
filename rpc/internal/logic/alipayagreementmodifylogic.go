@@ -57,6 +57,15 @@ func (l *AlipayAgreementModifyLogic) AlipayAgreementModify(in *pb.AlipayAgreemen
 		DeductTime:  in.DeductTime,
 	}
 
+	deductOrder, err := l.orderModel.GetOneByOutTradeNo(in.DeductOutTradeNo)
+	if err != nil {
+		logx.Errorf(err.Error())
+		return nil, err
+	}
+	if deductOrder == nil {
+		return nil, errors.New("扣款订单不存在， out_trade_no: " + in.DeductOutTradeNo)
+	}
+
 	result, err := client.AgreementExecutionPlanModify(params)
 	if err != nil {
 		logx.Errorf(err.Error())
@@ -64,11 +73,6 @@ func (l *AlipayAgreementModifyLogic) AlipayAgreementModify(in *pb.AlipayAgreemen
 	}
 
 	if result.Content.Code == alipay.CodeSuccess {
-		deductOrder, err := l.orderModel.GetOneByOutTradeNo(in.DeductOutTradeNo)
-		if err != nil {
-			logx.Errorf(err.Error())
-			return nil, err
-		}
 
 		deductTime, _ := time.Parse("2006-01-02", in.DeductTime)
 
@@ -84,12 +88,6 @@ func (l *AlipayAgreementModifyLogic) AlipayAgreementModify(in *pb.AlipayAgreemen
 			Status: code.ALI_PAY_SUCCESS,
 		}, nil
 	} else {
-
-		deductOrder, err := l.orderModel.GetOneByOutTradeNo(in.DeductOutTradeNo)
-		if err != nil {
-			logx.Errorf(err.Error())
-			return nil, err
-		}
 
 		deductOrder.Status = model.PmPayOrderTablePayStatusFailed
 
