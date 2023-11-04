@@ -27,7 +27,7 @@ type OrderTable struct {
 	PlatformTradeNo     string    `gorm:"column:platform_trade_no;NOT NULL"`                       // 支付宝/微信等平台的订单号
 	Amount              int       `gorm:"column:amount;default:0;NOT NULL"`                        // 支付金额
 	Status              int       `gorm:"column:status;default:0;NOT NULL"`                        // -1:关闭，0:未支付，1:已支付，2:支付失败，3:已退款
-	PayType             int       `gorm:"column:pay_type;default:0;NOT NULL"`                      // 支付类型（1微信，3支付宝）
+	PayType             int       `gorm:"column:pay_type;default:0;NOT NULL"`                      // 支付类型（1:支付宝，2微信）
 	PayTime             time.Time `gorm:"column:pay_time;default:0000-00-00 00:00:00;NOT NULL"`    // 支付时间
 	Subject             string    `gorm:"column:subject;NOT NULL"`                                 // 订单标题
 	ProductType         int       `gorm:"column:product_type;default:0;NOT NULL"`                  // 商品类型，0:普通商品，1:会员商品，2:订阅商品，3:订阅商品续费
