@@ -72,11 +72,12 @@ func EncodeUrlParams(domain string, params map[string]string) string {
 	return domain + "?" + values.Encode()
 }
 
-func CallbackWithRetry(notifyUrl string, dataMap map[string]interface{}, timeout time.Duration) {
+func CallbackWithRetry(notifyUrl string, dataMap map[string]interface{}, timeout time.Duration) (err error) {
 	for i := 0; i < 3; i++ {
-		_, err := util.HttpPost(notifyUrl, dataMap, timeout)
+		_, err = util.HttpPost("abc"+notifyUrl, dataMap, timeout)
 		if err == nil {
-			break
+			return nil
 		}
 	}
+	return err
 }

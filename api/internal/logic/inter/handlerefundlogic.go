@@ -2,6 +2,7 @@ package inter
 
 import (
 	"context"
+	"fmt"
 	alipay2 "gitee.com/yan-yixin0612/alipay/v3"
 	"gitee.com/zhuyunkj/pay-gateway/api/common/response"
 	"gitee.com/zhuyunkj/pay-gateway/common/clientMgr"
@@ -10,6 +11,7 @@ import (
 	"gitee.com/zhuyunkj/pay-gateway/common/exception"
 	"gitee.com/zhuyunkj/pay-gateway/common/utils"
 	"gitee.com/zhuyunkj/pay-gateway/db/mysql/model"
+	"gitee.com/zhuyunkj/zhuyun-core/alarm"
 	"strconv"
 	"time"
 
@@ -104,7 +106,11 @@ func (l *HandleRefundLogic) HandleRefund(req *types.RefundReq) (resp *types.Resu
 		dataMap["out_trade_no"] = table.OutTradeNo
 		dataMap["refund_out_side_app"] = false
 		dataMap["refund_status"] = table.RefundStatus
-		utils.CallbackWithRetry(table.NotifyUrl, dataMap, 5*time.Second)
+		err = utils.CallbackWithRetry(table.NotifyUrl, dataMap, 5*time.Second)
+		if err != nil {
+			desc := fmt.Sprintf("回调通知用户退款成功 异常, app_pkg=%s, out_trade_no=%s", table.AppPkg, table.OutTradeNo)
+			alarm.ImmediateAlarm("notifyUserRefundFailedErr", desc, alarm.ALARM_LEVEL_FATAL)
+		}
 	}()
 
 	res := response.MakeResult(code.CODE_OK, "操作成功", nil)
