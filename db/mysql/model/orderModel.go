@@ -84,7 +84,7 @@ func (o *OrderModel) GetOneByOutTradeNo(outTradeNo string) (info *OrderTable, er
 //根据协议号获取订单信息
 func (o *OrderModel) GetOneByExternalAgreementNo(externalAgreementNo string) (info *OrderTable, err error) {
 	var orderInfo OrderTable
-	err = o.DB.Where("`external_agreement_no` = ? ", externalAgreementNo).First(&orderInfo).Error
+	err = o.DB.Where("`external_agreement_no` = ? and `product_type` = ?", externalAgreementNo, code.PRODUCT_TYPE_SUBSCRIBE).First(&orderInfo).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}
@@ -139,6 +139,18 @@ func (o *OrderModel) UpdateStatusByOutTradeNo(outTradeNo string, status int) err
 	if err != nil {
 		logx.Errorf("UpdateStatusByOutTradeNo，err=%v", err)
 		updateOrderNotifyErr.CounterInc()
+	}
+	return nil
+}
+
+//根据协议号关闭续费订单
+func (o *OrderModel) CloseUnpaidSubscribeFeeOrderByExternalAgreementNo(externalAgreementNo string) (err error) {
+	err = o.DB.Where("`external_agreement_no` = ? and `product_type` = ? and `status` = ?", externalAgreementNo, code.PRODUCT_TYPE_SUBSCRIBE_FEE, 0).
+		Update("`status`", -1).Error
+	if err != nil {
+		logx.Errorf("更新续费订单信息失败，err:=%v, external_agreement_no=%s", err, externalAgreementNo)
+		getOrderErr.CounterInc()
+		return err
 	}
 	return nil
 }

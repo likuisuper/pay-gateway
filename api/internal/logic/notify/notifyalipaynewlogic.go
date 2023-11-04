@@ -270,6 +270,9 @@ func (l *NotifyAlipayNewLogic) NotifyAlipayNew(r *http.Request, w http.ResponseW
 			return
 		}
 		go func() {
+			l.orderModel.CloseUnpaidSubscribeFeeOrderByExternalAgreementNo(externalAgreement)
+		}()
+		go func() {
 			defer exception.Recover()
 			dataMap := l.transFormDataToMap(bodyData)
 			dataMap["notify_type"] = code.APP_NOTIFY_TYPE_UNSIGN
