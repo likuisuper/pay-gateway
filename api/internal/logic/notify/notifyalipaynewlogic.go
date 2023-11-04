@@ -11,6 +11,7 @@ import (
 	"gitee.com/zhuyunkj/pay-gateway/common/exception"
 	"gitee.com/zhuyunkj/pay-gateway/common/utils"
 	"gitee.com/zhuyunkj/pay-gateway/db/mysql/model"
+	"gitee.com/zhuyunkj/zhuyun-core/alarm"
 	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
 	"gitee.com/zhuyunkj/zhuyun-core/util"
 	"gorm.io/gorm"
@@ -139,14 +140,23 @@ func (l *NotifyAlipayNewLogic) NotifyAlipayNew(r *http.Request, w http.ResponseW
 				if orderInfo.ProductType == code.PRODUCT_TYPE_SUBSCRIBE_FEE {
 					dataMap["external_agreement_no"] = orderInfo.ExternalAgreementNo
 				}
-				_, _ = util.HttpPost(orderInfo.AppNotifyUrl, dataMap, 5*time.Second)
+				err = utils.CallbackWithRetry(orderInfo.AppNotifyUrl, dataMap, 5*time.Second)
+				if err != nil {
+					desc := fmt.Sprintf("回调通知用户付款成功 异常, app_pkg=%s, user_id=%s, out_trade_no=%s", orderInfo.AppPkg, orderInfo.UserID, orderInfo.OutTradeNo)
+					alarm.ImmediateAlarm("notifyUserPayErr", desc, alarm.ALARM_LEVEL_FATAL)
+				}
 			}()
 		} else { // 退款
 
 			amountFloat, parseErr := strconv.ParseFloat(refundFee, 64)
 			if parseErr != nil || amountFloat <= 0 {
-				err = fmt.Errorf("退款参数异常， out_trade_no = %s, err:=%v", outTradeNo, err)
-				util.CheckError(parseErr.Error())
+				if parseErr != nil {
+					err = fmt.Errorf("退款参数异常， out_trade_no = %s, err:=%v", outTradeNo, parseErr)
+					util.CheckError(parseErr.Error())
+				} else {
+					err = fmt.Errorf("退款参数异常， out_trade_no = %s, amount = %v", outTradeNo, amountFloat)
+					util.CheckError(err.Error())
+				}
 				return
 			}
 
@@ -180,26 +190,26 @@ func (l *NotifyAlipayNewLogic) NotifyAlipayNew(r *http.Request, w http.ResponseW
 
 			refundAmount := int(amountFloat * 100)
 
-			if table == nil { // 支付网关中没有，可能是用户自己通过申诉退款，不走我们的退款途径，创建一个退款单
-				refundOutSideApp = true
-				table = &model.RefundTable{
-					PayType:          orderInfo.PayType,
-					OutTradeNo:       orderInfo.OutTradeNo,
-					OutTradeRefundNo: utils.GenerateOrderCode(l.svcCtx.Config.SnowFlake.MachineNo, l.svcCtx.Config.SnowFlake.WorkerNo),
-					Reason:           "用户通过支付宝退款",
-					RefundAmount:     refundAmount,
-					NotifyUrl:        orderInfo.AppNotifyUrl,
-					Operator:         "user",
-					AppPkg:           orderInfo.AppPkg,
-					RefundedAt:       time.Now(),
-					RefundNo:         orderInfo.PlatformTradeNo, // 支付宝没有退款单号，先用支付单号
-				}
-				err = l.refundModel.Create(table)
-				if err != nil {
-					err = fmt.Errorf("退款回调：创建退款单失败， out_trade_no = %s, err:=%v", outTradeNo, err)
-					util.CheckError(err.Error())
-				}
-			}
+			//if table == nil { // 支付网关中没有，可能是用户自己通过申诉退款，不走我们的退款途径，创建一个退款单
+			//	refundOutSideApp = true
+			//	table = &model.RefundTable{
+			//		PayType:          orderInfo.PayType,
+			//		OutTradeNo:       orderInfo.OutTradeNo,
+			//		OutTradeRefundNo: utils.GenerateOrderCode(l.svcCtx.Config.SnowFlake.MachineNo, l.svcCtx.Config.SnowFlake.WorkerNo),
+			//		Reason:           "用户通过支付宝退款",
+			//		RefundAmount:     refundAmount,
+			//		NotifyUrl:        orderInfo.AppNotifyUrl,
+			//		Operator:         "user",
+			//		AppPkg:           orderInfo.AppPkg,
+			//		RefundedAt:       time.Now(),
+			//		RefundNo:         orderInfo.PlatformTradeNo, // 支付宝没有退款单号，先用支付单号
+			//	}
+			//	err = l.refundModel.Create(table)
+			//	if err != nil {
+			//		err = fmt.Errorf("退款回调：创建退款单失败， out_trade_no = %s, err:=%v", outTradeNo, err)
+			//		util.CheckError(err.Error())
+			//	}
+			//}
 
 			// 回调通知退款成功
 			go func() {
@@ -211,7 +221,11 @@ func (l *NotifyAlipayNewLogic) NotifyAlipayNew(r *http.Request, w http.ResponseW
 				dataMap["refund_out_side_app"] = refundOutSideApp
 				dataMap["refund_status"] = model.REFUND_STATUS_SUCCESS
 				dataMap["refund_fee"] = refundAmount
-				_, _ = util.HttpPost(table.NotifyUrl, dataMap, 5*time.Second)
+				err = utils.CallbackWithRetry(table.NotifyUrl, dataMap, 5*time.Second)
+				if err != nil {
+					desc := fmt.Sprintf("回调通知用户退款成功 异常, app_pkg=%s, out_trade_no=%s", table.AppPkg, table.OutTradeNo)
+					alarm.ImmediateAlarm("notifyUserRefundErr", desc, alarm.ALARM_LEVEL_FATAL)
+				}
 			}()
 		}
 
@@ -258,7 +272,11 @@ func (l *NotifyAlipayNewLogic) NotifyAlipayNew(r *http.Request, w http.ResponseW
 			dataMap := l.transFormDataToMap(bodyData)
 			dataMap["out_trade_no"] = order.OutTradeNo
 			dataMap["notify_type"] = code.APP_NOTIFY_TYPE_SIGN
-			_, _ = util.HttpPost(order.AppNotifyUrl, dataMap, 5*time.Second)
+			err = utils.CallbackWithRetry(order.AppNotifyUrl, dataMap, 5*time.Second)
+			if err != nil {
+				desc := fmt.Sprintf("回调通知用户签约成功 异常, app_pkg=%s, out_trade_no=%s", order.AppPkg, order.OutTradeNo)
+				alarm.ImmediateAlarm("notifyUserSignErr", desc, alarm.ALARM_LEVEL_FATAL)
+			}
 		}()
 
 	} else if ALI_NOTIFY_TYPE_UNSIGN == notifyType {
@@ -270,10 +288,17 @@ func (l *NotifyAlipayNewLogic) NotifyAlipayNew(r *http.Request, w http.ResponseW
 			return
 		}
 		go func() {
+			l.orderModel.CloseUnpaidSubscribeFeeOrderByExternalAgreementNo(externalAgreement)
+		}()
+		go func() {
 			defer exception.Recover()
 			dataMap := l.transFormDataToMap(bodyData)
 			dataMap["notify_type"] = code.APP_NOTIFY_TYPE_UNSIGN
-			_, _ = util.HttpPost(order.AppNotifyUrl, dataMap, 5*time.Second)
+			err = utils.CallbackWithRetry(order.AppNotifyUrl, dataMap, 5*time.Second)
+			if err != nil {
+				desc := fmt.Sprintf("回调通知用户解约 异常, app_pkg=%s, out_trade_no=%s", order.AppPkg, order.OutTradeNo)
+				alarm.ImmediateAlarm("notifyUserUnsignErr", desc, alarm.ALARM_LEVEL_FATAL)
+			}
 		}()
 
 	}

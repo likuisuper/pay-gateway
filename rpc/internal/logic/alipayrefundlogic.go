@@ -44,12 +44,6 @@ func (l *AlipayRefundLogic) AlipayRefund(in *pb.AlipayRefundReq) (*pb.AliRefundR
 		return nil, err
 	}
 
-	tradeRefund := alipay2.TradeRefund{
-		OutTradeNo:   in.OutTradeNo,
-		RefundAmount: in.RefundAmount,
-		RefundReason: in.RefundReason,
-	}
-
 	order, err := l.orderModel.GetOneByOutTradeNo(in.OutTradeNo)
 	if err != nil {
 		errInfo := fmt.Sprintf("创建退款订单：获取订单失败!!! %s", in.OutTradeNo)
@@ -71,12 +65,11 @@ func (l *AlipayRefundLogic) AlipayRefund(in *pb.AlipayRefundReq) (*pb.AliRefundR
 		RefundedAt:       time.Now(),
 	}
 
-	err = l.refundModel.Create(&refund)
-	if err != nil {
-		errInfo := fmt.Sprintf("创建退款订单失败!!! %s", in.OutTradeNo)
-		logx.Errorf(errInfo)
-		createRefundErr.CounterInc()
-		return nil, errors.New(errInfo)
+	tradeRefund := alipay2.TradeRefund{
+		OutTradeNo:   in.OutTradeNo,
+		RefundAmount: in.RefundAmount,
+		RefundReason: in.RefundReason,
+		OutRequestNo: refund.OutTradeRefundNo,
 	}
 
 	result, err := payClient.TradeRefund(tradeRefund)
@@ -90,7 +83,18 @@ func (l *AlipayRefundLogic) AlipayRefund(in *pb.AlipayRefundReq) (*pb.AliRefundR
 		intAmount := int(floatAmount * 100)
 		refund.RefundAmount = intAmount
 		refund.RefundStatus = model.REFUND_STATUS_SUCCESS
-		l.refundModel.Update(in.OutTradeNo, &refund)
+		//l.refundModel.Update(in.OutTradeNo, &refund)
+
+		err = l.refundModel.Create(&refund)
+		if err != nil {
+			errInfo := fmt.Sprintf("创建退款订单失败!!! %s", in.OutTradeNo)
+			logx.Errorf(errInfo)
+			createRefundErr.CounterInc()
+			return nil, errors.New(errInfo)
+		}
+
+		order.Status = code.ORDER_REFUNDED
+		l.orderModel.UpdateNotify(order)
 
 		return &pb.AliRefundResp{
 			Status:           code.ALI_PAY_SUCCESS,

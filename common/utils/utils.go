@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 	"net"
 	"net/url"
+	"time"
 )
 
 func ToString(v interface{}) string {
@@ -69,4 +70,14 @@ func EncodeUrlParams(domain string, params map[string]string) string {
 		values.Set(k, v)
 	}
 	return domain + "?" + values.Encode()
+}
+
+func CallbackWithRetry(notifyUrl string, dataMap map[string]interface{}, timeout time.Duration) (err error) {
+	for i := 0; i < 3; i++ {
+		_, err = util.HttpPost(notifyUrl, dataMap, timeout)
+		if err == nil {
+			return nil
+		}
+	}
+	return err
 }

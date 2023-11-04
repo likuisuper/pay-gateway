@@ -27,7 +27,7 @@ type OrderTable struct {
 	PlatformTradeNo     string    `gorm:"column:platform_trade_no;NOT NULL"`                       // 支付宝/微信等平台的订单号
 	Amount              int       `gorm:"column:amount;default:0;NOT NULL"`                        // 支付金额
 	Status              int       `gorm:"column:status;default:0;NOT NULL"`                        // -1:关闭，0:未支付，1:已支付，2:支付失败，3:已退款
-	PayType             int       `gorm:"column:pay_type;default:0;NOT NULL"`                      // 支付类型（1:支付宝，2微信）
+	PayType             int       `gorm:"column:pay_type;default:0;NOT NULL"`                      // 支付类型（1微信，3支付宝）
 	PayTime             time.Time `gorm:"column:pay_time;default:0000-00-00 00:00:00;NOT NULL"`    // 支付时间
 	Subject             string    `gorm:"column:subject;NOT NULL"`                                 // 订单标题
 	ProductType         int       `gorm:"column:product_type;default:0;NOT NULL"`                  // 商品类型，0:普通商品，1:会员商品，2:订阅商品，3:订阅商品续费
@@ -84,7 +84,7 @@ func (o *OrderModel) GetOneByOutTradeNo(outTradeNo string) (info *OrderTable, er
 //根据协议号获取订单信息
 func (o *OrderModel) GetOneByExternalAgreementNo(externalAgreementNo string) (info *OrderTable, err error) {
 	var orderInfo OrderTable
-	err = o.DB.Where("`external_agreement_no` = ? ", externalAgreementNo).First(&orderInfo).Error
+	err = o.DB.Where("`external_agreement_no` = ? and `product_type` = ?", externalAgreementNo, code.PRODUCT_TYPE_SUBSCRIBE).First(&orderInfo).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}
@@ -124,7 +124,8 @@ func (o *OrderModel) GetFirstUnpaidSubscribeFee() (table *OrderTable, err error)
 const VIP_DATA_ONCE_LIMIT = 100
 
 func (o *OrderModel) GetRangeData(id int) (records []*OrderTable, err error) {
-	err = o.DB.Where("product_type = ? and status = 0 and id > ? and updated_at > ? and deduct_time < ?", code.PRODUCT_TYPE_SUBSCRIBE_FEE, id, time.Now().Add(-time.Hour*25), time.Now()).
+	// 只取最近30天的
+	err = o.DB.Where("product_type = ? and status = 0 and id > ? and deduct_time < ? and created_at >= ?", code.PRODUCT_TYPE_SUBSCRIBE_FEE, id, time.Now(), time.Now().AddDate(0, 0, -30)).
 		Order("id asc").
 		Limit(VIP_DATA_ONCE_LIMIT).
 		Find(&records).Error
@@ -138,6 +139,18 @@ func (o *OrderModel) UpdateStatusByOutTradeNo(outTradeNo string, status int) err
 	if err != nil {
 		logx.Errorf("UpdateStatusByOutTradeNo，err=%v", err)
 		updateOrderNotifyErr.CounterInc()
+	}
+	return nil
+}
+
+//根据协议号关闭续费订单
+func (o *OrderModel) CloseUnpaidSubscribeFeeOrderByExternalAgreementNo(externalAgreementNo string) (err error) {
+	err = o.DB.Table("order").Where("`external_agreement_no` = ? and `product_type` = ? and `status` = ?", externalAgreementNo, code.PRODUCT_TYPE_SUBSCRIBE_FEE, 0).
+		Update("`status`", -1).Error
+	if err != nil {
+		logx.Errorf("更新续费订单信息失败，err:=%v, external_agreement_no=%s", err, externalAgreementNo)
+		getOrderErr.CounterInc()
+		return err
 	}
 	return nil
 }

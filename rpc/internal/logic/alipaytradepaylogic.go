@@ -13,8 +13,8 @@ import (
 	"gitee.com/zhuyunkj/pay-gateway/common/types"
 	"gitee.com/zhuyunkj/pay-gateway/common/utils"
 	"gitee.com/zhuyunkj/pay-gateway/db/mysql/model"
+	"gitee.com/zhuyunkj/zhuyun-core/alarm"
 	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
-	"gitee.com/zhuyunkj/zhuyun-core/util"
 	"time"
 
 	"gitee.com/zhuyunkj/pay-gateway/rpc/internal/svc"
@@ -76,7 +76,7 @@ func (l *AlipayTradePayLogic) AlipayTradePay(in *pb.AlipayTradePayReq) (*pb.Alip
 
 	trade := alipay2.Trade{
 		OutTradeNo:     utils.GenerateOrderCode(l.svcCtx.Config.SnowFlake.MachineNo, l.svcCtx.Config.SnowFlake.WorkerNo),
-		TotalAmount:    fmt.Sprintf("%f",product.Amount),
+		TotalAmount:    fmt.Sprintf("%f", product.Amount),
 		Subject:        product.TopText,
 		ProductCode:    "GENERAL_WITHHOLDING",
 		TimeoutExpress: "30m",
@@ -103,7 +103,11 @@ func (l *AlipayTradePayLogic) AlipayTradePay(in *pb.AlipayTradePayReq) (*pb.Alip
 			dataMap := make(map[string]interface{})
 			dataMap["notify_type"] = code.APP_NOTIFY_TYPE_PAY
 			dataMap["external_agreement_no"] = in.ExternalAgreementNo
-			_, _ = util.HttpPost(tb.AppNotifyUrl, dataMap, 5*time.Second)
+			err = utils.CallbackWithRetry(tb.AppNotifyUrl, dataMap, 5*time.Second)
+			if err != nil {
+				desc := fmt.Sprintf("回调通知用户续约 异常, app_pkg=%s, out_trade_no=%s", tb.AppPkg, tb.OutTradeNo)
+				alarm.ImmediateAlarm("notifyUserSignFeeErr", desc, alarm.ALARM_LEVEL_FATAL)
+			}
 		}()
 		return &pb.AlipayCommonResp{
 			Status: code.ALI_PAY_SUCCESS,
