@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"gitee.com/zhuyunkj/pay-gateway/api/internal/crontab"
 	"gitee.com/zhuyunkj/pay-gateway/db"
+	"gitee.com/zhuyunkj/zhuyun-core/alarm"
 	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
 	"gitee.com/zhuyunkj/zhuyun-core/nacos"
 	"gitee.com/zhuyunkj/zhuyun-core/util"
@@ -47,6 +48,9 @@ func main() {
 
 	// 初始化数据库
 	db.DBInit(c.Mysql, c.RedisConfig)
+
+	//初使化钉钉通知服务
+	alarm.InitAlarmClient(c.Name, c.Alarm.Redis, c.Alarm.DingDingUrl)
 
 	server := rest.MustNewServer(c.RestConf)
 	defer server.Stop()

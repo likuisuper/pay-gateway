@@ -12,6 +12,7 @@ type Config struct {
 	Nacos       NacosConfig           `json:"Nacos"`
 	RedisConfig []*cache.RedisConfigs `json:"RedisConfig"`
 	SnowFlake   SnowFlake             `json:"SnowFlake,optional"` //雪花算法参数
+	Alarm       Alarm                 //自定义告警
 }
 
 // nacos配置
@@ -32,4 +33,9 @@ type NacosService struct {
 type SnowFlake struct {
 	MachineNo int64 //工作ID
 	WorkerNo  int64 //数据中心ID
+}
+
+type Alarm struct {
+	Redis       cache.PublishRedisConfig
+	DingDingUrl string
 }
