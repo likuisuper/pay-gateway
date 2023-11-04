@@ -145,7 +145,7 @@ func (o *OrderModel) UpdateStatusByOutTradeNo(outTradeNo string, status int) err
 
 //根据协议号关闭续费订单
 func (o *OrderModel) CloseUnpaidSubscribeFeeOrderByExternalAgreementNo(externalAgreementNo string) (err error) {
-	err = o.DB.Where("`external_agreement_no` = ? and `product_type` = ? and `status` = ?", externalAgreementNo, code.PRODUCT_TYPE_SUBSCRIBE_FEE, 0).
+	err = o.DB.Table("order").Where("`external_agreement_no` = ? and `product_type` = ? and `status` = ?", externalAgreementNo, code.PRODUCT_TYPE_SUBSCRIBE_FEE, 0).
 		Update("`status`", -1).Error
 	if err != nil {
 		logx.Errorf("更新续费订单信息失败，err:=%v, external_agreement_no=%s", err, externalAgreementNo)
