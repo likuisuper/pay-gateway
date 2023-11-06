@@ -111,7 +111,7 @@ func (l *NotifyAlipayNewLogic) NotifyAlipayNew(r *http.Request, w http.ResponseW
 
 			//获取订单信息
 			orderInfo, dbErr := l.orderModel.GetOneByOutTradeNo(outTradeNo)
-			if dbErr != nil {
+			if dbErr != nil || orderInfo == nil {
 				dbErr = fmt.Errorf("获取订单失败！err=%v,order_code = %s", dbErr, outTradeNo)
 				util.CheckError(dbErr.Error())
 				return
