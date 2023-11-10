@@ -160,7 +160,8 @@ func (l *AlipayPagePayAndSignLogic) AlipayPagePayAndSign(in *pb.AlipayPageSignRe
 		orderInfo.AgreementNo = tb.AgreementNo
 		orderInfo.ExternalAgreementNo = tb.ExternalAgreementNo
 		orderInfo.ProductType = int(in.ProductType)
-		orderInfo.Amount = intAmount
+		periodAmount, _ := strconv.ParseFloat(amount, 64)
+		orderInfo.Amount = int(periodAmount * 100)
 	}
 
 	err = l.orderModel.Create(&orderInfo)
