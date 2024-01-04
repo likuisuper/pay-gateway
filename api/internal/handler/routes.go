@@ -65,6 +65,11 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 				Path:    "/notify/refund/wechat/:OutTradeNo",
 				Handler: notify.NotifyWechatRefundOrderHandler(serverCtx),
 			},
+			{
+				Method:  http.MethodPost,
+				Path:    "/notify/wechat/h5",
+				Handler: notify.NotifyWechatH5OrderHandler(serverCtx),
+			},
 		},
 	)
 
