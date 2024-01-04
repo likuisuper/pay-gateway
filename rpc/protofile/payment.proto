@@ -25,6 +25,7 @@ enum PayType {
   WxWeb = 4; //微信web支付
   KsUniApp = 5; //快手小程序支付-有收银台
   WxUnified  = 6; //微信统一下单接口
+  WxV3H5 = 7;  // 微信h5支付
 }
 
 //创建支付订单返回
@@ -63,6 +64,9 @@ message WxUnifiedPayReply {
   string OutTradeNo = 3;
 }
 
+message WxH5PayReplay{
+  string H5Url = 1; // h5支付地址
+}
 
 //抖音小程序支付返回
 message TiktokEcPayReply {
@@ -276,10 +280,13 @@ service Payment {
   //支付宝：签约延期
   rpc AlipayAgreementModify(AlipayAgreementModifyReq) returns (AlipayCommonResp);
 
-  //微信统一下单接口
+  //微信统一下单接口，JSAPI，对接文档：https://pay.weixin.qq.com/docs/merchant/products/jsapi-payment/introduction.html
   rpc WechatUnifiedOrder(AlipayPageSignReq) returns (WxUnifiedPayReply);
 
   //微信统一支付退款
   rpc WechatRefundOrder(WechatRefundOrderReq) returns (CreateRefundResp);
+
+  // 微信h5支付，对接文档：https://pay.weixin.qq.com/docs/merchant/apis/h5-payment/direct-jsons/h5-prepay.html
+  rpc WechatPayH5Order(AlipayPageSignReq) returns (WxH5PayReplay);
 
 }

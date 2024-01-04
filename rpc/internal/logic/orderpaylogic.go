@@ -194,7 +194,7 @@ func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (out *pb.OrderPayResp, err 
 	return
 }
 
-//支付宝wap支付
+// 支付宝wap支付
 func (l *OrderPayLogic) createAlipayWapOrder(in *pb.OrderPayReq, payConf *client.AliPayConfig) (payUrl string, err error) {
 	// 将 key 的验证调整到初始化阶段
 	payClient, err := client.GetAlipayClient(*payConf)
@@ -224,7 +224,7 @@ func (l *OrderPayLogic) createAlipayWapOrder(in *pb.OrderPayReq, payConf *client
 	return
 }
 
-//支付宝web支付
+// 支付宝web支付
 func (l *OrderPayLogic) createAlipayWebOrder(in *pb.OrderPayReq, payConf *client.AliPayConfig) (payUrl string, err error) {
 	// 将 key 的验证调整到初始化阶段
 	payClient, err := client.GetAlipayClient(*payConf)
@@ -254,7 +254,7 @@ func (l *OrderPayLogic) createAlipayWebOrder(in *pb.OrderPayReq, payConf *client
 	return
 }
 
-//微信小程序支付
+// 微信小程序支付 JSAPI
 func (l *OrderPayLogic) createWeChatUniOrder(in *pb.OrderPayReq, info *client.PayOrder, payConf *client.WechatPayConfig) (reply *pb.WxUniAppPayReply, err error) {
 	payClient := client.NewWeChatCommPay(*payConf)
 	res, err := payClient.WechatPayV3(info, in.WxOpenID)
@@ -275,7 +275,7 @@ func (l *OrderPayLogic) createWeChatUniOrder(in *pb.OrderPayReq, info *client.Pa
 	return
 }
 
-//微信web支付
+// 微信web支付
 func (l *OrderPayLogic) createWeChatNativeOrder(in *pb.OrderPayReq, info *client.PayOrder, payConf *client.WechatPayConfig) (reply *pb.WxNativePayReply, err error) {
 	payClient := client.NewWeChatCommPay(*payConf)
 	res, err := payClient.WechatPayV3Native(info)
@@ -301,7 +301,7 @@ func (l *OrderPayLogic) createWeChatNativeOrder(in *pb.OrderPayReq, info *client
 	return
 }
 
-//微信统一下单
+// 微信统一下单
 func (l *OrderPayLogic) createWeChatUnifiedOrder(in *pb.OrderPayReq, info *client.PayOrder, payConf *client.WechatPayConfig) (reply *pb.WxUnifiedPayReply, err error) {
 	payClient := client.NewWeChatCommPay(*payConf)
 	res, err := payClient.WechatPayUnified(info)
@@ -317,7 +317,7 @@ func (l *OrderPayLogic) createWeChatUnifiedOrder(in *pb.OrderPayReq, info *clien
 	return
 }
 
-//抖音小程序支付
+// 抖音小程序支付
 func (l *OrderPayLogic) createTikTokEcOrder(in *pb.OrderPayReq, info *client.PayOrder, payConf *client.TikTokPayConfig) (reply *pb.TiktokEcPayReply, err error) {
 	payClient := client.NewTikTokPay(*payConf)
 	res, err := payClient.CreateEcPayOrder(info)
@@ -333,7 +333,7 @@ func (l *OrderPayLogic) createTikTokEcOrder(in *pb.OrderPayReq, info *client.Pay
 	return
 }
 
-//快手小程序支付
+// 快手小程序支付
 func (l *OrderPayLogic) createKsOrder(in *pb.OrderPayReq, info *client.PayOrder, payConf *client.KsPayConfig) (reply *pb.KsUniAppReply, err error) {
 	payClient := client.NewKsPay(*payConf)
 	res, err := payClient.CreateOrder(info, in.WxOpenID)
