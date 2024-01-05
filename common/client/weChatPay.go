@@ -44,7 +44,7 @@ const (
 	SandboxUriSign   = "https://api.mch.weixin.qq.com/xdc/apiv2getsignkey/sign/getsignkey"
 )
 
-//微信支付配置
+// 微信支付配置
 type WechatPayConfig struct {
 	AppId          string //应用ID
 	MchId          string //直连商户号
@@ -55,7 +55,7 @@ type WechatPayConfig struct {
 	ApiKeyV2       string //apiKeyV2密钥
 }
 
-//WXOrderParam	微信请求参数
+// WXOrderParam	微信请求参数
 type WXOrderParam struct {
 	APPID          string `xml:"appid"`            //公众账号ID
 	MchID          string `xml:"mch_id"`           //商户号
@@ -71,7 +71,7 @@ type WXOrderParam struct {
 	SceneInfo      string `xml:"scene_info"`       //场景信息
 }
 
-//WXOrderReply	微信请求返回结果
+// WXOrderReply	微信请求返回结果
 type WXOrderReply struct {
 	ReturnCode string `xml:"return_code"`  //返回状态码
 	ReturnMsg  string `xml:"return_msg"`   //返回信息
@@ -88,7 +88,7 @@ type WXOrderReply struct {
 	MwebURL    string `xml:"mweb_url"`     //支付跳转链接
 }
 
-//沙箱请求体
+// 沙箱请求体
 type ShaBoxSignReq struct {
 	MchID    string `xml:"mch_id"`    //商户号
 	NonceStr string `xml:"nonce_str"` //随机字符串
@@ -103,7 +103,7 @@ type ShaBoxSignResp struct {
 	SandboxSignkey string `xml:"sandbox_signkey"`
 }
 
-//nuiApp调起支付参数
+// nuiApp调起支付参数
 type UniAppResp struct {
 	OrderInfo string `json:"orderInfo"`
 	TimeStamp string `json:"timeStamp"`
@@ -200,7 +200,7 @@ func getRandStr(n int) string {
 	return string(res[:n])
 }
 
-//获取V3Client
+// 获取V3Client
 func (l *WeChatCommPay) getClient() (uniAppResp *core.Client, err error) {
 	ctx := context.Background()
 	// 使用商户私钥等初始化 client，并使它具有自动定时获取微信支付平台证书的能力
@@ -222,7 +222,7 @@ func (l *WeChatCommPay) getClient() (uniAppResp *core.Client, err error) {
 	return client, nil
 }
 
-//支付请求v3  web
+// 支付请求v3  web
 func (l *WeChatCommPay) WechatPayV3Native(info *PayOrder) (resp *native.PrepayResponse, err error) {
 	attach := fmt.Sprintf(`{"order_sn":"%s","value":%d}`, info.OrderSn, info.Amount)
 	client, err := l.getClient()
@@ -255,7 +255,7 @@ func (l *WeChatCommPay) WechatPayV3Native(info *PayOrder) (resp *native.PrepayRe
 	return
 }
 
-//支付请求  统一下单
+// 支付请求  统一下单
 func (l *WeChatCommPay) WechatPayUnified(info *PayOrder) (resp *WXOrderReply, err error) {
 	requireUri := WeChatRequestUri
 	attchByte, _ := json.Marshal(info)
@@ -328,7 +328,7 @@ func (l *WeChatCommPay) WechatPayUnified(info *PayOrder) (resp *WXOrderReply, er
 	return &wechatReply, nil
 }
 
-//微信xmlHttp请求
+// 微信xmlHttp请求
 func XmlHttpPost(uri string, params string) ([]byte, error) {
 	logx.Infof("微信支付请求,地址：%s 参数:%s", uri, params)
 	req, err := http.NewRequest("POST", uri, strings.NewReader(params))
@@ -353,7 +353,7 @@ func XmlHttpPost(uri string, params string) ([]byte, error) {
 	return body, nil
 }
 
-//支付请求v3  h5
+// 支付请求v3  h5
 func (l *WeChatCommPay) WechatPayV3H5(info *PayOrder) (resp *h5.PrepayResponse, err error) {
 	attach := fmt.Sprintf(`{"order_sn":"%s","value":%d}`, info.OrderSn, info.Amount)
 	client, err := l.getClient()
@@ -367,6 +367,8 @@ func (l *WeChatCommPay) WechatPayV3H5(info *PayOrder) (resp *h5.PrepayResponse, 
 	amount := &h5.Amount{
 		Total: &total,
 	}
+
+	h5InfoType := "h5"
 	request := h5.PrepayRequest{
 		Appid:       core.String(l.Config.AppId),
 		Mchid:       core.String(l.Config.MchId),
@@ -375,6 +377,12 @@ func (l *WeChatCommPay) WechatPayV3H5(info *PayOrder) (resp *h5.PrepayResponse, 
 		Attach:      core.String(attach),
 		NotifyUrl:   core.String(l.Config.NotifyUrl),
 		Amount:      amount,
+		SceneInfo: &h5.SceneInfo{
+			PayerClientIp: &info.IP,
+			H5Info: &h5.H5Info{
+				Type: &h5InfoType,
+			},
+		},
 	}
 	resp, result, err := svc.Prepay(l.Ctx, request)
 	if err != nil {
@@ -386,7 +394,7 @@ func (l *WeChatCommPay) WechatPayV3H5(info *PayOrder) (resp *h5.PrepayResponse, 
 	return
 }
 
-//发起微信支付请求V3请求  jsapi
+// 发起微信支付请求V3请求  jsapi
 func (l *WeChatCommPay) WechatPayV3(info *PayOrder, openId string) (uniAppResp *UniAppResp, err error) {
 	attach := fmt.Sprintf(`{"order_sn":"%s","value":%d}`, info.OrderSn, info.Amount)
 	client, err := l.getClient()
@@ -430,7 +438,7 @@ func (l *WeChatCommPay) WechatPayV3(info *PayOrder, openId string) (uniAppResp *
 	return payResult, nil
 }
 
-//查询支付状态
+// 查询支付状态
 func (l *WeChatCommPay) GetOrderStatus(codeCode string) (orderInfo *payments.Transaction, err error) {
 	client, err := l.getClient()
 	if err != nil {
@@ -454,15 +462,15 @@ func (l *WeChatCommPay) GetOrderStatus(codeCode string) (orderInfo *payments.Tra
 	return resp, nil
 }
 
-//通知权限验证。及解析内容
-func (l *WeChatCommPay) Notify(r *http.Request ) (orderInfo *payments.Transaction,data map[string]interface{}, err error) {
+// 通知权限验证。及解析内容
+func (l *WeChatCommPay) Notify(r *http.Request) (orderInfo *payments.Transaction, data map[string]interface{}, err error) {
 	//获取私钥
 	mchPrivateKey, err := utils.LoadPrivateKeyWithPath(l.Config.PrivateKeyPath)
 	if err != nil {
 		weChatNotifyErr.CounterInc()
 		logx.Errorf("获取私钥发生错误！err=%v", err)
 		err = errors.New(`{"code": "FAIL","message": "获取入私钥发生错误"}`)
-		return nil, nil,err
+		return nil, nil, err
 	}
 	// 1. 使用 `RegisterDownloaderWithPrivateKey` 注册下载器
 	err = downloader.MgrInstance().RegisterDownloaderWithPrivateKey(l.Ctx, mchPrivateKey, l.Config.SerialNumber, l.Config.MchId, l.Config.ApiKey)
@@ -470,7 +478,7 @@ func (l *WeChatCommPay) Notify(r *http.Request ) (orderInfo *payments.Transactio
 		weChatNotifyErr.CounterInc()
 		logx.Errorf("下载解密器失败！err=%v", err)
 		err = errors.New(`{"code": "FAIL","message": "下载解密器失败"}`)
-		return nil, nil,err
+		return nil, nil, err
 	}
 	// 2. 获取商户号对应的微信支付平台证书访问器
 	certificateVisitor := downloader.MgrInstance().GetCertificateVisitor(l.Config.MchId)
@@ -485,23 +493,20 @@ func (l *WeChatCommPay) Notify(r *http.Request ) (orderInfo *payments.Transactio
 		err = fmt.Errorf("验签未通过，或者解密失败！err=%w", err)
 		logx.Error(err.Error())
 		//err = errors.New(`{"code": "FAIL","message": "验签未通过，或者解密失败"}`)
-		return nil, nil,err
+		return nil, nil, err
 	}
 	// 处理通知内容
 	logx.Slowf("Wechat notifyReq=%v", notifyReq.Summary)
 	logx.Slowf("Wechat content=%v", transaction)
-	return transaction, nil,nil
+	return transaction, nil, nil
 }
 
-//退款解密内容
-type  RefundOrderReply struct {
-	TransactionId  string `json:"transaction_id,omitempty"`
-
-
+// 退款解密内容
+type RefundOrderReply struct {
+	TransactionId string `json:"transaction_id,omitempty"`
 }
 
-
-//退款支付回调
+// 退款支付回调
 func (l *WeChatCommPay) RefundNotify(r *http.Request) (orderInfo map[string]interface{}, err error) {
 
 	mchPrivateKey, err := utils.LoadPrivateKeyWithPath(l.Config.PrivateKeyPath)
@@ -509,7 +514,7 @@ func (l *WeChatCommPay) RefundNotify(r *http.Request) (orderInfo map[string]inte
 		logx.Errorf("mchPrivateKey！err=%v", err)
 	}
 	// 1. 使用 `RegisterDownloaderWithPrivateKey` 注册下载器
-	err = downloader.MgrInstance().RegisterDownloaderWithPrivateKey(l.Ctx, mchPrivateKey,l.Config.SerialNumber, l.Config.MchId, l.Config.ApiKey)
+	err = downloader.MgrInstance().RegisterDownloaderWithPrivateKey(l.Ctx, mchPrivateKey, l.Config.SerialNumber, l.Config.MchId, l.Config.ApiKey)
 	if err != nil {
 		weChatNotifyErr.CounterInc()
 		logx.Errorf("注册下载器失败！err=%v", err)
@@ -531,17 +536,15 @@ func (l *WeChatCommPay) RefundNotify(r *http.Request) (orderInfo map[string]inte
 		//err = errors.New(`{"code": "FAIL","message": "验签未通过，或者解密失败"}`)
 		return nil, err
 	}
-	jsonData,_ := json.Marshal(content)
-	logx.Slowf("Wechat 解密后内容=%s",string(jsonData) )
+	jsonData, _ := json.Marshal(content)
+	logx.Slowf("Wechat 解密后内容=%s", string(jsonData))
 	// 处理通知内容
 	logx.Slowf("Wechat notifyReq=%v", notifyReq.Summary)
 	logx.Slowf("Wechat content=%v", content)
 	return content, nil
 }
 
-
-
-//关闭订单
+// 关闭订单
 type CloserReq struct {
 	Mchid string `json:"mchid"`
 }
@@ -566,7 +569,7 @@ func (l *WeChatCommPay) CloseOrder(orderCode string) error {
 
 const refundReason = "用户退款"
 
-//订单退款
+// 订单退款
 func (l *WeChatCommPay) RefundOrder(refundOrder *RefundOrder) (*refunddomestic.Refund, error) {
 	client, err := l.getClient()
 	if err != nil {
@@ -574,8 +577,8 @@ func (l *WeChatCommPay) RefundOrder(refundOrder *RefundOrder) (*refunddomestic.R
 		logx.Errorf("退款发生错误,err =%v", err)
 		return nil, err
 	}
-	params,_ := url.Parse(l.Config.NotifyUrl)
-	notifyUri := fmt.Sprintf( "%s://%s/notify/refund/wechat/%s" ,params.Scheme,params.Host, refundOrder.OutTradeNo)
+	params, _ := url.Parse(l.Config.NotifyUrl)
+	notifyUri := fmt.Sprintf("%s://%s/notify/refund/wechat/%s", params.Scheme, params.Host, refundOrder.OutTradeNo)
 	svc := refunddomestic.RefundsApiService{Client: client}
 	resp, result, err := svc.Create(l.Ctx,
 		refunddomestic.CreateRequest{
