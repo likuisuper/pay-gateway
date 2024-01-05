@@ -92,8 +92,6 @@ func (l *WechatPayH5OrderLogic) WechatPayH5Order(in *pb.AlipayPageSignReq) (*pb.
 	}
 
 	return data, nil
-
-	return &pb.WxH5PayReplay{}, nil
 }
 
 // 微信统一支付
@@ -118,7 +116,8 @@ func (l *WechatPayH5OrderLogic) createWeChatH5Order(orderInfo *model.OrderTable,
 		return
 	}
 	reply = &pb.WxH5PayReplay{
-		H5Url: *res.H5Url,
+		H5Url:      *res.H5Url,
+		OutTradeNo: orderInfo.OutTradeNo,
 	}
 	return
 }

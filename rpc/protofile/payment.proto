@@ -66,6 +66,7 @@ message WxUnifiedPayReply {
 
 message WxH5PayReplay{
   string H5Url = 1; // h5支付地址
+  string OutTradeNo = 2;  // 微信支付订单号
 }
 
 //抖音小程序支付返回
