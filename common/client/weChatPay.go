@@ -390,7 +390,7 @@ func (l *WeChatCommPay) WechatPayV3H5(info *PayOrder) (resp *h5.PrepayResponse, 
 		logx.Errorf("请求微信支付发生错误,err =%v", err)
 		return
 	}
-	logx.Infof("请求微信支付成功！result = %v", result)
+	logx.Infof("请求微信支付成功！result = %v, request:%+v", result, request)
 	return
 }
 
