@@ -18,7 +18,7 @@ func NotifyWechatH5OrderHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 		}
 
 		l := notify.NewNotifyWechatH5OrderLogic(r.Context(), svcCtx)
-		resp, err := l.NotifyWechatH5Order(&req, r)
+		resp, err := l.NotifyWechatH5Order(r)
 		if err != nil {
 			httpx.Error(w, err)
 		} else {

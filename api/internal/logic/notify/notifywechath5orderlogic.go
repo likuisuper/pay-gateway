@@ -10,6 +10,7 @@ import (
 	"gitee.com/zhuyunkj/zhuyun-core/util"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/wechatpay-apiv3/wechatpay-go/services/payments"
+	"github.com/zeromicro/go-zero/rest/httpx"
 	"net/http"
 	"time"
 
@@ -37,7 +38,15 @@ func NewNotifyWechatH5OrderLogic(ctx context.Context, svcCtx *svc.ServiceContext
 	}
 }
 
-func (l *NotifyWechatH5OrderLogic) NotifyWechatH5Order(req *types.WechatNotifyH5Req, request *http.Request) (resp *types.WeChatResp, err error) {
+func (l *NotifyWechatH5OrderLogic) NotifyWechatH5Order(request *http.Request) (resp *types.WeChatResp, err error) {
+	var req types.WechatNotifyH5Req
+	err = httpx.ParsePath(request, &req)
+	if err != nil {
+		err = fmt.Errorf("解析path失败！err=%v ", err)
+		logx.Errorf(err.Error())
+		return
+	}
+
 	payCfg, err := l.payConfigWechatModel.GetOneByAppID(req.AppID)
 	if err != nil {
 		err = fmt.Errorf("appid= %s, 读取微信支付配置失败，err:=%v", req.AppID, err)
