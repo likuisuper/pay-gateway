@@ -368,7 +368,6 @@ func (l *WeChatCommPay) WechatPayV3H5(info *PayOrder) (resp *h5.PrepayResponse, 
 		Total: &total,
 	}
 
-	h5InfoType := "h5"
 	request := h5.PrepayRequest{
 		Appid:       core.String(l.Config.AppId),
 		Mchid:       core.String(l.Config.MchId),
@@ -380,7 +379,7 @@ func (l *WeChatCommPay) WechatPayV3H5(info *PayOrder) (resp *h5.PrepayResponse, 
 		SceneInfo: &h5.SceneInfo{
 			PayerClientIp: &info.IP,
 			H5Info: &h5.H5Info{
-				Type: &h5InfoType,
+				Type: &l.Config.AppId,
 			},
 		},
 	}
