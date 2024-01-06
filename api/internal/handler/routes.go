@@ -67,7 +67,7 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 			},
 			{
 				Method:  http.MethodPost,
-				Path:    "/notify/wechat/h5/:AppID",
+				Path:    "/notify/h5/wechat/:AppID",
 				Handler: notify.NotifyWechatH5OrderHandler(serverCtx),
 			},
 		},
