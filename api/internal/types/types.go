@@ -78,12 +78,13 @@ type WechatRefundReq struct {
 }
 
 type WechatNotifyH5Req struct {
-	Id           string   `json:"id"`            // 通知的唯一ID
-	CreateTime   string   `json:"create_time"`   // 通知创建的时间，遵循rfc3339标准格式，格式为yyyy-MM-DDTHH:mm:ss+TIMEZONE，yyyy-MM-DD表示年月日，T出现在字符串中，表示time元素的开头，HH:mm:ss.表示时分秒，TIMEZONE表示时区（+08:00表示东八区时间，领先UTC 8小时，即北京时间）。例如：2015-05-20T13:29:35+08:00表示北京时间2015年05月20日13点29分35秒。
-	EventType    string   `json:"event_type"`    // 通知的类型，支付成功通知的类型为TRANSACTION.SUCCESS。
-	ResourceType string   `json:"resource_type"` // 通知的资源数据类型，支付成功通知为encrypt-resource。
-	Resource     Resource `json:"resource"`      // 通知资源数据。
-	Summary      string   `json:"summary"`       // 回调摘要
+	AppID        string   `path:"AppID,optional"` // 微信支付appid
+	Id           string   `json:"id"`             // 通知的唯一ID
+	CreateTime   string   `json:"create_time"`    // 通知创建的时间，遵循rfc3339标准格式，格式为yyyy-MM-DDTHH:mm:ss+TIMEZONE，yyyy-MM-DD表示年月日，T出现在字符串中，表示time元素的开头，HH:mm:ss.表示时分秒，TIMEZONE表示时区（+08:00表示东八区时间，领先UTC 8小时，即北京时间）。例如：2015-05-20T13:29:35+08:00表示北京时间2015年05月20日13点29分35秒。
+	EventType    string   `json:"event_type"`     // 通知的类型，支付成功通知的类型为TRANSACTION.SUCCESS。
+	ResourceType string   `json:"resource_type"`  // 通知的资源数据类型，支付成功通知为encrypt-resource。
+	Resource     Resource `json:"resource"`       // 通知资源数据。
+	Summary      string   `json:"summary"`        // 回调摘要
 }
 
 type CrtUploadReq struct {

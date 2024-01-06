@@ -37,12 +37,10 @@ func NewNotifyWechatH5OrderLogic(ctx context.Context, svcCtx *svc.ServiceContext
 	}
 }
 
-func (l *NotifyWechatH5OrderLogic) NotifyWechatH5Order(request *http.Request) (resp *types.WeChatResp, err error) {
-	appId := request.Header.Get("AppId")
-
-	payCfg, err := l.payConfigWechatModel.GetOneByAppID(appId)
+func (l *NotifyWechatH5OrderLogic) NotifyWechatH5Order(req *types.WechatNotifyH5Req, request *http.Request) (resp *types.WeChatResp, err error) {
+	payCfg, err := l.payConfigWechatModel.GetOneByAppID(req.AppID)
 	if err != nil {
-		err = fmt.Errorf("pkgName= %s, 读取微信支付配置失败，err:=%v", "all", err)
+		err = fmt.Errorf("appid= %s, 读取微信支付配置失败，err:=%v", req.AppID, err)
 		util.CheckError(err.Error())
 		return
 	}
