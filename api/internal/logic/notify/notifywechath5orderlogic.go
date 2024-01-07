@@ -43,7 +43,7 @@ func (l *NotifyWechatH5OrderLogic) NotifyWechatH5Order(request *http.Request) (r
 	err = httpx.ParsePath(request, &req)
 	if err != nil {
 		err = fmt.Errorf("解析path失败！err=%v ", err)
-		logx.Errorf(err.Error())
+		logx.WithContext(l.ctx).Errorf(err.Error())
 		return
 	}
 
