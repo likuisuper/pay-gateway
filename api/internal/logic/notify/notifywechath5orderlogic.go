@@ -4,9 +4,12 @@ import (
 	"context"
 	"fmt"
 	"gitee.com/zhuyunkj/pay-gateway/common/client"
+	"gitee.com/zhuyunkj/pay-gateway/common/code"
 	"gitee.com/zhuyunkj/pay-gateway/common/define"
 	"gitee.com/zhuyunkj/pay-gateway/common/exception"
+	"gitee.com/zhuyunkj/pay-gateway/common/utils"
 	"gitee.com/zhuyunkj/pay-gateway/db/mysql/model"
+	"gitee.com/zhuyunkj/zhuyun-core/alarm"
 	"gitee.com/zhuyunkj/zhuyun-core/util"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/wechatpay-apiv3/wechatpay-go/services/payments"
@@ -97,7 +100,15 @@ func (l *NotifyWechatH5OrderLogic) NotifyWechatH5Order(request *http.Request) (r
 	//回调业务方接口
 	go func() {
 		defer exception.Recover()
-		_, _ = util.HttpPost(orderInfo.AppNotifyUrl, transaction, 5*time.Second)
+		dataMap := map[string]interface{}{
+			"out_trade_no": *transaction.OutTradeNo,
+		}
+		dataMap["notify_type"] = code.APP_NOTIFY_TYPE_PAY
+		err = utils.CallbackWithRetry(orderInfo.AppNotifyUrl, dataMap, 5*time.Second)
+		if err != nil {
+			desc := fmt.Sprintf("回调通知用户付款成功 异常, app_pkg=%s, user_id=%d, out_trade_no=%s, 报错信息：%v", orderInfo.AppPkg, orderInfo.UserID, orderInfo.OutTradeNo, err)
+			alarm.ImmediateAlarm("notifyUserPayErr", desc, alarm.ALARM_LEVEL_FATAL)
+		}
 	}()
 
 	resp = &types.WeChatResp{
