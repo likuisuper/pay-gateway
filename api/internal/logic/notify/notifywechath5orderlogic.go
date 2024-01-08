@@ -24,7 +24,7 @@ type NotifyWechatH5OrderLogic struct {
 	logx.Logger
 	ctx                  context.Context
 	svcCtx               *svc.ServiceContext
-	payOrderModel        *model.PmPayOrderModel
+	orderModel           *model.OrderModel
 	payConfigWechatModel *model.PmPayConfigWechatModel
 }
 
@@ -33,7 +33,7 @@ func NewNotifyWechatH5OrderLogic(ctx context.Context, svcCtx *svc.ServiceContext
 		Logger:               logx.WithContext(ctx),
 		ctx:                  ctx,
 		svcCtx:               svcCtx,
-		payOrderModel:        model.NewPmPayOrderModel(define.DbPayGateway),
+		orderModel:           model.NewOrderModel(define.DbPayGateway),
 		payConfigWechatModel: model.NewPmPayConfigWechatModel(define.DbPayGateway),
 	}
 }
@@ -69,26 +69,27 @@ func (l *NotifyWechatH5OrderLogic) NotifyWechatH5Order(request *http.Request) (r
 		logx.Slowf("wechat支付回调异常: %s", jsonStr)
 		return
 	}
+	logx.Infof("weixin h5 pay transaction:%+v", transaction)
 
 	//获取订单信息
-	orderInfo, err := l.payOrderModel.GetOneByCode(*transaction.OutTradeNo)
+	orderInfo, err := l.orderModel.GetOneByOutTradeNo(*transaction.OutTradeNo)
 	if err != nil {
 		err = fmt.Errorf("获取订单失败！err=%v,order_code = %s", err, transaction.OutTradeNo)
 		util.CheckError(err.Error())
 		return
 	}
-	if orderInfo.PayStatus != model.PmPayOrderTablePayStatusNo {
+	if orderInfo.Status != model.PmPayOrderTablePayStatusNo {
 		notifyOrderHasDispose.CounterInc()
 		err = fmt.Errorf("订单已处理")
 		return
 	}
 	//修改数据库
-	orderInfo.NotifyAmount = int(*transaction.Amount.PayerTotal)
-	orderInfo.PayStatus = model.PmPayOrderTablePayStatusPaid
-	orderInfo.PayType = model.PmPayOrderTablePayTypeWechatPayUni
-	err = l.payOrderModel.UpdateNotify(orderInfo)
+	orderInfo.Status = model.PmPayOrderTablePayStatusPaid
+	orderInfo.PayType = model.PmPayOrderTablePayTypeWechatPayH5
+	orderInfo.PlatformTradeNo = *transaction.TransactionId
+	err = l.orderModel.UpdateNotify(orderInfo)
 	if err != nil {
-		err = fmt.Errorf("orderSn = %s, UpdateNotify，err:=%v", orderInfo.OrderSn, err)
+		err = fmt.Errorf("trade_no = %s, UpdateNotify，err:=%v", orderInfo.PlatformTradeNo, err)
 		util.CheckError(err.Error())
 		return
 	}
@@ -96,7 +97,7 @@ func (l *NotifyWechatH5OrderLogic) NotifyWechatH5Order(request *http.Request) (r
 	//回调业务方接口
 	go func() {
 		defer exception.Recover()
-		_, _ = util.HttpPost(orderInfo.NotifyUrl, transaction, 5*time.Second)
+		_, _ = util.HttpPost(orderInfo.AppNotifyUrl, transaction, 5*time.Second)
 	}()
 
 	resp = &types.WeChatResp{
