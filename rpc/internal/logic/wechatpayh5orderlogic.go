@@ -79,7 +79,7 @@ func (l *WechatPayH5OrderLogic) WechatPayH5Order(in *pb.AlipayPageSignReq) (*pb.
 		ProductID:    int(in.ProductId),
 		Subject:      in.Subject,
 	}
-	data, err := l.createWeChatH5Order(orderInfo, in.Ip)
+	data, err := l.createWeChatH5Order(orderInfo, in)
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +95,7 @@ func (l *WechatPayH5OrderLogic) WechatPayH5Order(in *pb.AlipayPageSignReq) (*pb.
 }
 
 // 微信统一支付
-func (l *WechatPayH5OrderLogic) createWeChatH5Order(orderInfo *model.OrderTable, ip string) (reply *pb.WxH5PayReplay, err error) {
+func (l *WechatPayH5OrderLogic) createWeChatH5Order(orderInfo *model.OrderTable, in *pb.AlipayPageSignReq) (reply *pb.WxH5PayReplay, err error) {
 	payCfg, cfgErr := l.payConfigWechatModel.GetOneByAppID(orderInfo.PayAppID)
 	if cfgErr != nil {
 		err = fmt.Errorf("pkgName= %s, 读取微信支付配置失败，err:=%v", orderInfo.AppPkg, cfgErr)
@@ -107,7 +107,7 @@ func (l *WechatPayH5OrderLogic) createWeChatH5Order(orderInfo *model.OrderTable,
 		OrderSn: orderInfo.OutTradeNo,
 		Amount:  orderInfo.Amount,
 		Subject: orderInfo.Subject,
-		IP:      ip,
+		IP:      in.Ip,
 	}
 	res, err := payClient.WechatPayV3H5(payInfo)
 	if err != nil {
@@ -116,7 +116,7 @@ func (l *WechatPayH5OrderLogic) createWeChatH5Order(orderInfo *model.OrderTable,
 		return
 	}
 	reply = &pb.WxH5PayReplay{
-		H5Url:      *res.H5Url,
+		H5Url:      fmt.Sprintf("%s&redirect_url=%s", *res.H5Url, in.RedirectUrl),
 		OutTradeNo: orderInfo.OutTradeNo,
 	}
 	return
