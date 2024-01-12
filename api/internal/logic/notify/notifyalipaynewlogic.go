@@ -142,7 +142,7 @@ func (l *NotifyAlipayNewLogic) NotifyAlipayNew(r *http.Request, w http.ResponseW
 				}
 				err = utils.CallbackWithRetry(orderInfo.AppNotifyUrl, dataMap, 5*time.Second)
 				if err != nil {
-					desc := fmt.Sprintf("回调通知用户付款成功 异常, app_pkg=%s, user_id=%s, out_trade_no=%s", orderInfo.AppPkg, orderInfo.UserID, orderInfo.OutTradeNo)
+					desc := fmt.Sprintf("回调通知用户付款成功 异常, app_pkg=%s, user_id=%d, out_trade_no=%s, 报错信息：%v", orderInfo.AppPkg, orderInfo.UserID, orderInfo.OutTradeNo, err)
 					alarm.ImmediateAlarm("notifyUserPayErr", desc, alarm.ALARM_LEVEL_FATAL)
 				}
 			}()
@@ -309,7 +309,7 @@ func (l *NotifyAlipayNewLogic) NotifyAlipayNew(r *http.Request, w http.ResponseW
 	return
 }
 
-//formdata数据转成map
+// formdata数据转成map
 func (l *NotifyAlipayNewLogic) transFormDataToMap(formData string) (dataMap map[string]interface{}) {
 	dataMap = make(map[string]interface{}, 0)
 	values, _ := url.ParseQuery(formData)

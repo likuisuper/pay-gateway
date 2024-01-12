@@ -18,16 +18,17 @@ var (
 )
 
 const (
-	//支付状态
-	PmPayOrderTablePayStatusNo     = 0
-	PmPayOrderTablePayStatusPaid   = 1
-	PmPayOrderTablePayStatusFailed = 2
-	PmPayOrderTablePayStatusRefund = 3
-	//支付方式
-	PmPayOrderTablePayTypeWechatPayUni = 1
+	// 支付状态
+	PmPayOrderTablePayStatusNo     = 0 // 未支付
+	PmPayOrderTablePayStatusPaid   = 1 // 支付成功
+	PmPayOrderTablePayStatusFailed = 2 // 支付失败
+	PmPayOrderTablePayStatusRefund = 3 // 退款
+	// 支付方式
+	PmPayOrderTablePayTypeWechatPayUni = 1 // 微信JSAPI支付
 	PmPayOrderTablePayTypeTiktokPayEc  = 2
 	PmPayOrderTablePayTypeAlipay       = 3
 	PmPayOrderTablePayTypeKs           = 4
+	PmPayOrderTablePayTypeWechatPayH5  = 5 // 微信H5支付
 )
 
 // 支付订单
@@ -60,7 +61,7 @@ func NewPmPayOrderModel(dbName string) *PmPayOrderModel {
 	}
 }
 
-//创建订单
+// 创建订单
 func (o *PmPayOrderModel) Create(info *PmPayOrderTable) error {
 	err := o.DB.Create(info).Error
 	if err != nil {
@@ -70,7 +71,7 @@ func (o *PmPayOrderModel) Create(info *PmPayOrderTable) error {
 	return err
 }
 
-//获取订单信息
+// 获取订单信息
 func (o *PmPayOrderModel) GetOneByCode(orderSn string) (info *PmPayOrderTable, err error) {
 	var orderInfo PmPayOrderTable
 	err = o.DB.Where("`order_sn` = ? ", orderSn).First(&orderInfo).Error
