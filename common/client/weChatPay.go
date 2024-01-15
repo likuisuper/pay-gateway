@@ -34,6 +34,7 @@ var (
 	weChatHttpRequestErr = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "weChatHttpRequestErr", nil, "weChat请求错误", nil})}
 	weChatNotifyErr      = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "weChatNotifyErr", nil, "weChat回调通知错误", nil})}
 	weChatRefundOrderErr = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "weChatRefundOrderErr", nil, "weCha退款失败次数", nil})}
+	weChatReturnPayErr = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "weChatReturnPayErr", nil, "微信支付返回错误", nil})}
 )
 
 const (
@@ -325,6 +326,12 @@ func (l *WeChatCommPay) WechatPayUnified(info *PayOrder) (resp *WXOrderReply, er
 		logx.Errorf("wechatReply xmlErr,原因:%v", err)
 		return nil, xmlErr
 	}
+	if wechatReply.ResultCode == "FAIL" {
+		weChatReturnPayErr.CounterInc()
+		logx.Errorf("发起支付错误,原因:%s", wechatReply.ReturnMsg)
+		return nil, nil
+	}
+
 	return &wechatReply, nil
 }
 
