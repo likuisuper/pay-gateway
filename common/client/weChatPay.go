@@ -264,8 +264,8 @@ func (l *WeChatCommPay) WechatPayUnified(info *PayOrder) (resp *WXOrderReply, er
 	sceneInfo := `{
 	"h5_info": {
 		"type": "Wap",
-		"wap_url": "https://zcloudbywl.com",
-		"wap_name": "展云帮意"
+		"wap_url": "https://kuaikanju-h5.yunjuhudong.com",
+		"wap_name": "快看剧"
 	}
 }`
 	NonceStr := getRandStr(32)
