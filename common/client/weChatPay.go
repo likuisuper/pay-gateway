@@ -34,7 +34,7 @@ var (
 	weChatHttpRequestErr = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "weChatHttpRequestErr", nil, "weChat请求错误", nil})}
 	weChatNotifyErr      = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "weChatNotifyErr", nil, "weChat回调通知错误", nil})}
 	weChatRefundOrderErr = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "weChatRefundOrderErr", nil, "weCha退款失败次数", nil})}
-	weChatReturnPayErr = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "weChatReturnPayErr", nil, "微信支付返回错误", nil})}
+	weChatReturnPayErr   = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "weChatReturnPayErr", nil, "微信支付返回错误", nil})}
 )
 
 const (
@@ -54,6 +54,8 @@ type WechatPayConfig struct {
 	SerialNumber   string //商户证书序列号
 	NotifyUrl      string //通知地址
 	ApiKeyV2       string //apiKeyV2密钥
+	WapUrl         string // 支付H5域名
+	WapName        string // 支付名称
 }
 
 // WXOrderParam	微信请求参数
@@ -87,6 +89,7 @@ type WXOrderReply struct {
 	TradeType  string `xml:"trade_type"`   //交易类型
 	PrepayID   string `xml:"prepay_id"`    //预支付交易会话标识
 	MwebURL    string `xml:"mweb_url"`     //支付跳转链接
+
 }
 
 // 沙箱请求体
@@ -256,18 +259,29 @@ func (l *WeChatCommPay) WechatPayV3Native(info *PayOrder) (resp *native.PrepayRe
 	return
 }
 
+const (
+	WapUrl  = "https://kuaikanju-h5.yunjuhudong.com"
+	WapName = "快看剧"
+)
+
 // 支付请求  统一下单
-func (l *WeChatCommPay) WechatPayUnified(info *PayOrder) (resp *WXOrderReply, err error) {
+func (l *WeChatCommPay) WechatPayUnified(info *PayOrder, appConfig *WechatPayConfig) (resp *WXOrderReply, err error) {
 	requireUri := WeChatRequestUri
 	attchByte, _ := json.Marshal(info)
 	attach := string(attchByte)
 	sceneInfo := `{
 	"h5_info": {
 		"type": "Wap",
-		"wap_url": "https://kuaikanju-h5.yunjuhudong.com",
-		"wap_name": "快看剧"
+		"wap_url": "%s",
+		"wap_name": "%s"
 	}
 }`
+	if appConfig.WapUrl != "" && appConfig.WapName != "" {
+		sceneInfo = fmt.Sprintf(sceneInfo, appConfig.WapUrl, appConfig.WapName)
+	} else {
+		sceneInfo = fmt.Sprintf(sceneInfo, WapUrl, WapName)
+	}
+
 	NonceStr := getRandStr(32)
 	params := &WXOrderParam{
 		APPID:          l.Config.AppId,

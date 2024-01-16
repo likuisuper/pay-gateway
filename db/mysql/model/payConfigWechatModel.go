@@ -16,17 +16,21 @@ var (
 
 // 微信支付配置
 type PmPayConfigWechatTable struct {
-	ID             int       `gorm:"column:id;primary_key;AUTO_INCREMENT" json:"id"`
-	MchID          string    `gorm:"column:mch_id;NOT NULL" json:"mch_id"`                     // 商户id
-	AppID          string    `gorm:"column:app_id;NOT NULL" json:"app_id"`                     // 应用id
-	ApiKey         string    `gorm:"column:api_key;NOT NULL" json:"api_key"`                   // apiV3密钥
-	ApiKeyV2       string    `gorm:"column:api_key_v2;NOT NULL" json:"api_key_v2"`             // apiV2密钥
-	NotifyUrl      string    `gorm:"column:notify_url" json:"notify_url"`                      // 回调地址
-	PrivateKeyPath string    `gorm:"column:private_key_path;NOT NULL" json:"private_key_path"` // apiV3密钥
-	SerialNumber   string    `gorm:"column:serial_number;NOT NULL" json:"serial_number"`       // 商户证书序列号
-	Remark         string    `gorm:"column:remark;NOT NULL" json:"remark"`                     // 备注信息
-	CreatedAt      time.Time `gorm:"column:created_at" json:"created_at"`
-	UpdatedAt      time.Time `gorm:"column:updated_at" json:"updated_at"`
+	ID             int    `gorm:"column:id;primary_key;AUTO_INCREMENT" json:"id"`
+	MchID          string `gorm:"column:mch_id;NOT NULL" json:"mch_id"`                     // 商户id
+	AppID          string `gorm:"column:app_id;NOT NULL" json:"app_id"`                     // 应用id
+	ApiKey         string `gorm:"column:api_key;NOT NULL" json:"api_key"`                   // apiV3密钥
+	ApiKeyV2       string `gorm:"column:api_key_v2;NOT NULL" json:"api_key_v2"`             // apiV2密钥
+	NotifyUrl      string `gorm:"column:notify_url" json:"notify_url"`                      // 回调地址
+	PrivateKeyPath string `gorm:"column:private_key_path;NOT NULL" json:"private_key_path"` // apiV3密钥
+	SerialNumber   string `gorm:"column:serial_number;NOT NULL" json:"serial_number"`       // 商户证书序列号
+	Remark         string `gorm:"column:remark;NOT NULL" json:"remark"`                     // 备注信息
+
+	WapUrl  string `gorm:"column:wap_url" json:"wap_url"`   // 支付H5域名
+	WapName string `gorm:"column:wap_name" json:"wap_name"` // 支付名称
+
+	CreatedAt time.Time `gorm:"column:created_at" json:"created_at"`
+	UpdatedAt time.Time `gorm:"column:updated_at" json:"updated_at"`
 }
 
 func (m *PmPayConfigWechatTable) TableName() string {
@@ -42,6 +46,8 @@ func (m *PmPayConfigWechatTable) TransClientConfig() (clientCfg *client.WechatPa
 		SerialNumber:   m.SerialNumber,
 		NotifyUrl:      m.NotifyUrl,
 		ApiKeyV2:       m.ApiKeyV2,
+		WapName:        m.WapName,
+		WapUrl:         m.WapUrl,
 	}
 	return
 }

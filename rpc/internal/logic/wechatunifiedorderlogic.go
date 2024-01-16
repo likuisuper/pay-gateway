@@ -94,13 +94,14 @@ func (l *WechatUnifiedOrderLogic) WechatUnifiedOrder(in *pb.AlipayPageSignReq) (
 }
 
 //微信统一支付
-func (l *WechatUnifiedOrderLogic) createWeChatUnifiedOrder(orderInfo *model.OrderTable,ip string) (reply *pb.WxUnifiedPayReply, err error) {
+func (l *WechatUnifiedOrderLogic) createWeChatUnifiedOrder(orderInfo *model.OrderTable,ip string,) (reply *pb.WxUnifiedPayReply, err error) {
 	payCfg, cfgErr := l.payConfigWechatModel.GetOneByAppID(orderInfo.PayAppID)
 	if cfgErr != nil {
 		err = fmt.Errorf("pkgName= %s, 读取微信支付配置失败，err:=%v", orderInfo.AppPkg, cfgErr)
 		util.CheckError(err.Error())
 		return nil, cfgErr
 	}
+
 	payClient := client.NewWeChatCommPay(*payCfg.TransClientConfig())
 	payInfo := &client.PayOrder{
 		OrderSn: orderInfo.OutTradeNo,
@@ -108,7 +109,8 @@ func (l *WechatUnifiedOrderLogic) createWeChatUnifiedOrder(orderInfo *model.Orde
 		Subject: orderInfo.Subject,
 		IP: ip,
 	}
-	res, err := payClient.WechatPayUnified(payInfo)
+	wechatPayConfig :=payCfg.TransClientConfig()
+	res, err := payClient.WechatPayUnified(payInfo,wechatPayConfig)
 	if err != nil {
 		wechatNativePayFailNum.CounterInc()
 		util.CheckError("pkgName= %s, wechatUniPay，err:=%v", orderInfo.AppPkg, err)
@@ -119,5 +121,11 @@ func (l *WechatUnifiedOrderLogic) createWeChatUnifiedOrder(orderInfo *model.Orde
 		MwebUrl:    res.MwebURL,
 		OutTradeNo: orderInfo.OutTradeNo,
 	}
+
+	if wechatPayConfig.WapName!=""&& wechatPayConfig.WapUrl !=""{
+		reply.WapName = wechatPayConfig.WapName
+		reply.WapUrl = wechatPayConfig.WapUrl
+	}
+
 	return
 }

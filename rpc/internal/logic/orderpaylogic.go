@@ -304,7 +304,7 @@ func (l *OrderPayLogic) createWeChatNativeOrder(in *pb.OrderPayReq, info *client
 // 微信统一下单
 func (l *OrderPayLogic) createWeChatUnifiedOrder(in *pb.OrderPayReq, info *client.PayOrder, payConf *client.WechatPayConfig) (reply *pb.WxUnifiedPayReply, err error) {
 	payClient := client.NewWeChatCommPay(*payConf)
-	res, err := payClient.WechatPayUnified(info)
+	res, err := payClient.WechatPayUnified(info,payConf)
 	if err != nil {
 		wechatNativePayFailNum.CounterInc()
 		util.CheckError("pkgName= %s, wechatUniPay，err:=%v", in.AppPkgName, err)
@@ -313,6 +313,10 @@ func (l *OrderPayLogic) createWeChatUnifiedOrder(in *pb.OrderPayReq, info *clien
 	reply = &pb.WxUnifiedPayReply{
 		Prepayid: res.PrepayID,
 		MwebUrl:  res.MwebURL,
+	}
+	if payConf.WapName!=""&& payConf.WapUrl !=""{
+		reply.WapName = payConf.WapName
+		reply.WapUrl = payConf.WapUrl
 	}
 	return
 }

@@ -62,6 +62,8 @@ message WxUnifiedPayReply {
   string Prepayid = 1; //h5地址
   string MwebUrl = 2; //h5地址
   string OutTradeNo = 3;
+  string WapUrl = 4;
+  string WapName= 5;
 }
 
 message WxH5PayReplay{
