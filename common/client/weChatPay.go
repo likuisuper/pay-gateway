@@ -345,7 +345,6 @@ func (l *WeChatCommPay) WechatPayUnified(info *PayOrder, appConfig *WechatPayCon
 		logx.Errorf("发起支付错误,原因:%s", wechatReply.ReturnMsg)
 		return nil, nil
 	}
-
 	return &wechatReply, nil
 }
 
@@ -371,6 +370,7 @@ func XmlHttpPost(uri string, params string) ([]byte, error) {
 		logx.Errorf("ReaddBody Error,原因:%v", err)
 		return nil, err
 	}
+	logx.Infof("微信支付请求,返回内容：%s", string(body))
 	return body, nil
 }
 
