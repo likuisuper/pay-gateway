@@ -23,7 +23,6 @@ type PayConfig struct {
 	KeyVersion        string
 	NotifyUrl         string
 	PlatformPublicKey string // 平台公钥
-	AppSecret         string // 应用密钥
 	CustomerImId      string
 	GetClientTokenUrl string
 }
@@ -254,7 +253,7 @@ type GetClientTokenData struct {
 func (c *PayClient) GetClientToken() (*GetClientTokenResp, error) {
 	req := &GetClientTokenReq{
 		ClientKey:    c.config.AppId,
-		ClientSecret: c.config.AppSecret,
+		ClientSecret: "",
 		GrantType:    "client_credential",
 	}
 	result, err := util.HttpPost("https://open.douyin.com/oauth/client_token/", req, time.Second*3)
