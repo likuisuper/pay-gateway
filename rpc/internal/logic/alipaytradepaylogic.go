@@ -89,7 +89,7 @@ func (l *AlipayTradePayLogic) AlipayTradePay(in *pb.AlipayTradePayReq) (*pb.Alip
 
 	result, err := client.TradePay(tradePayApp)
 	if err != nil {
-		logx.Infof("订阅扣款：扣款失败 outTradeNo=%s, err=%s", result, err.Error())
+		logx.Infof("订阅扣款：扣款失败 outTradeNo=%v, err=%s", result, err.Error())
 		SubscribeVipTradePayErr.CounterInc()
 		return &pb.AlipayCommonResp{
 			Status: code.ALI_PAY_FAIL,

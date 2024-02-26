@@ -80,7 +80,7 @@ func (l *AlipayAgreementModifyLogic) AlipayAgreementModify(in *pb.AlipayAgreemen
 
 		err = l.orderModel.UpdateNotify(deductOrder)
 		if err != nil {
-			logx.Errorf("延期扣款：更新扣款订单失败 agreementNo=%s err=%s", err.Error())
+			logx.Errorf("延期扣款：更新扣款订单失败 agreementNo=%s err=%s", tb.AgreementNo, err.Error())
 			return nil, err
 		}
 
@@ -93,7 +93,7 @@ func (l *AlipayAgreementModifyLogic) AlipayAgreementModify(in *pb.AlipayAgreemen
 
 		err = l.orderModel.UpdateNotify(deductOrder)
 		if err != nil {
-			logx.Errorf("延期扣款：更新扣款订单失败 agreementNo=%s err=%s", err.Error())
+			logx.Errorf("延期扣款：更新扣款订单失败 agreementNo=%s err=%s", tb.AgreementNo, err.Error())
 			return nil, err
 		}
 

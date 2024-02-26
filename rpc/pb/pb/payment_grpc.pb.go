@@ -25,6 +25,7 @@ const (
 	Payment_OrderStatus_FullMethodName                = "/payment.Payment/OrderStatus"
 	Payment_AlipayCheckAccount_FullMethodName         = "/payment.Payment/AlipayCheckAccount"
 	Payment_DyOrderRefund_FullMethodName              = "/payment.Payment/DyOrderRefund"
+	Payment_CreateDouyinRefund_FullMethodName         = "/payment.Payment/CreateDouyinRefund"
 	Payment_AlipayTrade_FullMethodName                = "/payment.Payment/AlipayTrade"
 	Payment_AlipayPagePayAndSign_FullMethodName       = "/payment.Payment/AlipayPagePayAndSign"
 	Payment_AlipayPageUnSign_FullMethodName           = "/payment.Payment/AlipayPageUnSign"
@@ -41,35 +42,37 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type PaymentClient interface {
-	//创建支付订单
+	// 创建支付订单
 	OrderPay(ctx context.Context, in *OrderPayReq, opts ...grpc.CallOption) (*OrderPayResp, error)
-	//关闭订单
+	// 关闭订单
 	ClosePayOrder(ctx context.Context, in *ClosePayOrderReq, opts ...grpc.CallOption) (*Empty, error)
-	//支付宝转出
+	// 支付宝转出
 	AlipayFundTransUniTransfer(ctx context.Context, in *AlipayFundTransUniTransferReq, opts ...grpc.CallOption) (*Empty, error)
-	//查询订单
+	// 查询订单
 	OrderStatus(ctx context.Context, in *OrderStatusReq, opts ...grpc.CallOption) (*OrderStatusResp, error)
-	//支付宝转出账号校验
+	// 支付宝转出账号校验
 	AlipayCheckAccount(ctx context.Context, in *AlipayCheckAccountReq, opts ...grpc.CallOption) (*AlipayCheckAccountResp, error)
-	//抖音退款订单
+	// 抖音退款订单
 	DyOrderRefund(ctx context.Context, in *DyOrderRefundReq, opts ...grpc.CallOption) (*DyOrderRefundResp, error)
-	//支付宝：创建支付
+	// 抖音退款 使用通用交易系统
+	CreateDouyinRefund(ctx context.Context, in *CreateDouyinRefundReq, opts ...grpc.CallOption) (*CreateDouyinRefundResp, error)
+	// 支付宝：创建支付
 	AlipayTrade(ctx context.Context, in *AlipayTradeReq, opts ...grpc.CallOption) (*AlipayPageSignResp, error)
-	//支付宝：支付并签约
+	// 支付宝：支付并签约
 	AlipayPagePayAndSign(ctx context.Context, in *AlipayPageSignReq, opts ...grpc.CallOption) (*AlipayPageSignResp, error)
-	//支付宝：解约
+	// 支付宝：解约
 	AlipayPageUnSign(ctx context.Context, in *AlipayPageUnSignReq, opts ...grpc.CallOption) (*AlipayCommonResp, error)
-	//支付宝：创建退款订单
+	// 支付宝：创建退款订单
 	AlipayCreateRefund(ctx context.Context, in *AlipayRefundReq, opts ...grpc.CallOption) (*CreateRefundResp, error)
-	//支付宝：退款
+	// 支付宝：退款
 	AlipayRefund(ctx context.Context, in *AlipayRefundReq, opts ...grpc.CallOption) (*AliRefundResp, error)
-	//支付宝：订阅扣款
+	// 支付宝：订阅扣款
 	AlipayTradePay(ctx context.Context, in *AlipayTradePayReq, opts ...grpc.CallOption) (*AlipayCommonResp, error)
-	//支付宝：签约延期
+	// 支付宝：签约延期
 	AlipayAgreementModify(ctx context.Context, in *AlipayAgreementModifyReq, opts ...grpc.CallOption) (*AlipayCommonResp, error)
-	//微信统一下单接口，JSAPI，对接文档：https://pay.weixin.qq.com/docs/merchant/products/jsapi-payment/introduction.html
+	// 微信统一下单接口，JSAPI，对接文档：https://pay.weixin.qq.com/docs/merchant/products/jsapi-payment/introduction.html
 	WechatUnifiedOrder(ctx context.Context, in *AlipayPageSignReq, opts ...grpc.CallOption) (*WxUnifiedPayReply, error)
-	//微信统一支付退款
+	// 微信统一支付退款
 	WechatRefundOrder(ctx context.Context, in *WechatRefundOrderReq, opts ...grpc.CallOption) (*CreateRefundResp, error)
 	// 微信h5支付，对接文档：https://pay.weixin.qq.com/docs/merchant/apis/h5-payment/direct-jsons/h5-prepay.html
 	WechatPayH5Order(ctx context.Context, in *AlipayPageSignReq, opts ...grpc.CallOption) (*WxH5PayReplay, error)
@@ -131,6 +134,15 @@ func (c *paymentClient) AlipayCheckAccount(ctx context.Context, in *AlipayCheckA
 func (c *paymentClient) DyOrderRefund(ctx context.Context, in *DyOrderRefundReq, opts ...grpc.CallOption) (*DyOrderRefundResp, error) {
 	out := new(DyOrderRefundResp)
 	err := c.cc.Invoke(ctx, Payment_DyOrderRefund_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *paymentClient) CreateDouyinRefund(ctx context.Context, in *CreateDouyinRefundReq, opts ...grpc.CallOption) (*CreateDouyinRefundResp, error) {
+	out := new(CreateDouyinRefundResp)
+	err := c.cc.Invoke(ctx, Payment_CreateDouyinRefund_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -231,35 +243,37 @@ func (c *paymentClient) WechatPayH5Order(ctx context.Context, in *AlipayPageSign
 // All implementations must embed UnimplementedPaymentServer
 // for forward compatibility
 type PaymentServer interface {
-	//创建支付订单
+	// 创建支付订单
 	OrderPay(context.Context, *OrderPayReq) (*OrderPayResp, error)
-	//关闭订单
+	// 关闭订单
 	ClosePayOrder(context.Context, *ClosePayOrderReq) (*Empty, error)
-	//支付宝转出
+	// 支付宝转出
 	AlipayFundTransUniTransfer(context.Context, *AlipayFundTransUniTransferReq) (*Empty, error)
-	//查询订单
+	// 查询订单
 	OrderStatus(context.Context, *OrderStatusReq) (*OrderStatusResp, error)
-	//支付宝转出账号校验
+	// 支付宝转出账号校验
 	AlipayCheckAccount(context.Context, *AlipayCheckAccountReq) (*AlipayCheckAccountResp, error)
-	//抖音退款订单
+	// 抖音退款订单
 	DyOrderRefund(context.Context, *DyOrderRefundReq) (*DyOrderRefundResp, error)
-	//支付宝：创建支付
+	// 抖音退款 使用通用交易系统
+	CreateDouyinRefund(context.Context, *CreateDouyinRefundReq) (*CreateDouyinRefundResp, error)
+	// 支付宝：创建支付
 	AlipayTrade(context.Context, *AlipayTradeReq) (*AlipayPageSignResp, error)
-	//支付宝：支付并签约
+	// 支付宝：支付并签约
 	AlipayPagePayAndSign(context.Context, *AlipayPageSignReq) (*AlipayPageSignResp, error)
-	//支付宝：解约
+	// 支付宝：解约
 	AlipayPageUnSign(context.Context, *AlipayPageUnSignReq) (*AlipayCommonResp, error)
-	//支付宝：创建退款订单
+	// 支付宝：创建退款订单
 	AlipayCreateRefund(context.Context, *AlipayRefundReq) (*CreateRefundResp, error)
-	//支付宝：退款
+	// 支付宝：退款
 	AlipayRefund(context.Context, *AlipayRefundReq) (*AliRefundResp, error)
-	//支付宝：订阅扣款
+	// 支付宝：订阅扣款
 	AlipayTradePay(context.Context, *AlipayTradePayReq) (*AlipayCommonResp, error)
-	//支付宝：签约延期
+	// 支付宝：签约延期
 	AlipayAgreementModify(context.Context, *AlipayAgreementModifyReq) (*AlipayCommonResp, error)
-	//微信统一下单接口，JSAPI，对接文档：https://pay.weixin.qq.com/docs/merchant/products/jsapi-payment/introduction.html
+	// 微信统一下单接口，JSAPI，对接文档：https://pay.weixin.qq.com/docs/merchant/products/jsapi-payment/introduction.html
 	WechatUnifiedOrder(context.Context, *AlipayPageSignReq) (*WxUnifiedPayReply, error)
-	//微信统一支付退款
+	// 微信统一支付退款
 	WechatRefundOrder(context.Context, *WechatRefundOrderReq) (*CreateRefundResp, error)
 	// 微信h5支付，对接文档：https://pay.weixin.qq.com/docs/merchant/apis/h5-payment/direct-jsons/h5-prepay.html
 	WechatPayH5Order(context.Context, *AlipayPageSignReq) (*WxH5PayReplay, error)
@@ -287,6 +301,9 @@ func (UnimplementedPaymentServer) AlipayCheckAccount(context.Context, *AlipayChe
 }
 func (UnimplementedPaymentServer) DyOrderRefund(context.Context, *DyOrderRefundReq) (*DyOrderRefundResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DyOrderRefund not implemented")
+}
+func (UnimplementedPaymentServer) CreateDouyinRefund(context.Context, *CreateDouyinRefundReq) (*CreateDouyinRefundResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateDouyinRefund not implemented")
 }
 func (UnimplementedPaymentServer) AlipayTrade(context.Context, *AlipayTradeReq) (*AlipayPageSignResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AlipayTrade not implemented")
@@ -435,6 +452,24 @@ func _Payment_DyOrderRefund_Handler(srv interface{}, ctx context.Context, dec fu
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(PaymentServer).DyOrderRefund(ctx, req.(*DyOrderRefundReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Payment_CreateDouyinRefund_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateDouyinRefundReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PaymentServer).CreateDouyinRefund(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Payment_CreateDouyinRefund_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PaymentServer).CreateDouyinRefund(ctx, req.(*CreateDouyinRefundReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -649,6 +684,10 @@ var Payment_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DyOrderRefund",
 			Handler:    _Payment_DyOrderRefund_Handler,
+		},
+		{
+			MethodName: "CreateDouyinRefund",
+			Handler:    _Payment_CreateDouyinRefund_Handler,
 		},
 		{
 			MethodName: "AlipayTrade",

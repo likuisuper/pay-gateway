@@ -24,11 +24,12 @@ const (
 	PmPayOrderTablePayStatusFailed = 2 // 支付失败
 	PmPayOrderTablePayStatusRefund = 3 // 退款
 	// 支付方式
-	PmPayOrderTablePayTypeWechatPayUni = 1 // 微信JSAPI支付
-	PmPayOrderTablePayTypeTiktokPayEc  = 2
-	PmPayOrderTablePayTypeAlipay       = 3
-	PmPayOrderTablePayTypeKs           = 4
-	PmPayOrderTablePayTypeWechatPayH5  = 5 // 微信H5支付
+	PmPayOrderTablePayTypeWechatPayUni       = 1 // 微信JSAPI支付
+	PmPayOrderTablePayTypeTiktokPayEc        = 2
+	PmPayOrderTablePayTypeAlipay             = 3
+	PmPayOrderTablePayTypeKs                 = 4
+	PmPayOrderTablePayTypeWechatPayH5        = 5 // 微信H5支付
+	PmPayOrderTablePayTypeDouyinGeneralTrade = 6 // 抖音通用交易系统
 )
 
 // 支付订单

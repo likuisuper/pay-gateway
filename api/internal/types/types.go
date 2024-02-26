@@ -87,6 +87,21 @@ type WechatNotifyH5Req struct {
 	Summary      string   `json:"summary"`        // 回调摘要
 }
 
+type DouyinReq struct {
+	Version       string `json:"version,optional"`
+	Type          string `json:"type,optional"`
+	Msg           string `json:"msg,optional"`
+	ByteTimestamp string `header:"Byte-Timestamp"`
+	ByteNonceStr  string `header:"Byte-Nonce-Str"`
+	ByteSignature string `header:"Byte-Signature"`
+	Body          string `json:"body"`
+}
+
+type DouyinResp struct {
+	ErrNo   int    `json:"err_no"`
+	ErrTips string `json:"err_tips"`
+}
+
 type CrtUploadReq struct {
 	AlipayAppCertPublicKeyPath string `form:"alipayAppCertPublicKeyPath,optional"`
 	AlipayPublicKeyPath        string `form:"alipayPublicKeyPath,optional"`

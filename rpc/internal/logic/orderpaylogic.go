@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"gitee.com/yan-yixin0612/alipay/v3"
 	"gitee.com/zhuyunkj/pay-gateway/common/client"
+	douyin "gitee.com/zhuyunkj/pay-gateway/common/client/douyinGeneralTrade"
 	"gitee.com/zhuyunkj/pay-gateway/common/define"
 	"gitee.com/zhuyunkj/pay-gateway/db/mysql/model"
 	"gitee.com/zhuyunkj/pay-gateway/rpc/internal/svc"
@@ -120,7 +121,7 @@ func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (out *pb.OrderPayResp, err 
 		payAppId = pkgCfg.WechatPayAppID
 	case pb.PayType_WxWeb:
 		payAppId = pkgCfg.WechatPayAppID
-	case pb.PayType_TiktokEc:
+	case pb.PayType_TiktokEc, pb.PayType_DouyinGeneralTrade:
 		payAppId = pkgCfg.TiktokPayAppID
 	case pb.PayType_KsUniApp:
 		payAppId = pkgCfg.KsPayAppID
@@ -190,6 +191,21 @@ func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (out *pb.OrderPayResp, err 
 			return
 		}
 		out.WxUnified, err = l.createWeChatUnifiedOrder(in, payOrder, payCfg.TransClientConfig())
+	case pb.PayType_DouyinGeneralTrade:
+		checkParamErr := l.checkDouyinGeneralTradeParam(in)
+		if checkParamErr != nil {
+			util.CheckError("checkParam fail pkgName= %s, tiktokEcPay，err:=%v", in.AppPkgName, checkParamErr)
+			return
+		}
+
+		payCfg, cfgErr := l.payConfigTiktokModel.GetOneByAppID(pkgCfg.TiktokPayAppID)
+		if cfgErr != nil {
+			err = fmt.Errorf("pkgName= %s, 读取抖音通用交易系统支付配置失败，err:=%v", in.AppPkgName, cfgErr)
+			util.CheckError(err.Error())
+			return
+		}
+
+		out.DouyinGeneralTrade, err = l.createDouyinGeneralTradeOrder(in, payCfg.GetGeneralTradeConfig())
 	}
 	return
 }
@@ -304,7 +320,7 @@ func (l *OrderPayLogic) createWeChatNativeOrder(in *pb.OrderPayReq, info *client
 // 微信统一下单
 func (l *OrderPayLogic) createWeChatUnifiedOrder(in *pb.OrderPayReq, info *client.PayOrder, payConf *client.WechatPayConfig) (reply *pb.WxUnifiedPayReply, err error) {
 	payClient := client.NewWeChatCommPay(*payConf)
-	res, err := payClient.WechatPayUnified(info,payConf)
+	res, err := payClient.WechatPayUnified(info, payConf)
 	if err != nil {
 		wechatNativePayFailNum.CounterInc()
 		util.CheckError("pkgName= %s, wechatUniPay，err:=%v", in.AppPkgName, err)
@@ -314,7 +330,7 @@ func (l *OrderPayLogic) createWeChatUnifiedOrder(in *pb.OrderPayReq, info *clien
 		Prepayid: res.PrepayID,
 		MwebUrl:  res.MwebURL,
 	}
-	if payConf.WapName!=""&& payConf.WapUrl !=""{
+	if payConf.WapName != "" && payConf.WapUrl != "" {
 		reply.WapName = payConf.WapName
 		reply.WapUrl = payConf.WapUrl
 	}
@@ -349,6 +365,73 @@ func (l *OrderPayLogic) createKsOrder(in *pb.OrderPayReq, info *client.PayOrder,
 	reply = &pb.KsUniAppReply{
 		OrderNo:        res.OrderNo,
 		OrderInfoToken: res.OrderInfoToken,
+	}
+	return
+}
+
+func (l *OrderPayLogic) checkDouyinGeneralTradeParam(in *pb.OrderPayReq) error {
+	if in.DouyinGeneralTradeReq == nil {
+		return errors.New("invalid DouyinGeneralTradeReq")
+	}
+	req := in.DouyinGeneralTradeReq
+	if req.Type == pb.DouyinGeneralTradeReq_Unknown || pb.DouyinGeneralTradeReq_SkuType_name[int32(req.Type)] == "" {
+		return errors.New("invalid sku type")
+	}
+	return nil
+}
+
+// 抖音小程序通用交易系统
+func (l *OrderPayLogic) createDouyinGeneralTradeOrder(in *pb.OrderPayReq, payConf *douyin.PayConfig) (reply *pb.DouyinGeneralTradeReply, err error) {
+	payClient := douyin.NewDouyinPay(payConf)
+	douyinReq := in.DouyinGeneralTradeReq
+	sku := &douyin.Sku{
+		SkuId:       douyinReq.SkuId,
+		Price:       douyinReq.Price,
+		Quantity:    douyinReq.Quantity,
+		Title:       douyinReq.Title,
+		ImageList:   douyinReq.ImageList,
+		Type:        0,
+		TagGroupId:  "",
+		EntrySchema: nil,
+	}
+	if douyinReq.GetEntrySchema() != nil {
+		sku.EntrySchema = &douyin.Schema{
+			Path:   douyinReq.GetEntrySchema().GetPath(),
+			Params: douyinReq.GetEntrySchema().GetParams(),
+		}
+	}
+	if douyinReq.Type == pb.DouyinGeneralTradeReq_ContentRecharge {
+		sku.Type = douyin.SkuContentRecharge
+		sku.TagGroupId = douyin.SKuTagGroupIdContentRecharge
+	}
+	data := &douyin.RequestOrderData{
+		SkuList: []*douyin.Sku{
+			sku,
+		},
+		OutOrderNo:       in.OrderSn,
+		TotalAmount:      int32(in.Amount),
+		PayExpireSeconds: 1800,
+		PayNotifyUrl:     payConf.NotifyUrl,
+		MerchantUid:      "",
+		OrderEntrySchema: &douyin.Schema{
+			Path:   douyinReq.GetOrderEntrySchema().GetPath(),
+			Params: douyinReq.GetOrderEntrySchema().GetParams(),
+		},
+		LimitPayWayList: douyinReq.LimitPayWayList,
+	}
+	if in.Os == "ios" {
+		data.PayScene = "IM"
+	}
+	dataStr, byteAuthorization, err := payClient.RequestOrder(data)
+	if err != nil {
+		tiktokEcPayFailNum.CounterInc()
+		l.Errorf("pkgName= %s, tiktokEcPay，err:=%v", in.AppPkgName, err)
+		return
+	}
+	reply = &pb.DouyinGeneralTradeReply{
+		Data:              dataStr,
+		ByteAuthorization: byteAuthorization,
+		CustomerImId:      payConf.CustomerImId,
 	}
 	return
 }

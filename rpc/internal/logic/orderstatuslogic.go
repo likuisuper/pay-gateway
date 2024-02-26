@@ -4,11 +4,13 @@ import (
 	"context"
 	"fmt"
 	"gitee.com/zhuyunkj/pay-gateway/common/client"
+	douyin "gitee.com/zhuyunkj/pay-gateway/common/client/douyinGeneralTrade"
 	"gitee.com/zhuyunkj/pay-gateway/common/define"
 	"gitee.com/zhuyunkj/pay-gateway/db/mysql/model"
 	"gitee.com/zhuyunkj/zhuyun-core/util"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/wechatpay-apiv3/wechatpay-go/services/payments"
+	"time"
 
 	"gitee.com/zhuyunkj/pay-gateway/rpc/internal/svc"
 	"gitee.com/zhuyunkj/pay-gateway/rpc/pb/pb"
@@ -112,6 +114,33 @@ func (l *OrderStatusLogic) OrderStatus(in *pb.OrderStatusReq) (resp *pb.OrderSta
 		if orderInfo.PayStatus == "SUCCESS" {
 			resp.Status = 1
 			resp.PayAmount = int64(orderInfo.TotalAmount)
+		}
+	case pb.PayType_DouyinGeneralTrade:
+		payCfg, cfgErr := l.payConfigTiktokModel.GetOneByAppID(pkgCfg.TiktokPayAppID)
+		if cfgErr != nil {
+			err = fmt.Errorf("pkgName= %s, 读取抖音支付配置失败，err:=%v", in.AppPkgName, cfgErr)
+			util.CheckError(err.Error())
+			return
+		}
+
+		douyinPayConfig := payCfg.GetGeneralTradeConfig()
+		douyinPayConfig.GetClientTokenUrl = l.svcCtx.Config.DouyinClientTokenUrl
+		payClient := douyin.NewDouyinPay(douyinPayConfig)
+
+		defer func(t time.Time) {
+			l.Slowf("payClient.QueryOrder timecost:%v", time.Since(t))
+		}(time.Now())
+
+		orderInfo, err := payClient.QueryOrder("", in.OrderSn)
+		l.Slowf("queryOrder, orderSn:%s, err:%v, resp:%v", in.OrderSn, err, orderInfo)
+		if err != nil {
+			err = fmt.Errorf("查询抖音订单失败, orderSn=%s, err=%v", in.OrderSn, err)
+			util.CheckError(err.Error())
+			return nil, err
+		}
+		if orderInfo.Data != nil && orderInfo.Data.PayStatus == "SUCCESS" {
+			resp.Status = 1
+			resp.PayAmount = orderInfo.Data.TotalAmount
 		}
 	}
 

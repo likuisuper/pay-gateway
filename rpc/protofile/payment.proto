@@ -14,6 +14,8 @@ message OrderPayReq {
   string NotifyURL = 6; //回调通知地址
   string returnURL = 7; //H5,wap支付跳转地址
   string WxOpenID = 8;//微信小程序支付时必传
+  string os = 9; // 系统标识
+  DouyinGeneralTradeReq douyinGeneralTradeReq = 10; //抖音小程序订单信息-通用交易系统
 }
 
 //支付方式枚举
@@ -24,8 +26,9 @@ enum PayType {
   AlipayWeb = 3; //支付宝web支付
   WxWeb = 4; //微信web支付
   KsUniApp = 5; //快手小程序支付-有收银台
-  WxUnified  = 6; //微信统一下单接口
+  WxUnified = 6; //微信统一下单接口
   WxV3H5 = 7;  // 微信h5支付
+  DouyinGeneralTrade = 8; //抖音小程序支付-通用交易系统
 }
 
 //创建支付订单返回
@@ -39,7 +42,8 @@ message OrderPayResp {
   string AlipayWeb = 7; //支付宝web支付
   WxNativePayReply WxNative = 8; //微信web支付
   KsUniAppReply KsUniApp = 9; //快手小程序
-  WxUnifiedPayReply  WxUnified  = 10;    ///微信统一下单支付
+  WxUnifiedPayReply  WxUnified = 10;    ///微信统一下单支付
+  DouyinGeneralTradeReply DouyinGeneralTrade = 11; //抖音小程序-通用交易系统
 }
 
 //微信uniapp支付返回
@@ -63,7 +67,7 @@ message WxUnifiedPayReply {
   string MwebUrl = 2; //h5地址
   string OutTradeNo = 3;
   string WapUrl = 4;
-  string WapName= 5;
+  string WapName = 5;
 }
 
 message WxH5PayReplay{
@@ -167,7 +171,7 @@ message AlipayPageSignReq {
   int64 ProductId = 6;  //商品id
   string ProductDesc = 7; //商品详情
   string BelongSignOrder = 8; //对应的签约订单单号（订阅续费时需要）
-  string Ip   = 9;            //客户端ip地址
+  string Ip = 9;            //客户端ip地址
   string RedirectUrl = 10;  // 支付成功后重定向地址
 }
 
@@ -232,15 +236,54 @@ message AlipayAgreementModifyReq {
 
 //微信支付退款
 message WechatRefundOrderReq {
-  string	OutTradeNo  =1;  //内部订单号
-  int64	TotalFee    =2;  //订单总金额，单位为分
-  int64	RefundFee   =3;  //退款总金额，订单总金额，单位为分
+  string  OutTradeNo = 1;  //内部订单号
+  int64  TotalFee = 2;  //订单总金额，单位为分
+  int64  RefundFee = 3;  //退款总金额，订单总金额，单位为分
   string RefundReason = 4; //退款理由
 }
 
+// 抖音通用交易系统 https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/api/industry/general_trade/create_order/requestOrder#33efe69e
+message DouyinGeneralTradeReq {
+  enum SkuType {
+    Unknown = 0;
+    ContentRecharge = 401; // 内容充值
+  }
+  string skuId = 1; // 外部商品id
+  int32 price = 2; // 价格 分
+  int32 quantity = 3; // 数量
+  string title = 4; // 商品标题，长度 <= 256字节
+  repeated string imageList = 5; // 商品图片链接，长度 <= 512 字节，只取第一项
+  SkuType type = 6; // 商品类型
+  Schema entrySchema = 8; // 商品详情页链接
+  Schema orderEntrySchema = 9; // 订单详情页链接 必填
+  repeated int32 limitPayWayList = 10; // 限制的支付方式 1 微信 2 支付宝
+}
 
+message Schema {
+  string path = 1; // 详情页跳转路径，没有前导的“/”，路径后不可携带query参数
+  string params = 2; // 详情页路径参数
+}
 
+message DouyinGeneralTradeReply {
+  string data = 1; //订单信息
+  string byteAuthorization = 2; //签名字符串
+  string customerImId = 3; // 客服imId 用于ios支付
+}
 
+message CreateDouyinRefundReq {
+  string appPkgName = 1; // 应用包名
+  string outOrderNo = 2; // 商户支付订单号
+  string outRefundNo = 3; // 商户退款订单号
+  int64 refundAmount = 4; // 退款金额 分
+  string refundReason = 5; // 退款原因
+  string refundNotifyUrl = 6; // 退款回调地址
+  Schema orderEntrySchema = 7; // 退款单的跳转的 schema
+}
+
+message CreateDouyinRefundResp {
+  string refundId = 1; // 抖音侧退款id
+  int64 refundAuditDeadline = 2; // 退款截止期限
+}
 
 //============== service ==============================================================================
 
@@ -262,6 +305,8 @@ service Payment {
 
   //抖音退款订单
   rpc DyOrderRefund(DyOrderRefundReq) returns (DyOrderRefundResp);
+  // 抖音退款 使用通用交易系统
+  rpc CreateDouyinRefund(CreateDouyinRefundReq) returns (CreateDouyinRefundResp);
 
   //支付宝：创建支付
   rpc AlipayTrade(AlipayTradeReq) returns (AlipayPageSignResp);
