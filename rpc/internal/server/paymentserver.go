@@ -58,6 +58,12 @@ func (s *PaymentServer) DyOrderRefund(ctx context.Context, in *pb.DyOrderRefundR
 	return l.DyOrderRefund(in)
 }
 
+// 抖音退款 使用通用交易系统
+func (s *PaymentServer) CreateDouyinRefund(ctx context.Context, in *pb.CreateDouyinRefundReq) (*pb.CreateDouyinRefundResp, error) {
+	l := logic.NewCreateDouyinRefundLogic(ctx, s.svcCtx)
+	return l.CreateDouyinRefund(in)
+}
+
 // 支付宝：创建支付
 func (s *PaymentServer) AlipayTrade(ctx context.Context, in *pb.AlipayTradeReq) (*pb.AlipayPageSignResp, error) {
 	l := logic.NewAlipayTradeLogic(ctx, s.svcCtx)
@@ -112,7 +118,7 @@ func (s *PaymentServer) WechatRefundOrder(ctx context.Context, in *pb.WechatRefu
 	return l.WechatRefundOrder(in)
 }
 
-//  微信h5支付，对接文档：https://pay.weixin.qq.com/docs/merchant/apis/h5-payment/direct-jsons/h5-prepay.html
+// 微信h5支付，对接文档：https://pay.weixin.qq.com/docs/merchant/apis/h5-payment/direct-jsons/h5-prepay.html
 func (s *PaymentServer) WechatPayH5Order(ctx context.Context, in *pb.AlipayPageSignReq) (*pb.WxH5PayReplay, error) {
 	l := logic.NewWechatPayH5OrderLogic(ctx, s.svcCtx)
 	return l.WechatPayH5Order(in)

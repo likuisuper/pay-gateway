@@ -3,6 +3,7 @@ package model
 
 import (
 	"gitee.com/zhuyunkj/pay-gateway/common/client"
+	douyin "gitee.com/zhuyunkj/pay-gateway/common/client/douyinGeneralTrade"
 	"gitee.com/zhuyunkj/pay-gateway/db"
 	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
 	"github.com/zeromicro/go-zero/core/logx"
@@ -16,14 +17,18 @@ var (
 
 // 字节支付配置
 type PmPayConfigTiktokTable struct {
-	ID        int       `gorm:"column:id;primary_key;AUTO_INCREMENT" json:"id"`
-	AppID     string    `gorm:"column:app_id;NOT NULL" json:"app_id"`         // 应用id
-	Salt      string    `gorm:"column:salt;NOT NULL" json:"salt"`             // 加密参数
-	NotifyUrl string    `gorm:"column:notify_url;NOT NULL" json:"notify_url"` // 回调地址
-	Token     string    `gorm:"column:token;NOT NULL" json:"token"`           // token
-	Remark    string    `gorm:"column:remark;NOT NULL" json:"remark"`         // 备注信息
-	CreatedAt time.Time `gorm:"column:created_at" json:"created_at"`
-	UpdatedAt time.Time `gorm:"column:updated_at" json:"updated_at"`
+	ID                int       `gorm:"column:id;primary_key;AUTO_INCREMENT" json:"id"`
+	AppID             string    `gorm:"column:app_id;NOT NULL" json:"app_id"`         // 应用id
+	Salt              string    `gorm:"column:salt;NOT NULL" json:"salt"`             // 加密参数
+	NotifyUrl         string    `gorm:"column:notify_url;NOT NULL" json:"notify_url"` // 回调地址
+	Token             string    `gorm:"column:token;NOT NULL" json:"token"`           // token
+	Remark            string    `gorm:"column:remark;NOT NULL" json:"remark"`         // 备注信息
+	CreatedAt         time.Time `gorm:"column:created_at" json:"created_at"`
+	UpdatedAt         time.Time `gorm:"column:updated_at" json:"updated_at"`
+	PrivateKey        string    `json:"private_key"`         // 私钥
+	KeyVersion        string    `json:"key_version"`         // 私钥版本号
+	PlatformPublicKey string    `json:"platform_public_key"` // 平台公钥
+	CustomerImId      string    `json:"customer_im_id"`      // 抖音客服id 用于ios支付
 }
 
 func (m *PmPayConfigTiktokTable) TableName() string {
@@ -40,6 +45,18 @@ func (m *PmPayConfigTiktokTable) TransClientConfig() (clientCfg *client.TikTokPa
 	return
 }
 
+func (m *PmPayConfigTiktokTable) GetGeneralTradeConfig() (clientCfg *douyin.PayConfig) {
+	clientCfg = &douyin.PayConfig{
+		AppId:             m.AppID,
+		PrivateKey:        m.PrivateKey,
+		KeyVersion:        m.KeyVersion,
+		NotifyUrl:         m.NotifyUrl,
+		PlatformPublicKey: m.PlatformPublicKey,
+		CustomerImId:      m.CustomerImId,
+	}
+	return
+}
+
 type PmPayConfigTiktokModel struct {
 	DB *gorm.DB
 }
@@ -50,7 +67,7 @@ func NewPmPayConfigTiktokModel(dbName string) *PmPayConfigTiktokModel {
 	}
 }
 
-//获取应用配置信息
+// 获取应用配置信息
 func (o *PmPayConfigTiktokModel) GetOneByAppID(appID string) (appConfig *PmPayConfigTiktokTable, err error) {
 	var cfg PmPayConfigTiktokTable
 	err = o.DB.Where(" `app_id` = ?", appID).First(&cfg).Error
