@@ -57,7 +57,7 @@ func (l *NotifyWechatLogic) NotifyWechat(request *http.Request) (resp *types.WeC
 	var transaction *payments.Transaction
 	var wxCli *client.WeChatCommPay
 	wxCli = client.NewWeChatCommPay(*payCfg.TransClientConfig())
-	transaction,_, err = wxCli.Notify(request)
+	transaction, _, err = wxCli.Notify(request)
 	if err != nil {
 		err = fmt.Errorf("解析及验证内容失败！err=%v ", err)
 		logx.Errorf(err.Error())
@@ -92,11 +92,13 @@ func (l *NotifyWechatLogic) NotifyWechat(request *http.Request) (resp *types.WeC
 		util.CheckError(err.Error())
 		return
 	}
-
 	//回调业务方接口
 	go func() {
 		defer exception.Recover()
-		_, _ = util.HttpPost(orderInfo.NotifyUrl, transaction, 5*time.Second)
+		headerMap := map[string]string{
+			"App-Origin": orderInfo.AppPkgName,
+		}
+		_, _ = util.HttpPostWithHeader(orderInfo.NotifyUrl, transaction, headerMap, 5*time.Second)
 	}()
 
 	resp = &types.WeChatResp{

@@ -138,7 +138,9 @@ func (l *NotifyKspayLogic) NotifyKspay(r *http.Request, w http.ResponseWriter) (
 	//回调业务方接口
 	go func() {
 		defer exception.Recover()
-		_, _ = util.HttpPost(orderInfo.NotifyUrl, notifyData, 5*time.Second)
+		headerMap := make(map[string]string, 1)
+		headerMap["App-Origin"] = orderInfo.AppPkgName
+		_, _ = util.HttpPostWithHeader(orderInfo.NotifyUrl, notifyData, headerMap, 5*time.Second)
 	}()
 
 	resData := &ksOrderNotifyResp{
