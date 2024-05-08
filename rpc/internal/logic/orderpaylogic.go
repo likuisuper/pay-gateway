@@ -404,6 +404,12 @@ func (l *OrderPayLogic) createDouyinGeneralTradeOrder(in *pb.OrderPayReq, payCon
 		sku.Type = douyin.SkuContentRecharge
 		sku.TagGroupId = douyin.SKuTagGroupIdContentRecharge
 	}
+
+	var merchantUid string
+	if in.AppPkgName == "" {
+		merchantUid = "73661517812667866124"
+	}
+
 	data := &douyin.RequestOrderData{
 		SkuList: []*douyin.Sku{
 			sku,
@@ -412,7 +418,7 @@ func (l *OrderPayLogic) createDouyinGeneralTradeOrder(in *pb.OrderPayReq, payCon
 		TotalAmount:      int32(in.Amount),
 		PayExpireSeconds: 1800,
 		PayNotifyUrl:     payConf.NotifyUrl,
-		MerchantUid:      "",
+		MerchantUid:      merchantUid,
 		OrderEntrySchema: &douyin.Schema{
 			Path:   douyinReq.GetOrderEntrySchema().GetPath(),
 			Params: douyinReq.GetOrderEntrySchema().GetParams(),
