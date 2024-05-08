@@ -405,8 +405,9 @@ func (l *OrderPayLogic) createDouyinGeneralTradeOrder(in *pb.OrderPayReq, payCon
 		sku.TagGroupId = douyin.SKuTagGroupIdContentRecharge
 	}
 
+	// 临时线上验证商户号调整，验证无误后再加到支付网关后台配置
 	var merchantUid string
-	if in.AppPkgName == "" {
+	if in.AppPkgName == "com.douyin.xingjuta" {
 		merchantUid = "73661517812667866124"
 	}
 
