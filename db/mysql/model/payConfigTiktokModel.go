@@ -29,6 +29,7 @@ type PmPayConfigTiktokTable struct {
 	KeyVersion        string    `json:"key_version"`         // 私钥版本号
 	PlatformPublicKey string    `json:"platform_public_key"` // 平台公钥
 	CustomerImId      string    `json:"customer_im_id"`      // 抖音客服id 用于ios支付
+	MerchantUid       string    `json:"merchant_uid"`        // 自定义的商户号
 }
 
 func (m *PmPayConfigTiktokTable) TableName() string {
@@ -53,6 +54,7 @@ func (m *PmPayConfigTiktokTable) GetGeneralTradeConfig() (clientCfg *douyin.PayC
 		NotifyUrl:         m.NotifyUrl,
 		PlatformPublicKey: m.PlatformPublicKey,
 		CustomerImId:      m.CustomerImId,
+		MerchantUid:       m.MerchantUid,
 	}
 	return
 }

@@ -219,7 +219,7 @@ func (l *OrderPayLogic) createAlipayWapOrder(in *pb.OrderPayReq, payConf *client
 		return
 	}
 	//发起支付请求
-	var amount float64 = float64(in.Amount) / 100
+	var amount = float64(in.Amount) / 100
 	sendAmount := strconv.FormatFloat(amount, 'f', 2, 32)
 	var p = alipay.TradeWapPay{}
 	p.NotifyURL = payConf.NotifyUrl
@@ -249,7 +249,7 @@ func (l *OrderPayLogic) createAlipayWebOrder(in *pb.OrderPayReq, payConf *client
 		return
 	}
 	//发起支付请求
-	var amount float64 = float64(in.Amount) / 100
+	var amount = float64(in.Amount) / 100
 	sendAmount := strconv.FormatFloat(amount, 'f', 2, 32)
 	var p = alipay.TradePagePay{}
 	p.NotifyURL = payConf.NotifyUrl
@@ -404,17 +404,6 @@ func (l *OrderPayLogic) createDouyinGeneralTradeOrder(in *pb.OrderPayReq, payCon
 		sku.Type = douyin.SkuContentRecharge
 		sku.TagGroupId = douyin.SKuTagGroupIdContentRecharge
 	}
-
-	// 临时线上验证商户号调整，验证无误后再加到支付网关后台配置
-	var merchantUid string
-	if in.AppPkgName == "com.douyin.xingjuta" {
-		merchantUid = "73661517812667866124"
-	} else if in.AppPkgName == "com.douyin.yunjutn" {
-		merchantUid = "73664755270388144754"
-	} else if in.AppPkgName == "com.douyin.xingsnju" {
-		merchantUid = "73669449167960824724"
-	}
-
 	data := &douyin.RequestOrderData{
 		SkuList: []*douyin.Sku{
 			sku,
@@ -423,7 +412,7 @@ func (l *OrderPayLogic) createDouyinGeneralTradeOrder(in *pb.OrderPayReq, payCon
 		TotalAmount:      int32(in.Amount),
 		PayExpireSeconds: 1800,
 		PayNotifyUrl:     payConf.NotifyUrl,
-		MerchantUid:      merchantUid,
+		MerchantUid:      payConf.MerchantUid,
 		OrderEntrySchema: &douyin.Schema{
 			Path:   douyinReq.GetOrderEntrySchema().GetPath(),
 			Params: douyinReq.GetOrderEntrySchema().GetParams(),
