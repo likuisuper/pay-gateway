@@ -411,6 +411,8 @@ func (l *OrderPayLogic) createDouyinGeneralTradeOrder(in *pb.OrderPayReq, payCon
 		merchantUid = "73661517812667866124"
 	} else if in.AppPkgName == "com.douyin.yunjutn" {
 		merchantUid = "73664755270388144754"
+	} else if in.AppPkgName == "com.douyin.xingsnju" {
+		merchantUid = "73669449167960824724"
 	}
 
 	data := &douyin.RequestOrderData{
