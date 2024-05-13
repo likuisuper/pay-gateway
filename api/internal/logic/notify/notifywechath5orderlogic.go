@@ -104,7 +104,10 @@ func (l *NotifyWechatH5OrderLogic) NotifyWechatH5Order(request *http.Request) (r
 			"out_trade_no": *transaction.OutTradeNo,
 		}
 		dataMap["notify_type"] = code.APP_NOTIFY_TYPE_PAY
-		err = utils.CallbackWithRetry(orderInfo.AppNotifyUrl, dataMap, 5*time.Second)
+		headerMap := map[string]string{
+			"App-Origin": orderInfo.AppPkg,
+		}
+		err = utils.CallbackWithRetry(orderInfo.AppNotifyUrl,headerMap, dataMap, 5*time.Second)
 		if err != nil {
 			desc := fmt.Sprintf("回调通知用户付款成功 异常, app_pkg=%s, user_id=%d, out_trade_no=%s, 报错信息：%v", orderInfo.AppPkg, orderInfo.UserID, orderInfo.OutTradeNo, err)
 			alarm.ImmediateAlarm("notifyUserPayErr", desc, alarm.ALARM_LEVEL_FATAL)

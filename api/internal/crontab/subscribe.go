@@ -174,7 +174,10 @@ func (c *CrontabOrder) PaySubscribeFee(tb *dbmodel.OrderTable) error {
 			dataMap["external_agreement_no"] = tb.ExternalAgreementNo
 			dataMap["out_trade_no"] = tb.OutTradeNo
 			dataMap["err_info"] = errDesc
-			err = utils.CallbackWithRetry(tb.AppNotifyUrl, dataMap, 5*time.Second)
+			headerMap :=map[string]string{
+				"App-Origin": tb.AppPkg,
+			}
+			err = utils.CallbackWithRetry(tb.AppNotifyUrl, headerMap,dataMap, 5*time.Second)
 			if err != nil {
 				desc := fmt.Sprintf("回调通知用户续约失败 异常, app_pkg=%s, user_id=%s, out_trade_no=%s", tb.AppPkg, tb.UserID, tb.OutTradeNo)
 				alarm.ImmediateAlarm("notifyUserSignFeeFailedErr", desc, alarm.ALARM_LEVEL_FATAL)

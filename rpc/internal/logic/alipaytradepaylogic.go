@@ -103,7 +103,12 @@ func (l *AlipayTradePayLogic) AlipayTradePay(in *pb.AlipayTradePayReq) (*pb.Alip
 			dataMap := make(map[string]interface{})
 			dataMap["notify_type"] = code.APP_NOTIFY_TYPE_PAY
 			dataMap["external_agreement_no"] = in.ExternalAgreementNo
-			err = utils.CallbackWithRetry(tb.AppNotifyUrl, dataMap, 5*time.Second)
+
+			headerMap := map[string]string{
+				"App-Origin": tb.AppPkg,
+			}
+
+			err = utils.CallbackWithRetry(tb.AppNotifyUrl,headerMap, dataMap, 5*time.Second)
 			if err != nil {
 				desc := fmt.Sprintf("回调通知用户续约 异常, app_pkg=%s, out_trade_no=%s", tb.AppPkg, tb.OutTradeNo)
 				alarm.ImmediateAlarm("notifyUserSignFeeErr", desc, alarm.ALARM_LEVEL_FATAL)
