@@ -25,6 +25,7 @@ type PayConfig struct {
 	PlatformPublicKey string // 平台公钥
 	CustomerImId      string
 	GetClientTokenUrl string
+	MerchantUid       string // 支付使用的商户号，为空抖音侧会使用默认值
 }
 
 type PayClient struct {

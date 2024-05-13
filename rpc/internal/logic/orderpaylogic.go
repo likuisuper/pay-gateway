@@ -219,7 +219,7 @@ func (l *OrderPayLogic) createAlipayWapOrder(in *pb.OrderPayReq, payConf *client
 		return
 	}
 	//发起支付请求
-	var amount float64 = float64(in.Amount) / 100
+	var amount = float64(in.Amount) / 100
 	sendAmount := strconv.FormatFloat(amount, 'f', 2, 32)
 	var p = alipay.TradeWapPay{}
 	p.NotifyURL = payConf.NotifyUrl
@@ -249,7 +249,7 @@ func (l *OrderPayLogic) createAlipayWebOrder(in *pb.OrderPayReq, payConf *client
 		return
 	}
 	//发起支付请求
-	var amount float64 = float64(in.Amount) / 100
+	var amount = float64(in.Amount) / 100
 	sendAmount := strconv.FormatFloat(amount, 'f', 2, 32)
 	var p = alipay.TradePagePay{}
 	p.NotifyURL = payConf.NotifyUrl
@@ -412,7 +412,7 @@ func (l *OrderPayLogic) createDouyinGeneralTradeOrder(in *pb.OrderPayReq, payCon
 		TotalAmount:      int32(in.Amount),
 		PayExpireSeconds: 1800,
 		PayNotifyUrl:     payConf.NotifyUrl,
-		MerchantUid:      "",
+		MerchantUid:      payConf.MerchantUid,
 		OrderEntrySchema: &douyin.Schema{
 			Path:   douyinReq.GetOrderEntrySchema().GetPath(),
 			Params: douyinReq.GetOrderEntrySchema().GetParams(),
