@@ -85,6 +85,7 @@ func (l *NotifyWechatLogic) NotifyWechat(request *http.Request) (resp *types.WeC
 	//修改数据库
 	orderInfo.NotifyAmount = int(*transaction.Amount.PayerTotal)
 	orderInfo.PayStatus = model.PmPayOrderTablePayStatusPaid
+	orderInfo.ThirdOrderNo = *transaction.TransactionId
 	//orderInfo.PayType = model.PmPayOrderTablePayTypeWechatPayUni //改为创建订单时指定支付类型，用于补偿机制建设
 	err = l.payOrderModel.UpdateNotify(orderInfo)
 	if err != nil {

@@ -136,7 +136,7 @@ func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (out *pb.OrderPayResp, err 
 	}
 
 	switch out.PayType {
-	case pb.PayType_AlipayWap:
+	case pb.PayType_AlipayWap: //小程序未用到
 		payCfg, cfgErr := l.payConfigAlipayModel.GetOneByAppID(pkgCfg.AlipayAppID)
 		if cfgErr != nil {
 			err = fmt.Errorf("pkgName= %s, 读取支付宝配置失败，err:=%v", in.AppPkgName, cfgErr)
@@ -144,7 +144,7 @@ func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (out *pb.OrderPayResp, err 
 			return
 		}
 		out.AlipayWap, err = l.createAlipayWapOrder(in, payCfg.TransClientConfig())
-	case pb.PayType_AlipayWeb:
+	case pb.PayType_AlipayWeb: //小程序未用到
 		payCfg, cfgErr := l.payConfigAlipayModel.GetOneByAppID(pkgCfg.AlipayAppID)
 		if cfgErr != nil {
 			err = fmt.Errorf("pkgName= %s, 读取支付宝配置失败，err:=%v", in.AppPkgName, cfgErr)

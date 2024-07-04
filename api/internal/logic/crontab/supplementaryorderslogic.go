@@ -164,7 +164,7 @@ func (l *SupplementaryOrdersLogic) SupplementaryOrders(req *types.SupplementaryO
 	}, nil
 }
 
-// handleWxOrder 处理微信订单
+// handleWxOrder 微信订单处理
 func (l *SupplementaryOrdersLogic) handleWxOrder(orderInfo *model.PmPayOrderTable, appId string) error {
 	payCfg, cfgErr := l.payConfigWechatModel.GetOneByAppID(appId)
 	if cfgErr != nil {
@@ -192,6 +192,7 @@ func (l *SupplementaryOrdersLogic) handleWxOrder(orderInfo *model.PmPayOrderTabl
 		//修改数据库
 		currentOrderInfo.NotifyAmount = int(*transaction.Amount.PayerTotal)
 		currentOrderInfo.PayStatus = model.PmPayOrderTablePayStatusPaid
+		currentOrderInfo.ThirdOrderNo = *transaction.TransactionId //微信系统订单id
 		err = l.payOrderModel.UpdateNotify(currentOrderInfo)
 		if err != nil {
 			orderSupplementaryErrNum.CounterInc()
@@ -210,7 +211,7 @@ func (l *SupplementaryOrdersLogic) handleWxOrder(orderInfo *model.PmPayOrderTabl
 	return nil
 }
 
-// handleDouyinOrder
+// handleDouyinOrder 抖音订单回调处理
 func (l *SupplementaryOrdersLogic) handleDouyinOrder(orderInfo *model.PmPayOrderTable, appId string) error {
 	payCfg, cfgErr := l.payConfigTiktokModel.GetOneByAppID(appId)
 	if cfgErr != nil {
@@ -239,6 +240,7 @@ func (l *SupplementaryOrdersLogic) handleDouyinOrder(orderInfo *model.PmPayOrder
 		//修改数据库
 		orderInfo.NotifyAmount = int(douyinOrder.Data.TotalAmount)
 		orderInfo.PayStatus = model.PmPayOrderTablePayStatusPaid
+		orderInfo.ThirdOrderNo = douyinOrder.Data.OrderId
 		err = l.payOrderModel.UpdateNotify(orderInfo)
 		if err != nil {
 			orderSupplementaryErrNum.CounterInc()

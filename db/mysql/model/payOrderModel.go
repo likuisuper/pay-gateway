@@ -49,6 +49,7 @@ type PmPayOrderTable struct {
 	PayAppId     string    `gorm:"column:pay_app_id;NOT NULL" json:"pay_app_id"`                 //第三方支付的appid
 	CreatedAt    time.Time `gorm:"column:created_at;type:datetime" json:"created_at"`
 	UpdatedAt    time.Time `gorm:"column:updated_at;type:datetime" json:"updated_at"`
+	ThirdOrderNo string    `gorm:"column:third_order_no;NULL" json:"third_order_no"` //三方订单号
 }
 
 func (m *PmPayOrderTable) TableName() string {
