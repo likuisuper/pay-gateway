@@ -27,9 +27,12 @@ const (
 	PmPayOrderTablePayTypeWechatPayUni       = 1 // 微信JSAPI支付
 	PmPayOrderTablePayTypeTiktokPayEc        = 2
 	PmPayOrderTablePayTypeAlipay             = 3
-	PmPayOrderTablePayTypeKs                 = 4
-	PmPayOrderTablePayTypeWechatPayH5        = 5 // 微信H5支付
-	PmPayOrderTablePayTypeDouyinGeneralTrade = 6 // 抖音通用交易系统
+	PmPayOrderTablePayTypeKs                 = 4 //已废弃，pb入参，4为 PayType_WxWeb
+	PmPayOrderTablePayTypeWechatPayH5        = 5 // 暂时没用，微信H5支付，pb入参 5为 PayType_KsUniApp
+	PmPayOrderTablePayWxUnified              = 6 //微信统一下单接口 ,暂未用到回调接口被误用为8
+	PmPayOrderTablePayWxV3H5                 = 7 // 微信h5支付
+	PmPayOrderTablePayTypeDouyinGeneralTrade = 8 //抖音小程序支付-通用交易系统,由6调整为8和Pb入参一致
+
 )
 
 // 支付订单
@@ -104,4 +107,35 @@ func (o *PmPayOrderModel) UpdatePayAppID(orderSn string, payAppId string) (err e
 	}
 	return
 
+}
+
+// GetListByCreateTimeRange 获取指定时间区间的数据,批量获取，每次获取3000条
+func (o *PmPayOrderModel) GetListByCreateTimeRange(startTime, endTime time.Time) (pmPayList []*PmPayOrderTable, err error) {
+	pmPayList = make([]*PmPayOrderTable, 0)
+	batch := make([]*PmPayOrderTable, 0)
+
+	fromIndex := uint(0)
+	for {
+		err = o.DB.Where("created_at >= ?", startTime).
+			Where("created_at <= ?", endTime).
+			Where("pay_status = 0").
+			Where("id > ?", fromIndex).
+			Order("id asc").
+			Limit(3000).
+			Find(&batch).Error
+		if len(batch) == 0 {
+			break
+		}
+
+		lastOne := batch[len(batch)-1]
+		fromIndex = lastOne.ID
+		pmPayList = append(pmPayList, batch...)
+	}
+
+	if err != nil {
+		logx.Errorf("GetListByCreateTimeRange，err:%v, params:%v, %v", err, startTime, endTime)
+		return
+	}
+
+	return pmPayList, nil
 }

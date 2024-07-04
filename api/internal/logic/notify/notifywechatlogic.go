@@ -57,7 +57,7 @@ func (l *NotifyWechatLogic) NotifyWechat(request *http.Request) (resp *types.WeC
 	var transaction *payments.Transaction
 	var wxCli *client.WeChatCommPay
 	wxCli = client.NewWeChatCommPay(*payCfg.TransClientConfig())
-	transaction,_, err = wxCli.Notify(request)
+	transaction, _, err = wxCli.Notify(request)
 	if err != nil {
 		err = fmt.Errorf("解析及验证内容失败！err=%v ", err)
 		logx.Errorf(err.Error())
@@ -85,7 +85,7 @@ func (l *NotifyWechatLogic) NotifyWechat(request *http.Request) (resp *types.WeC
 	//修改数据库
 	orderInfo.NotifyAmount = int(*transaction.Amount.PayerTotal)
 	orderInfo.PayStatus = model.PmPayOrderTablePayStatusPaid
-	orderInfo.PayType = model.PmPayOrderTablePayTypeWechatPayUni
+	//orderInfo.PayType = model.PmPayOrderTablePayTypeWechatPayUni //改为创建订单时指定支付类型，用于补偿机制建设
 	err = l.payOrderModel.UpdateNotify(orderInfo)
 	if err != nil {
 		err = fmt.Errorf("orderSn = %s, UpdateNotify，err:=%v", orderInfo.OrderSn, err)

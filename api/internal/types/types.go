@@ -135,3 +135,17 @@ type RefundReq struct {
 	Reviewer         string `json:"reviewer"`         // 操作者
 	ReviewerComment  string `json:"reviewer_comment"` // 操作者备注
 }
+
+type SupplementaryOrdersReq struct {
+	Type        string `form:"type"`
+	StartMinute string `form:"startMinute,omitempty""`
+	EndMinute   string `form:"endMinute,omitempty"`
+	IsNotice     string `form:"isNotice,omitempty"`
+}
+
+type SupplementaryOrdersResp struct {
+	ErrNo   int    `json:"err_no"`
+	ErrTips string `json:"err_tips"`
+}
+
+

@@ -98,7 +98,7 @@ func (l *NotifyAlipayLogic) NotifyAlipay(r *http.Request, w http.ResponseWriter)
 	amount := util.String2Float64(res.Content.TotalAmount) * 100
 	orderInfo.NotifyAmount = int(amount)
 	orderInfo.PayStatus = model.PmPayOrderTablePayStatusPaid
-	orderInfo.PayType = model.PmPayOrderTablePayTypeAlipay
+	//orderInfo.PayType = model.PmPayOrderTablePayTypeAlipay //改为创建订单时指定支付类型，用于补偿机制建设
 	err = l.payOrderModel.UpdateNotify(orderInfo)
 	if err != nil {
 		err = fmt.Errorf("orderSn = %s, UpdateNotify，err:=%v", orderInfo.OrderSn, err)
@@ -119,7 +119,7 @@ func (l *NotifyAlipayLogic) NotifyAlipay(r *http.Request, w http.ResponseWriter)
 	return
 }
 
-//formdata数据转成map
+// formdata数据转成map
 func (l *NotifyAlipayLogic) transFormDataToMap(formData string) (dataMap map[string]interface{}) {
 	dataMap = make(map[string]interface{}, 0)
 	values, _ := url.ParseQuery(formData)

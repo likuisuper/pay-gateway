@@ -95,6 +95,7 @@ func (l *NotifyDouyinLogic) NotifyDouyin(req *http.Request) (resp *types.DouyinR
 	}, nil
 }
 
+// 抖音回调
 func (l *NotifyDouyinLogic) notifyPayment(req *http.Request, body []byte, msgJson string, originData interface{}) (*types.DouyinResp, error) {
 	msg := new(douyin.GeneralTradeMsg)
 	err := sonic.UnmarshalString(msgJson, msg)
@@ -159,7 +160,7 @@ func (l *NotifyDouyinLogic) notifyPayment(req *http.Request, body []byte, msgJso
 	//修改数据库
 	orderInfo.NotifyAmount = int(msg.TotalAmount)
 	orderInfo.PayStatus = model.PmPayOrderTablePayStatusPaid
-	orderInfo.PayType = model.PmPayOrderTablePayTypeDouyinGeneralTrade
+	//orderInfo.PayType = model.PmPayOrderTablePayTypeDouyinGeneralTrade //改为创建订单时指定支付类型，用于补偿机制建设
 	err = l.payOrderModel.UpdateNotify(orderInfo)
 	if err != nil {
 		err = fmt.Errorf("orderSn = %s, UpdateNotify，err:=%v", orderInfo.OrderSn, err)

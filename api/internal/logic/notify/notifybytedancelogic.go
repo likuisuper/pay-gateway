@@ -59,7 +59,7 @@ func (l *NotifyBytedanceLogic) NotifyBytedance(req *types.ByteDanceReq) (resp *t
 	return
 }
 
-//支付成功回调
+// 支付成功回调
 func (l *NotifyBytedanceLogic) NotifyPayment(req *types.ByteDanceReq) (resp *types.ByteDanceResp, err error) {
 	msgData := new(client.TikTokNotifyMsgData)
 	err = json.Unmarshal([]byte(req.Msg), msgData)
@@ -115,7 +115,7 @@ func (l *NotifyBytedanceLogic) NotifyPayment(req *types.ByteDanceReq) (resp *typ
 	//修改数据库
 	orderInfo.NotifyAmount = order.TotalAmount
 	orderInfo.PayStatus = model.PmPayOrderTablePayStatusPaid
-	orderInfo.PayType = model.PmPayOrderTablePayTypeTiktokPayEc
+	//orderInfo.PayType = model.PmPayOrderTablePayTypeTiktokPayEc // 改为创建订单时指定支付类型，用于补偿机制建设
 	err = l.payOrderModel.UpdateNotify(orderInfo)
 	if err != nil {
 		err = fmt.Errorf("orderSn = %s, UpdateNotify，err:=%v", orderInfo.OrderSn, err)
@@ -141,7 +141,7 @@ func (l *NotifyBytedanceLogic) NotifyPayment(req *types.ByteDanceReq) (resp *typ
 	return
 }
 
-//退款回调
+// 退款回调
 func (l *NotifyBytedanceLogic) NotifyRefund(req *types.ByteDanceReq) (resp *types.ByteDanceResp, err error) {
 	refundData := new(client.TikTokNotifyMsgRefundData)
 	err = json.Unmarshal([]byte(req.Msg), refundData)

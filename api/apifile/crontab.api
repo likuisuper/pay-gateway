@@ -1,0 +1,31 @@
+syntax = "v1"
+
+info(
+	title: "crontab"
+)
+
+type (
+	SupplementaryOrdersReq {
+		Type        string 	`form:"type"`
+		StartMinute string 	`form:"startMinute""`
+		EndMinute   string 	`form:"endMinute"`
+		IsNotice 	string	`form:"isNotice"`
+	}
+
+	SupplementaryOrdersResp {
+		ErrNo   int    `json:"err_no"`
+		ErrTips string `json:"err_tips"`
+	}
+)
+
+@server(
+	group: crontab
+)
+service payment {
+	@doc(
+		summary: "定时任务补单"
+	)
+	@handler supplementaryOrders
+	post /crontab/supplementaryOrders (SupplementaryOrdersReq) returns (SupplementaryOrdersResp)
+	
+}
