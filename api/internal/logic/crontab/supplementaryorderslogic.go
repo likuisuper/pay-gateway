@@ -1,18 +1,14 @@
 package crontab
 
 import (
-	"bytes"
 	"context"
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"fmt"
 	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
 	"github.com/zeromicro/go-zero/core/trace"
 	"go.opentelemetry.io/otel"
 	oteltrace "go.opentelemetry.io/otel/trace"
-	"io"
-	"net/http"
 	"strconv"
 	"time"
 
@@ -30,11 +26,9 @@ import (
 
 const DingdingRobot = "https://oapi.dingtalk.com/robot/send?access_token=e59900c50124bc9353e9a83410de55c5c9a351bef988aa4a7fd61bbec00239ac"
 
-var noNeedSupplementaryError = errors.New("order has been handled")
-
 var (
 	orderSupplementaryErrNum     = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "notifyOrderSupplementaryErrNum", nil, "订单补偿失败", nil})}
-	orderSupplementarySuccessNum = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "notifyOrderSupplementarySuccessNum", nil, "订单成功", nil})}
+	orderSupplementarySuccessNum = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "notifyOrderSupplementarySuccessNum", nil, "订单补偿成功", nil})}
 )
 
 type SupplementaryOrdersLogic struct {
@@ -116,7 +110,7 @@ func (l *SupplementaryOrdersLogic) SupplementaryOrders(req *types.SupplementaryO
 			case model.PmPayOrderTablePayTypeWechatPayUni: //model.PmPayOrderTablePayTypeWechatPayH5 ,暂时没用
 				wxNeedSupplementCount++
 				if err = l.handleWxOrder(payItem, pkgCfg.WechatPayAppID); err != nil {
-					if !errors.Is(err, noNeedSupplementaryError) {
+					if !errors.Is(err, model.NoNeedSupplementaryError) {
 						l.Logger.Error(err.Error())
 					}
 				} else {
@@ -127,7 +121,7 @@ func (l *SupplementaryOrdersLogic) SupplementaryOrders(req *types.SupplementaryO
 			case model.PmPayOrderTablePayTypeDouyinGeneralTrade: //抖音，通用交易
 				douyinNeedSupplementCount++
 				if err = l.handleDouyinOrder(payItem, pkgCfg.TiktokPayAppID); err != nil {
-					if !errors.Is(err, noNeedSupplementaryError) {
+					if !errors.Is(err, model.NoNeedSupplementaryError) {
 						l.Logger.Error(err.Error())
 					}
 				} else {
@@ -180,35 +174,27 @@ func (l *SupplementaryOrdersLogic) handleWxOrder(orderInfo *model.PmPayOrderTabl
 	}
 
 	if *transaction.TradeState == "SUCCESS" {
-		//获取订单信息
-		currentOrderInfo, err := l.payOrderModel.GetOneByCode(*transaction.OutTradeNo)
-		if err != nil {
-			return fmt.Errorf("handleWxOrder: 获取订单失败！err=%v,order_code = %s", err, transaction.OutTradeNo)
-		}
-		if currentOrderInfo.PayStatus != model.PmPayOrderTablePayStatusNo { //订单已处理
-			return noNeedSupplementaryError
-		}
-
-		//修改数据库
-		currentOrderInfo.NotifyAmount = int(*transaction.Amount.PayerTotal)
-		currentOrderInfo.PayStatus = model.PmPayOrderTablePayStatusPaid
-		currentOrderInfo.ThirdOrderNo = *transaction.TransactionId //微信系统订单id
-		err = l.payOrderModel.UpdateNotify(currentOrderInfo)
+		isSupplementary, err := l.payOrderModel.QueryAfterUpdate(*transaction.OutTradeNo, *transaction.TransactionId, int(*transaction.Amount.PayerTotal))
 		if err != nil {
 			orderSupplementaryErrNum.CounterInc()
-			return fmt.Errorf("handleWxOrder:update order table failed orderSn = %s, UpdateNotify，err:=%v", orderInfo.OrderSn, err)
+			return err
 		}
 
-		//回调业务方接口
-		_, err = util.HttpPost(orderInfo.NotifyUrl, transaction, 5*time.Second)
-		if err != nil {
-			orderSupplementaryErrNum.CounterInc()
-			return fmt.Errorf("\"handleDouyinOrder:callback notify_url failed , transaction:%+v, err:%v", transaction, err)
+		if isSupplementary { //成功补单
+			_, err = util.HttpPost(orderInfo.NotifyUrl, transaction, 5*time.Second)
+			if err != nil {
+				orderSupplementaryErrNum.CounterInc()
+				return fmt.Errorf("\"handleDouyinOrder:callback notify_url failed , transaction:%+v, err:%v", transaction, err)
+			}
+			//正常处理
+			return nil
 		}
+
+		//这种情况不存在
 	}
 
 	//订单状态未完成，等待下次脚本刷新
-	return noNeedSupplementaryError
+	return model.NoNeedSupplementaryError
 }
 
 // handleDouyinOrder 抖音订单回调处理
@@ -226,42 +212,36 @@ func (l *SupplementaryOrdersLogic) handleDouyinOrder(orderInfo *model.PmPayOrder
 	if err != nil {
 		return fmt.Errorf("handleDouyinOrder:查询抖音订单失败, orderSn=%s, err=%v", orderInfo.OrderSn, err)
 	}
+	douyinOrderData := douyinOrder.Data
+	if douyinOrderData != nil && douyinOrderData.PayStatus == "SUCCESS" {
 
-	if douyinOrder.Data != nil && douyinOrder.Data.PayStatus == "SUCCESS" {
-		currentOrderInfo, err := l.payOrderModel.GetOneByCode(douyinOrder.Data.OutOrderNo)
-		if err != nil {
-			return fmt.Errorf("handleDouyinOrder:获取订单失败！err=%v,order_code = %s", err, douyinOrder.Data.OutOrderNo)
-		}
-
-		if currentOrderInfo.PayStatus != model.PmPayOrderTablePayStatusNo { //订单已被处理
-			return noNeedSupplementaryError
-		}
-
-		//修改数据库
-		orderInfo.NotifyAmount = int(douyinOrder.Data.TotalAmount)
-		orderInfo.PayStatus = model.PmPayOrderTablePayStatusPaid
-		orderInfo.ThirdOrderNo = douyinOrder.Data.OrderId
-		err = l.payOrderModel.UpdateNotify(orderInfo)
+		isSupplementary, err := l.payOrderModel.QueryAfterUpdate(douyinOrderData.OutOrderNo, douyinOrderData.OrderId, int(douyinOrderData.TotalAmount))
 		if err != nil {
 			orderSupplementaryErrNum.CounterInc()
-			return fmt.Errorf("handleDouyinOrder: update order table failed, orderSn = %s, UpdateNotify，err:=%v", orderInfo.OrderSn, err)
+			return err
 		}
 
-		//回调业务方接口
-		msg, _ := sonic.MarshalString(douyin.GeneralTradeMsg{
-			OutOrderNo: orderInfo.OrderSn,
-		})
-		req := &types.ByteDanceReq{
-			Msg: msg,
+		if isSupplementary { //成功补单
+			//回调业务方接口
+			msg, _ := sonic.MarshalString(douyin.GeneralTradeMsg{
+				OutOrderNo: orderInfo.OrderSn,
+			})
+			req := &types.ByteDanceReq{
+				Msg: msg,
+			}
+			_, err = util.HttpPost(orderInfo.NotifyUrl, req, 5*time.Second)
+			if err != nil {
+				orderSupplementaryErrNum.CounterInc()
+				return fmt.Errorf("\"handleDouyinOrder:callback notify_url failed , req:%+v, err:%v", req, err)
+			}
+			//正常处理
+			return nil
 		}
-		_, requestErr := util.HttpPost(orderInfo.NotifyUrl, req, 5*time.Second)
-		if requestErr != nil {
-			orderSupplementaryErrNum.CounterInc()
-			return fmt.Errorf("\"handleDouyinOrder:callback notify_url failed , req:%+v, err:%v", req, requestErr)
-		}
+
+		//这种情况不存在
 	}
 
-	return noNeedSupplementaryError
+	return model.NoNeedSupplementaryError
 }
 
 // getRequestParams 参数处理
@@ -293,32 +273,32 @@ func (l *SupplementaryOrdersLogic) getRequestParams(req *types.SupplementaryOrde
 	return
 }
 
-// httpPost 调试使用
-func httpPost(url string, data interface{}, timeout time.Duration) (string, error) {
-	jsonStr, _ := json.Marshal(data)
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
-	if err != nil {
-		return "", err
-	}
-	req.Header.Add("content-type", "application/json")
-
-	defer req.Body.Close()
-
-	httpClient := &http.Client{Timeout: timeout}
-	resp, err := httpClient.Do(req)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-	result, err := io.ReadAll(resp.Body)
-	return string(result), err
-}
-
 // getNatureDayTime 获取自然日时间
 func getNatureDayTime(ts time.Time) time.Time {
 	dayTime := time.Date(ts.Year(), ts.Month(), ts.Day(), 0, 0, 0, 0, ts.Location())
 	return dayTime
 }
+
+// httpPost 调试使用
+//func httpPost(url string, data interface{}, timeout time.Duration) (string, error) {
+//	jsonStr, _ := json.Marshal(data)
+//	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
+//	if err != nil {
+//		return "", err
+//	}
+//	req.Header.Add("content-type", "application/json")
+//
+//	defer req.Body.Close()
+//
+//	httpClient := &http.Client{Timeout: timeout}
+//	resp, err := httpClient.Do(req)
+//	if err != nil {
+//		return "", err
+//	}
+//	defer resp.Body.Close()
+//	result, err := io.ReadAll(resp.Body)
+//	return string(result), err
+//}
 
 // handleTiktokOrder 抖音支付，担保交易，已废弃
 //func (l *SupplementaryOrdersLogic) handleBytedanceOrder(orderInfo *model.PmPayOrderTable, appId string) error {

@@ -17,6 +17,8 @@ var (
 	getPayOrderErr       = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "getPayOrderErr", nil, "获取支付订单失败", nil})}
 )
 
+var NoNeedSupplementaryError = errors.New("order has been handled")
+
 const (
 	// 支付状态
 	PmPayOrderTablePayStatusNo     = 0 // 未支付
@@ -89,6 +91,41 @@ func (o *PmPayOrderModel) GetOneByCode(orderSn string) (info *PmPayOrderTable, e
 		return nil, err
 	}
 	return &orderInfo, nil
+}
+
+// QueryAfterUpdate 查询后修改订单状态
+func (o *PmPayOrderModel) QueryAfterUpdate(orderSn, thirdOrderNo string, totalAmount int) (bool, error) {
+	var orderInfo PmPayOrderTable
+	tx := o.DB.Begin()
+	err := o.DB.Where("`order_sn` = ? ", orderSn).First(&orderInfo).Error
+	if err != nil {
+		tx.Rollback()
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			logx.Errorf("QueryAfterUpdate:获取订单信息失败，err:=%v,order_sn=%s", err, orderSn)
+			getPayOrderErr.CounterInc()
+		}
+		return false, err
+	}
+
+	if orderInfo.PayStatus != PmPayOrderTablePayStatusNo { //订单已被处理
+		tx.Rollback()
+		return false, NoNeedSupplementaryError
+	}
+
+	orderInfo.NotifyAmount = totalAmount
+	orderInfo.PayStatus = PmPayOrderTablePayStatusPaid
+	orderInfo.ThirdOrderNo = thirdOrderNo
+	err = o.DB.Save(&orderInfo).Error
+	if err != nil {
+		tx.Rollback()
+		logx.Errorf("QueryAfterUpdate:更新回调订单失败，err=%v", err)
+		updateNofityOrderErr.CounterInc()
+		return false, err
+	}
+
+	//正常逻辑
+	tx.Commit()
+	return true, nil
 }
 
 func (o *PmPayOrderModel) UpdateNotify(info *PmPayOrderTable) error {
