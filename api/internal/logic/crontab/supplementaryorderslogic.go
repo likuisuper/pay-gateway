@@ -208,7 +208,7 @@ func (l *SupplementaryOrdersLogic) handleWxOrder(orderInfo *model.PmPayOrderTabl
 	}
 
 	//订单状态未完成，等待下次脚本刷新
-	return nil
+	return noNeedSupplementaryError
 }
 
 // handleDouyinOrder 抖音订单回调处理
@@ -261,7 +261,7 @@ func (l *SupplementaryOrdersLogic) handleDouyinOrder(orderInfo *model.PmPayOrder
 		}
 	}
 
-	return nil
+	return noNeedSupplementaryError
 }
 
 // getRequestParams 参数处理
