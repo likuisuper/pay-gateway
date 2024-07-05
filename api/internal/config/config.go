@@ -8,11 +8,12 @@ import (
 
 type Config struct {
 	rest.RestConf
-	Mysql       []*db.DbConfig        `json:"Mysql"`
-	Nacos       NacosConfig           `json:"Nacos"`
-	RedisConfig []*cache.RedisConfigs `json:"RedisConfig"`
-	SnowFlake   SnowFlake             `json:"SnowFlake,optional"` //雪花算法参数
-	Alarm       Alarm                 //自定义告警
+	Mysql                []*db.DbConfig        `json:"Mysql"`
+	Nacos                NacosConfig           `json:"Nacos"`
+	RedisConfig          []*cache.RedisConfigs `json:"RedisConfig"`
+	SnowFlake            SnowFlake             `json:"SnowFlake,optional"` //雪花算法参数
+	Alarm                Alarm                 //自定义告警
+	DouyinClientTokenUrl string                `json:"DouyinClientTokenUrl,optional"` // 获取抖音client_token链接
 }
 
 // nacos配置

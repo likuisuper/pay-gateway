@@ -15,6 +15,8 @@ require (
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
 	github.com/wechatpay-apiv3/wechatpay-go v0.2.14
 	github.com/zeromicro/go-zero v1.4.0
+	go.opentelemetry.io/otel v1.9.0
+	go.opentelemetry.io/otel/trace v1.9.0
 	google.golang.org/grpc v1.49.0
 	google.golang.org/protobuf v1.28.1
 	gorm.io/gorm v1.23.6

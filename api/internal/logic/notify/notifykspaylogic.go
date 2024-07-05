@@ -22,6 +22,7 @@ import (
 	"github.com/zeromicro/go-zero/core/logx"
 )
 
+// NotifyKspayLogic 快手支付已废弃，暂不使用
 type NotifyKspayLogic struct {
 	logx.Logger
 	ctx    context.Context
@@ -35,7 +36,7 @@ var (
 	notifyKspayErrNum = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "notifyKspayErrNum", nil, "快手支付回调失败", nil})}
 )
 
-//快手回调
+// 快手回调
 type ksOrderNotifyData struct {
 	Data struct {
 		Channel         string `json:"channel"`          //支付渠道。取值：UNKNOWN - 未知｜WECHAT-微信｜ALIPAY-支付宝
@@ -55,7 +56,7 @@ type ksOrderNotifyData struct {
 	Timestamp int64  `json:"timestamp"`
 }
 
-//回调接口返回
+// 回调接口返回
 type ksOrderNotifyResp struct {
 	Result    int    `json:"result"`
 	MessageId string `json:"message_id"`
@@ -127,7 +128,7 @@ func (l *NotifyKspayLogic) NotifyKspay(r *http.Request, w http.ResponseWriter) (
 	//修改数据库
 	orderInfo.NotifyAmount = notifyData.Data.OrderAmount
 	orderInfo.PayStatus = model.PmPayOrderTablePayStatusPaid
-	orderInfo.PayType = model.PmPayOrderTablePayTypeKs
+	//orderInfo.PayType = model.PmPayOrderTablePayTypeKs //改为创建订单时指定支付类型，用于补偿机制建设
 	err = l.payOrderModel.UpdateNotify(orderInfo)
 	if err != nil {
 		err = fmt.Errorf("orderSn = %s, UpdateNotify，err:=%v", orderInfo.OrderSn, err)
