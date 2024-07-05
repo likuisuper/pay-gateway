@@ -111,6 +111,7 @@ func (l *SupplementaryOrdersLogic) SupplementaryOrders(req *types.SupplementaryO
 				wxNeedSupplementCount++
 				if err = l.handleWxOrder(payItem, pkgCfg.WechatPayAppID); err != nil {
 					if !errors.Is(err, model.NoNeedSupplementaryError) {
+						orderSupplementaryErrNum.CounterInc()
 						l.Logger.Error(err.Error())
 					}
 				} else {
@@ -122,6 +123,7 @@ func (l *SupplementaryOrdersLogic) SupplementaryOrders(req *types.SupplementaryO
 				douyinNeedSupplementCount++
 				if err = l.handleDouyinOrder(payItem, pkgCfg.TiktokPayAppID); err != nil {
 					if !errors.Is(err, model.NoNeedSupplementaryError) {
+						orderSupplementaryErrNum.CounterInc()
 						l.Logger.Error(err.Error())
 					}
 				} else {
@@ -176,15 +178,13 @@ func (l *SupplementaryOrdersLogic) handleWxOrder(orderInfo *model.PmPayOrderTabl
 	if *transaction.TradeState == "SUCCESS" {
 		isSupplementary, err := l.payOrderModel.QueryAfterUpdate(*transaction.OutTradeNo, *transaction.TransactionId, int(*transaction.Amount.PayerTotal))
 		if err != nil {
-			orderSupplementaryErrNum.CounterInc()
 			return err
 		}
 
 		if isSupplementary { //成功补单
 			_, err = util.HttpPost(orderInfo.NotifyUrl, transaction, 5*time.Second)
 			if err != nil {
-				orderSupplementaryErrNum.CounterInc()
-				return fmt.Errorf("\"handleDouyinOrder:callback notify_url failed , transaction:%+v, err:%v", transaction, err)
+				return fmt.Errorf("handleDouyinOrder:callback notify_url failed , transaction:%+v, err:%v", transaction, err)
 			}
 			//正常处理
 			return nil
@@ -217,7 +217,6 @@ func (l *SupplementaryOrdersLogic) handleDouyinOrder(orderInfo *model.PmPayOrder
 
 		isSupplementary, err := l.payOrderModel.QueryAfterUpdate(douyinOrderData.OutOrderNo, douyinOrderData.OrderId, int(douyinOrderData.TotalAmount))
 		if err != nil {
-			orderSupplementaryErrNum.CounterInc()
 			return err
 		}
 
@@ -231,7 +230,6 @@ func (l *SupplementaryOrdersLogic) handleDouyinOrder(orderInfo *model.PmPayOrder
 			}
 			_, err = util.HttpPost(orderInfo.NotifyUrl, req, 5*time.Second)
 			if err != nil {
-				orderSupplementaryErrNum.CounterInc()
 				return fmt.Errorf("\"handleDouyinOrder:callback notify_url failed , req:%+v, err:%v", req, err)
 			}
 			//正常处理
