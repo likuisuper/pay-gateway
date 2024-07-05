@@ -39,10 +39,10 @@ type SupplementaryOrdersLogic struct {
 	payOrderModel  *model.PmPayOrderModel
 	appConfigModel *model.PmAppConfigModel
 
-	payConfigAlipayModel *model.PmPayConfigAlipayModel
+	//payConfigAlipayModel *model.PmPayConfigAlipayModel
 	payConfigTiktokModel *model.PmPayConfigTiktokModel
 	payConfigWechatModel *model.PmPayConfigWechatModel
-	payConfigKsModel     *model.PmPayConfigKsModel
+	//payConfigKsModel     *model.PmPayConfigKsModel
 }
 
 func NewSupplementaryOrdersLogic(ctx context.Context, svcCtx *svc.ServiceContext) *SupplementaryOrdersLogic {
@@ -51,12 +51,12 @@ func NewSupplementaryOrdersLogic(ctx context.Context, svcCtx *svc.ServiceContext
 		ctx:    ctx,
 		svcCtx: svcCtx,
 
-		payOrderModel:        model.NewPmPayOrderModel(define.DbPayGateway),
-		appConfigModel:       model.NewPmAppConfigModel(define.DbPayGateway),
-		payConfigAlipayModel: model.NewPmPayConfigAlipayModel(define.DbPayGateway),
+		payOrderModel:  model.NewPmPayOrderModel(define.DbPayGateway),
+		appConfigModel: model.NewPmAppConfigModel(define.DbPayGateway),
+		//payConfigAlipayModel: model.NewPmPayConfigAlipayModel(define.DbPayGateway),
 		payConfigTiktokModel: model.NewPmPayConfigTiktokModel(define.DbPayGateway),
 		payConfigWechatModel: model.NewPmPayConfigWechatModel(define.DbPayGateway),
-		payConfigKsModel:     model.NewPmPayConfigKsModel(define.DbPayGateway),
+		//payConfigKsModel:     model.NewPmPayConfigKsModel(define.DbPayGateway),
 	}
 }
 
