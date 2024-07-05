@@ -184,7 +184,7 @@ func (l *SupplementaryOrdersLogic) handleWxOrder(orderInfo *model.PmPayOrderTabl
 		if isSupplementary { //成功补单
 			_, err = util.HttpPost(orderInfo.NotifyUrl, transaction, 5*time.Second)
 			if err != nil {
-				return fmt.Errorf("handleDouyinOrder:callback notify_url failed , transaction:%+v, err:%v", transaction, err)
+				return fmt.Errorf("handleWxOrder:callback notify_url failed , transaction:%+v, err:%v", transaction, err)
 			}
 			//正常处理
 			return nil
