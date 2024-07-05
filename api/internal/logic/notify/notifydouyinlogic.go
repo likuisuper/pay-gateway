@@ -84,6 +84,12 @@ func (l *NotifyDouyinLogic) NotifyDouyin(req *http.Request) (resp *types.DouyinR
 		return l.notifyPayment(req, body, data.Msg, data)
 	case douyin.EventRefund:
 		return l.notifyRefund(req, body, data.Msg, data)
+	case douyin.EventSettle: //该类型线上未接入，后续需要再实现对应逻辑
+		resp := &types.DouyinResp{
+			ErrNo:   0,
+			ErrTips: "success",
+		}
+		return resp, nil
 	case douyin.EventPreCreateRefund:
 
 	}

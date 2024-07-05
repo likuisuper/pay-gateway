@@ -165,6 +165,7 @@ const (
 	EventPayment         EventType = "payment"
 	EventRefund          EventType = "refund"
 	EventPreCreateRefund EventType = "pre_create_refund"
+	EventSettle          EventType = "settle"
 )
 
 type GeneralTradeMsg struct {
