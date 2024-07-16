@@ -60,7 +60,7 @@ func (l *NotifyBytedanceLogic) NotifyBytedance(req *types.ByteDanceReq) (resp *t
 	return
 }
 
-// 支付成功回调
+// NotifyPayment 支付成功回调
 func (l *NotifyBytedanceLogic) NotifyPayment(req *types.ByteDanceReq) (resp *types.ByteDanceResp, err error) {
 	msgData := new(client.TikTokNotifyMsgData)
 	err = json.Unmarshal([]byte(req.Msg), msgData)
@@ -103,6 +103,7 @@ func (l *NotifyBytedanceLogic) NotifyPayment(req *types.ByteDanceReq) (resp *typ
 
 	//获取订单信息
 	//orderInfo, err := l.payOrderModel.GetOneByCode(order.CpOrderno)
+	//升级为根据订单号和appid查询
 	orderInfo, err := l.payOrderModel.GetOneByOrderSnAndAppId(order.CpOrderno, msgData.Appid)
 	if err != nil {
 		err = fmt.Errorf("获取订单失败！err=%v,order_code = %s", err, order.CpOrderno)

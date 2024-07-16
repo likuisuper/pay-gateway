@@ -92,7 +92,6 @@ func (l *NotifyWechatH5OrderLogic) NotifyWechatH5Order(request *http.Request) (r
 	orderInfo.Status = model.PmPayOrderTablePayStatusPaid
 	orderInfo.PayType = model.PmPayOrderTablePayTypeWechatPayH5
 	orderInfo.PlatformTradeNo = *transaction.TransactionId
-	orderInfo.PayAppID = ""
 	err = l.orderModel.UpdateNotify(orderInfo)
 	if err != nil {
 		err = fmt.Errorf("trade_no = %s, UpdateNotify，err:=%v", orderInfo.PlatformTradeNo, err)
