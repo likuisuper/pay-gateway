@@ -109,10 +109,10 @@ func (o *PmPayOrderModel) GetOneByOrderSnAndAppId(orderSn, appId string) (info *
 }
 
 // QueryAfterUpdate 查询后修改订单状态
-func (o *PmPayOrderModel) QueryAfterUpdate(orderSn, thirdOrderNo string, totalAmount int) (bool, error) {
+func (o *PmPayOrderModel) QueryAfterUpdate(orderSn, appId, thirdOrderNo string, totalAmount int) (bool, error) {
 	var orderInfo PmPayOrderTable
 	tx := o.DB.Begin()
-	err := o.DB.Where("`order_sn` = ? ", orderSn).First(&orderInfo).Error
+	err := o.DB.Where("`order_sn` = ? and  pay_app_id = ? ", orderSn, appId).First(&orderInfo).Error
 	if err != nil {
 		tx.Rollback()
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
