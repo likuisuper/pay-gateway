@@ -26,6 +26,8 @@ import (
 	"github.com/zeromicro/go-zero/core/logx"
 )
 
+// 流量使用
+
 type NotifyAlipayNewLogic struct {
 	logx.Logger
 	ctx         context.Context
