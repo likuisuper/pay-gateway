@@ -23,6 +23,8 @@ import (
 	"github.com/zeromicro/go-zero/core/logx"
 )
 
+// 流量用
+
 type NotifyWechatH5OrderLogic struct {
 	logx.Logger
 	ctx                  context.Context

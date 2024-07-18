@@ -176,7 +176,7 @@ func (l *SupplementaryOrdersLogic) handleWxOrder(orderInfo *model.PmPayOrderTabl
 	}
 
 	if *transaction.TradeState == "SUCCESS" {
-		isSupplementary, err := l.payOrderModel.QueryAfterUpdate(*transaction.OutTradeNo, *transaction.TransactionId, int(*transaction.Amount.PayerTotal))
+		isSupplementary, err := l.payOrderModel.QueryAfterUpdate(*transaction.OutTradeNo, appId, *transaction.TransactionId, int(*transaction.Amount.PayerTotal))
 		if err != nil {
 			return err
 		}
@@ -215,7 +215,7 @@ func (l *SupplementaryOrdersLogic) handleDouyinOrder(orderInfo *model.PmPayOrder
 	douyinOrderData := douyinOrder.Data
 	if douyinOrderData != nil && douyinOrderData.PayStatus == "SUCCESS" {
 
-		isSupplementary, err := l.payOrderModel.QueryAfterUpdate(douyinOrderData.OutOrderNo, douyinOrderData.OrderId, int(douyinOrderData.TotalAmount))
+		isSupplementary, err := l.payOrderModel.QueryAfterUpdate(douyinOrderData.OutOrderNo, appId, douyinOrderData.OrderId, int(douyinOrderData.TotalAmount))
 		if err != nil {
 			return err
 		}

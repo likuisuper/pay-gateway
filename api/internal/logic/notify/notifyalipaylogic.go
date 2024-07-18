@@ -18,6 +18,8 @@ import (
 	"time"
 )
 
+//短剧表-暂未使用
+
 var (
 	notifyAlipayErrNum = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "notifyAlipayErrNum", nil, "支付宝回调失败", nil})}
 )
@@ -42,8 +44,8 @@ func NewNotifyAlipayLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Noti
 	}
 }
 
+// NotifyAlipay 支付宝回调，暂未使用
 func (l *NotifyAlipayLogic) NotifyAlipay(r *http.Request, w http.ResponseWriter) (resp *types.EmptyReq, err error) {
-
 	err = r.ParseForm()
 	if err != nil {
 		logx.Errorf("NotifyAlipay err: %v", err)
@@ -83,12 +85,16 @@ func (l *NotifyAlipayLogic) NotifyAlipay(r *http.Request, w http.ResponseWriter)
 	}
 
 	//获取订单信息
-	orderInfo, err := l.payOrderModel.GetOneByCode(outTradeNo)
+	//orderInfo, err := l.payOrderModel.GetOneByCode(outTradeNo)
+
+	//升级为根据订单号和appid查询
+	orderInfo, err := l.payOrderModel.GetOneByOrderSnAndAppId(outTradeNo, appId)
 	if err != nil {
 		err = fmt.Errorf("获取订单失败！err=%v,order_code = %s", err, outTradeNo)
 		util.CheckError(err.Error())
 		return
 	}
+
 	if orderInfo.PayStatus != model.PmPayOrderTablePayStatusNo {
 		notifyOrderHasDispose.CounterInc()
 		err = fmt.Errorf("订单已处理")

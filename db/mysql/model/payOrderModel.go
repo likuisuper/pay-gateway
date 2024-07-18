@@ -78,7 +78,7 @@ func (o *PmPayOrderModel) Create(info *PmPayOrderTable) error {
 	return err
 }
 
-// 获取订单信息
+// GetOneByCode 获取订单信息
 func (o *PmPayOrderModel) GetOneByCode(orderSn string) (info *PmPayOrderTable, err error) {
 	var orderInfo PmPayOrderTable
 	err = o.DB.Where("`order_sn` = ? ", orderSn).First(&orderInfo).Error
@@ -93,11 +93,26 @@ func (o *PmPayOrderModel) GetOneByCode(orderSn string) (info *PmPayOrderTable, e
 	return &orderInfo, nil
 }
 
+// GetOneByOrderSnAndAppId 根据订单号和包名获取订单信息
+func (o *PmPayOrderModel) GetOneByOrderSnAndAppId(orderSn, appId string) (info *PmPayOrderTable, err error) {
+	var orderInfo PmPayOrderTable
+	err = o.DB.Where("`order_sn` = ? and pay_app_id = ?", orderSn, appId).First(&orderInfo).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	if err != nil {
+		logx.Errorf("GetOneByOrderSnAndPkgName 获取订单信息失败，err:=%v,order_sn=%s", err, orderSn)
+		getPayOrderErr.CounterInc()
+		return nil, err
+	}
+	return &orderInfo, nil
+}
+
 // QueryAfterUpdate 查询后修改订单状态
-func (o *PmPayOrderModel) QueryAfterUpdate(orderSn, thirdOrderNo string, totalAmount int) (bool, error) {
+func (o *PmPayOrderModel) QueryAfterUpdate(orderSn, appId, thirdOrderNo string, totalAmount int) (bool, error) {
 	var orderInfo PmPayOrderTable
 	tx := o.DB.Begin()
-	err := o.DB.Where("`order_sn` = ? ", orderSn).First(&orderInfo).Error
+	err := o.DB.Where("`order_sn` = ? and  pay_app_id = ? ", orderSn, appId).First(&orderInfo).Error
 	if err != nil {
 		tx.Rollback()
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
