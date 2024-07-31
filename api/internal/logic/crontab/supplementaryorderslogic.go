@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"gitee.com/zhuyunkj/pay-gateway/api/internal/logic/notify"
 	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
 	"github.com/zeromicro/go-zero/core/trace"
 	"go.opentelemetry.io/otel"
@@ -184,6 +185,7 @@ func (l *SupplementaryOrdersLogic) handleWxOrder(orderInfo *model.PmPayOrderTabl
 		if isSupplementary { //成功补单
 			_, err = util.HttpPost(orderInfo.NotifyUrl, transaction, 5*time.Second)
 			if err != nil {
+				notify.CallbackBizFailNum.CounterInc()
 				return fmt.Errorf("handleWxOrder:callback notify_url failed , transaction:%+v, err:%v", transaction, err)
 			}
 			//正常处理
@@ -230,6 +232,7 @@ func (l *SupplementaryOrdersLogic) handleDouyinOrder(orderInfo *model.PmPayOrder
 			}
 			_, err = util.HttpPost(orderInfo.NotifyUrl, req, 5*time.Second)
 			if err != nil {
+				notify.CallbackBizFailNum.CounterInc()
 				return fmt.Errorf("\"handleDouyinOrder:callback notify_url failed , req:%+v, err:%v", req, err)
 			}
 			//正常处理
