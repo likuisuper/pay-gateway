@@ -9,6 +9,7 @@ import (
 	"gitee.com/zhuyunkj/pay-gateway/db"
 	"gitee.com/zhuyunkj/pay-gateway/db/mysql/model"
 	"gitee.com/zhuyunkj/zhuyun-core/cache"
+	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
 	"gitee.com/zhuyunkj/zhuyun-core/util"
 	"github.com/bytedance/sonic"
 	"github.com/google/uuid"
@@ -21,6 +22,8 @@ import (
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
+
+var CallbackBizFailNum = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "callbackBizFailNum", nil, "网关回调业务异常", nil})}
 
 type NotifyDouyinLogic struct {
 	logx.Logger
@@ -183,6 +186,7 @@ func (l *NotifyDouyinLogic) notifyPayment(req *http.Request, body []byte, msgJso
 		respData, requestErr := util.HttpPost(orderInfo.NotifyUrl, originData, 5*time.Second)
 		if requestErr != nil {
 			l.Errorf("NotifyPayment-post, req:%+v, err:%v", originData, requestErr)
+			CallbackBizFailNum.CounterInc()
 			return
 		}
 		l.Slowf("NotifyPayment-post, req:%+v, respData:%s", originData, respData)
@@ -247,6 +251,7 @@ func (l *NotifyDouyinLogic) notifyRefund(req *http.Request, body []byte, msgJson
 		defer exception.Recover()
 		respData, requestErr := util.HttpPost(refundInfo.NotifyUrl, originData, 5*time.Second)
 		if requestErr != nil {
+			CallbackBizFailNum.CounterInc()
 			util.CheckError("NotifyRefund-post, req:%+v, err:%v", originData, requestErr)
 			return
 		}
