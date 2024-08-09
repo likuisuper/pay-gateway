@@ -116,7 +116,9 @@ func (l *NotifyAlipayLogic) NotifyAlipay(r *http.Request, w http.ResponseWriter)
 	go func() {
 		defer exception.Recover()
 		dataMap := l.transFormDataToMap(bodyData)
-		_, _ = util.HttpPost(orderInfo.NotifyUrl, dataMap, 5*time.Second)
+		headerMap := make(map[string]string,1)
+		headerMap["App-Origin"] = orderInfo.AppPkgName
+		_, _ = util.HttpPostWithHeader(orderInfo.NotifyUrl, dataMap,headerMap, 5*time.Second)
 	}()
 
 	bytes := []byte("success")

@@ -99,7 +99,10 @@ func (l *NotifyWechatLogic) NotifyWechat(request *http.Request) (resp *types.WeC
 	//回调业务方接口
 	go func() {
 		defer exception.Recover()
-		_, err = util.HttpPost(orderInfo.NotifyUrl, transaction, 5*time.Second)
+		headerMap := map[string]string{
+			"App-Origin": orderInfo.AppPkgName,
+		}
+		_, err = util.HttpPostWithHeader(orderInfo.NotifyUrl, transaction, headerMap, 5*time.Second)
 		if err != nil {
 			util.CheckError("NotifyWechat call business failed，orderSn = %s, err:=%v", orderInfo.OrderSn, err)
 			CallbackBizFailNum.CounterInc()

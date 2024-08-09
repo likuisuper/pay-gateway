@@ -138,7 +138,9 @@ func (l *NotifyWechatUnifiedOrderLogic) NotifyWechatUnifiedOrder(r *http.Request
 			dataMap := make(map[string]interface{})
 			dataMap["notify_type"] = code.APP_NOTIFY_TYPE_PAY
 			dataMap["out_trade_no"] = orderInfo.OutTradeNo
-			_, _ = util.HttpPost(orderInfo.AppNotifyUrl, dataMap, 5*time.Second)
+			headerMap := make(map[string]string,1)
+			headerMap["App-Origin"] = orderInfo.AppPkg
+			_, _ = util.HttpPostWithHeader(orderInfo.AppNotifyUrl, dataMap, headerMap,5*time.Second)
 		}()
 
 	} else {

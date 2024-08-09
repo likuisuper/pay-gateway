@@ -106,7 +106,11 @@ func (l *HandleRefundLogic) HandleRefund(req *types.RefundReq) (resp *types.Resu
 		dataMap["out_trade_no"] = table.OutTradeNo
 		dataMap["refund_out_side_app"] = false
 		dataMap["refund_status"] = table.RefundStatus
-		err = utils.CallbackWithRetry(table.NotifyUrl, dataMap, 5*time.Second)
+		headerMap := map[string]string{
+			"App-Origin": table.AppPkg,
+		}
+
+		err = utils.CallbackWithRetry(table.NotifyUrl, headerMap, dataMap, 5*time.Second)
 		if err != nil {
 			desc := fmt.Sprintf("回调通知用户退款成功 异常, app_pkg=%s, out_trade_no=%s", table.AppPkg, table.OutTradeNo)
 			alarm.ImmediateAlarm("notifyUserRefundFailedErr", desc, alarm.ALARM_LEVEL_FATAL)

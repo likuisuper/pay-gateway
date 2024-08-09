@@ -82,7 +82,7 @@ func main() {
 		LogRollingConfig:    logRollingConfig,
 	}
 
-	opts := nacos2.NewNacosConfig("payment.rpc", c.Nacos.ListenOn, sc, cc)
+	opts := nacos2.NewNacosConfig( c.Name, c.Nacos.ListenOn, sc, cc)
 	err = nacos2.RegisterService(opts)
 	if err != nil {
 		logx.Errorf("nacosService err:%v", err)
