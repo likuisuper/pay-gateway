@@ -19,6 +19,8 @@ import (
 	"github.com/zeromicro/go-zero/core/logx"
 )
 
+// 流量用
+
 type NotifyWechatUnifiedOrderLogic struct {
 	logx.Logger
 	ctx                  context.Context
@@ -39,7 +41,7 @@ func NewNotifyWechatUnifiedOrderLogic(ctx context.Context, svcCtx *svc.ServiceCo
 	}
 }
 
-//微信支付回调解析
+// 微信支付回调解析
 type wechatCallbackRepay struct {
 	Appid         string `xml:"appid"`
 	Attach        string `xml:"attach"`
@@ -60,7 +62,7 @@ type wechatCallbackRepay struct {
 	TransactionId string `xml:"transaction_id"`
 }
 
-//orderInfo结构
+// orderInfo结构
 type AttachInfo struct {
 	OrderSn  string
 	Amount   int
@@ -68,7 +70,7 @@ type AttachInfo struct {
 	KsTypeId int
 }
 
-//微信退款回调解密内容
+// 微信退款回调解密内容
 type wechatRefundReply struct {
 	TransactionId       string `xml:"transaction_id"`
 	OutTradeNo          string `xml:"out_trade_no"`
@@ -153,5 +155,3 @@ func (l *NotifyWechatUnifiedOrderLogic) NotifyWechatUnifiedOrder(r *http.Request
 		Message: "OK",
 	}, nil
 }
-
-

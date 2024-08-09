@@ -165,12 +165,13 @@ const (
 	EventPayment         EventType = "payment"
 	EventRefund          EventType = "refund"
 	EventPreCreateRefund EventType = "pre_create_refund"
+	EventSettle          EventType = "settle"
 )
 
 type GeneralTradeMsg struct {
 	AppId          string `json:"app_id,omitempty"`           // 必填 appId
 	OutOrderNo     string `json:"out_order_no,omitempty"`     // 必填 开发者系统订单号
-	OrderId        string `json:"order_id,omitempty"`         // 必填 抖音开平侧订单号
+	OrderId        string `json:"order_id,omitempty"`         // 必填 抖音平台侧订单号
 	Status         string `json:"status,omitempty"`           // 必填 支付结果状态枚举 "SUCCESS" （支付成功 ） "CANCEL" （支付取消）
 	TotalAmount    int64  `json:"total_amount,omitempty"`     // 必填 订单总金额 单位分
 	DiscountAmount int64  `json:"discount_amount,omitempty"`  // 非必填 订单优惠金额 单位分
@@ -281,7 +282,7 @@ type QueryOrderResp struct {
 
 type QueryOrderData struct {
 	AppId          string                 `json:"app_id,omitempty"`          // 必填 appId
-	OrderId        string                 `json:"order_id,omitempty"`        // 必填 开平侧订单号
+	OrderId        string                 `json:"order_id,omitempty"`        // 必填 抖音平台侧订单号
 	OutOrderNo     string                 `json:"out_order_no,omitempty"`    // 必填 开发者系统订单号
 	PayStatus      string                 `json:"pay_status,omitempty"`      // 必填 订单支付状态 PROCESS： 订单处理中 支付处理中 SUCCESS：成功 支付成功 FAIL：失败 支付失败 暂无该情况会支付失败 TIMEOUT：用户超时未支付
 	TotalAmount    int64                  `json:"total_amount,omitempty"`    // 必填 订单总金额 单位分 支付金额 = total_amount - discount_amount

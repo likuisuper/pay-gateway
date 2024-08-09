@@ -58,7 +58,7 @@ func NewOrderPayLogic(ctx context.Context, svcCtx *svc.ServiceContext) *OrderPay
 	}
 }
 
-// 创建支付订单
+// OrderPay 创建支付订单
 func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (out *pb.OrderPayResp, err error) {
 	//读取应用配置
 	pkgCfg, err := l.appConfigModel.GetOneByPkgName(in.AppPkgName)
@@ -69,14 +69,40 @@ func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (out *pb.OrderPayResp, err 
 		return
 	}
 
+	var payAppId string
+	switch in.PayType {
+	case pb.PayType_AlipayWap:
+		payAppId = pkgCfg.AlipayAppID
+	case pb.PayType_AlipayWeb:
+		payAppId = pkgCfg.AlipayAppID
+	case pb.PayType_WxUniApp:
+		payAppId = pkgCfg.WechatPayAppID
+	case pb.PayType_WxWeb:
+		payAppId = pkgCfg.WechatPayAppID
+	case pb.PayType_TiktokEc, pb.PayType_DouyinGeneralTrade:
+		payAppId = pkgCfg.TiktokPayAppID
+	case pb.PayType_KsUniApp:
+		payAppId = pkgCfg.KsPayAppID
+	case pb.PayType_WxUnified:
+		payAppId = pkgCfg.WechatPayAppID
+	}
+
 	//获取订单信息
-	orderInfo, err := l.payOrderModel.GetOneByCode(in.OrderSn)
+	// orderInfo, err := l.payOrderModel.GetOneByCode(in.OrderSn)
+	//创建订单时订单号对包隔离 规避业务方订单号重复case
+	orderInfo, err := l.payOrderModel.GetOneByOrderSnAndAppId(in.OrderSn, payAppId)
+
 	if err != nil {
 		err = fmt.Errorf("获取订单信息错误 %w", err)
 		logx.Error(err)
 		orderTableIOFailNum.CounterInc()
 		return
 	}
+
+	//err = l.payOrderModel.UpdatePayAppID(orderInfo.OrderSn, payAppId)
+	//if err != nil {
+	//	return
+	//}
 
 	if orderInfo == nil {
 		orderInfo = &model.PmPayOrderTable{
@@ -85,6 +111,8 @@ func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (out *pb.OrderPayResp, err 
 			Amount:     int(in.Amount),
 			Subject:    in.Subject,
 			NotifyUrl:  in.NotifyURL,
+			PayAppId:   payAppId,        //创建订单时，直接指定PayAppid，减少一次DB操作
+			PayType:    int(in.PayType), // 创建订单时，传入支付类型，补偿机制依赖
 			PayStatus:  model.PmPayOrderTablePayStatusNo,
 		}
 		err = l.payOrderModel.Create(orderInfo)
@@ -111,30 +139,8 @@ func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (out *pb.OrderPayResp, err 
 		Subject: orderInfo.Subject,
 	}
 
-	var payAppId string
-	switch in.PayType {
-	case pb.PayType_AlipayWap:
-		payAppId = pkgCfg.AlipayAppID
-	case pb.PayType_AlipayWeb:
-		payAppId = pkgCfg.AlipayAppID
-	case pb.PayType_WxUniApp:
-		payAppId = pkgCfg.WechatPayAppID
-	case pb.PayType_WxWeb:
-		payAppId = pkgCfg.WechatPayAppID
-	case pb.PayType_TiktokEc, pb.PayType_DouyinGeneralTrade:
-		payAppId = pkgCfg.TiktokPayAppID
-	case pb.PayType_KsUniApp:
-		payAppId = pkgCfg.KsPayAppID
-	case pb.PayType_WxUnified:
-		payAppId = pkgCfg.WechatPayAppID
-	}
-	err = l.payOrderModel.UpdatePayAppID(orderInfo.OrderSn, payAppId)
-	if err != nil {
-		return
-	}
-
 	switch out.PayType {
-	case pb.PayType_AlipayWap:
+	case pb.PayType_AlipayWap: //小程序未用到
 		payCfg, cfgErr := l.payConfigAlipayModel.GetOneByAppID(pkgCfg.AlipayAppID)
 		if cfgErr != nil {
 			err = fmt.Errorf("pkgName= %s, 读取支付宝配置失败，err:=%v", in.AppPkgName, cfgErr)
@@ -142,7 +148,7 @@ func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (out *pb.OrderPayResp, err 
 			return
 		}
 		out.AlipayWap, err = l.createAlipayWapOrder(in, payCfg.TransClientConfig())
-	case pb.PayType_AlipayWeb:
+	case pb.PayType_AlipayWeb: //小程序未用到
 		payCfg, cfgErr := l.payConfigAlipayModel.GetOneByAppID(pkgCfg.AlipayAppID)
 		if cfgErr != nil {
 			err = fmt.Errorf("pkgName= %s, 读取支付宝配置失败，err:=%v", in.AppPkgName, cfgErr)
@@ -158,7 +164,7 @@ func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (out *pb.OrderPayResp, err 
 			return
 		}
 		out.WxUniApp, err = l.createWeChatUniOrder(in, payOrder, payCfg.TransClientConfig())
-	case pb.PayType_WxWeb:
+	case pb.PayType_WxWeb: //未用
 		payCfg, cfgErr := l.payConfigWechatModel.GetOneByAppID(pkgCfg.WechatPayAppID)
 		if cfgErr != nil {
 			err = fmt.Errorf("pkgName= %s, 读取微信支付配置失败，err:=%v", in.AppPkgName, cfgErr)
@@ -166,7 +172,7 @@ func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (out *pb.OrderPayResp, err 
 			return
 		}
 		out.WxNative, err = l.createWeChatNativeOrder(in, payOrder, payCfg.TransClientConfig())
-	case pb.PayType_TiktokEc:
+	case pb.PayType_TiktokEc: //未用到
 		payCfg, cfgErr := l.payConfigTiktokModel.GetOneByAppID(pkgCfg.TiktokPayAppID)
 		if cfgErr != nil {
 			err = fmt.Errorf("pkgName= %s, 读取字节支付配置失败，err:=%v", in.AppPkgName, cfgErr)
@@ -174,7 +180,7 @@ func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (out *pb.OrderPayResp, err 
 			return
 		}
 		out.TikTokEc, err = l.createTikTokEcOrder(in, payOrder, payCfg.TransClientConfig())
-	case pb.PayType_KsUniApp:
+	case pb.PayType_KsUniApp: //未用到
 		payCfg, cfgErr := l.payConfigKsModel.GetOneByAppID(pkgCfg.KsPayAppID)
 		if cfgErr != nil {
 			err = fmt.Errorf("pkgName= %s, 读取快手支付配置失败，err:=%v", in.AppPkgName, cfgErr)
@@ -183,7 +189,7 @@ func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (out *pb.OrderPayResp, err 
 		}
 		payOrder.KsTypeId = 1273
 		out.KsUniApp, err = l.createKsOrder(in, payOrder, payCfg.TransClientConfig())
-	case pb.PayType_WxUnified:
+	case pb.PayType_WxUnified: //未用到
 		payCfg, cfgErr := l.payConfigWechatModel.GetOneByAppID(pkgCfg.WechatPayAppID)
 		if cfgErr != nil {
 			err = fmt.Errorf("pkgName= %s, 读取微信支付配置失败，err:=%v", in.AppPkgName, cfgErr)

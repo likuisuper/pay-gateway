@@ -18,6 +18,8 @@ import (
 	"time"
 )
 
+//短剧表-暂未使用
+
 var (
 	notifyAlipayErrNum = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "notifyAlipayErrNum", nil, "支付宝回调失败", nil})}
 )
@@ -42,8 +44,8 @@ func NewNotifyAlipayLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Noti
 	}
 }
 
+// NotifyAlipay 支付宝回调，暂未使用
 func (l *NotifyAlipayLogic) NotifyAlipay(r *http.Request, w http.ResponseWriter) (resp *types.EmptyReq, err error) {
-
 	err = r.ParseForm()
 	if err != nil {
 		logx.Errorf("NotifyAlipay err: %v", err)
@@ -83,12 +85,16 @@ func (l *NotifyAlipayLogic) NotifyAlipay(r *http.Request, w http.ResponseWriter)
 	}
 
 	//获取订单信息
-	orderInfo, err := l.payOrderModel.GetOneByCode(outTradeNo)
+	//orderInfo, err := l.payOrderModel.GetOneByCode(outTradeNo)
+
+	//升级为根据订单号和appid查询
+	orderInfo, err := l.payOrderModel.GetOneByOrderSnAndAppId(outTradeNo, appId)
 	if err != nil {
 		err = fmt.Errorf("获取订单失败！err=%v,order_code = %s", err, outTradeNo)
 		util.CheckError(err.Error())
 		return
 	}
+
 	if orderInfo.PayStatus != model.PmPayOrderTablePayStatusNo {
 		notifyOrderHasDispose.CounterInc()
 		err = fmt.Errorf("订单已处理")
@@ -98,7 +104,7 @@ func (l *NotifyAlipayLogic) NotifyAlipay(r *http.Request, w http.ResponseWriter)
 	amount := util.String2Float64(res.Content.TotalAmount) * 100
 	orderInfo.NotifyAmount = int(amount)
 	orderInfo.PayStatus = model.PmPayOrderTablePayStatusPaid
-	orderInfo.PayType = model.PmPayOrderTablePayTypeAlipay
+	//orderInfo.PayType = model.PmPayOrderTablePayTypeAlipay //改为创建订单时指定支付类型，用于补偿机制建设
 	err = l.payOrderModel.UpdateNotify(orderInfo)
 	if err != nil {
 		err = fmt.Errorf("orderSn = %s, UpdateNotify，err:=%v", orderInfo.OrderSn, err)
@@ -121,7 +127,7 @@ func (l *NotifyAlipayLogic) NotifyAlipay(r *http.Request, w http.ResponseWriter)
 	return
 }
 
-//formdata数据转成map
+// formdata数据转成map
 func (l *NotifyAlipayLogic) transFormDataToMap(formData string) (dataMap map[string]interface{}) {
 	dataMap = make(map[string]interface{}, 0)
 	values, _ := url.ParseQuery(formData)

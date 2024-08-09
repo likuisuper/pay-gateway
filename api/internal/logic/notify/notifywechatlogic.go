@@ -71,7 +71,9 @@ func (l *NotifyWechatLogic) NotifyWechat(request *http.Request) (resp *types.WeC
 	}
 
 	//获取订单信息
-	orderInfo, err := l.payOrderModel.GetOneByCode(*transaction.OutTradeNo)
+	//orderInfo, err := l.payOrderModel.GetOneByCode(*transaction.OutTradeNo)
+	//升级为根据订单号和appid查询
+	orderInfo, err := l.payOrderModel.GetOneByOrderSnAndAppId(*transaction.OutTradeNo, appId)
 	if err != nil {
 		err = fmt.Errorf("获取订单失败！err=%v,order_code = %s", err, transaction.OutTradeNo)
 		util.CheckError(err.Error())
@@ -85,20 +87,26 @@ func (l *NotifyWechatLogic) NotifyWechat(request *http.Request) (resp *types.WeC
 	//修改数据库
 	orderInfo.NotifyAmount = int(*transaction.Amount.PayerTotal)
 	orderInfo.PayStatus = model.PmPayOrderTablePayStatusPaid
-	orderInfo.PayType = model.PmPayOrderTablePayTypeWechatPayUni
+	orderInfo.ThirdOrderNo = *transaction.TransactionId
+	//orderInfo.PayType = model.PmPayOrderTablePayTypeWechatPayUni //改为创建订单时指定支付类型，用于补偿机制建设
 	err = l.payOrderModel.UpdateNotify(orderInfo)
 	if err != nil {
 		err = fmt.Errorf("orderSn = %s, UpdateNotify，err:=%v", orderInfo.OrderSn, err)
 		util.CheckError(err.Error())
 		return
 	}
+
 	//回调业务方接口
 	go func() {
 		defer exception.Recover()
 		headerMap := map[string]string{
 			"App-Origin": orderInfo.AppPkgName,
 		}
-		_, _ = util.HttpPostWithHeader(orderInfo.NotifyUrl, transaction, headerMap, 5*time.Second)
+		_, err = util.HttpPostWithHeader(orderInfo.NotifyUrl, transaction, headerMap, 5*time.Second)
+		if err != nil {
+			util.CheckError("NotifyWechat call business failed，orderSn = %s, err:=%v", orderInfo.OrderSn, err)
+			CallbackBizFailNum.CounterInc()
+		}
 	}()
 
 	resp = &types.WeChatResp{
