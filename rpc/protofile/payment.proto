@@ -248,6 +248,11 @@ message DouyinGeneralTradeReq {
     Unknown = 0;
     ContentRecharge = 401; // 内容充值
   }
+  enum IosPayType {
+    IosPayTypeUnknown = 0;
+    IosPayTypeIm = 1; // 跳转im支付
+    IosPayTypeDiamond = 2; // 钻石支付
+  }
   string skuId = 1; // 外部商品id
   int32 price = 2; // 价格 分
   int32 quantity = 3; // 数量
@@ -257,6 +262,7 @@ message DouyinGeneralTradeReq {
   Schema entrySchema = 8; // 商品详情页链接
   Schema orderEntrySchema = 9; // 订单详情页链接 必填
   repeated int32 limitPayWayList = 10; // 限制的支付方式 1 微信 2 支付宝
+  IosPayType iosPayType = 11; // ios场景下支付方式
 }
 
 message Schema {

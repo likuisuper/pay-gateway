@@ -8,6 +8,7 @@ import (
 	"gitee.com/yan-yixin0612/alipay/v3"
 	"gitee.com/zhuyunkj/pay-gateway/common/client"
 	douyin "gitee.com/zhuyunkj/pay-gateway/common/client/douyinGeneralTrade"
+	"gitee.com/zhuyunkj/pay-gateway/common/code"
 	"gitee.com/zhuyunkj/pay-gateway/common/define"
 	"gitee.com/zhuyunkj/pay-gateway/db/mysql/model"
 	"gitee.com/zhuyunkj/pay-gateway/rpc/internal/svc"
@@ -383,6 +384,12 @@ func (l *OrderPayLogic) checkDouyinGeneralTradeParam(in *pb.OrderPayReq) error {
 	if req.Type == pb.DouyinGeneralTradeReq_Unknown || pb.DouyinGeneralTradeReq_SkuType_name[int32(req.Type)] == "" {
 		return errors.New("invalid sku type")
 	}
+
+	if in.Os == code.OsIos {
+		if _, ok := pb.DouyinGeneralTradeReq_IosPayType_name[int32(req.IosPayType)]; !ok || req.IosPayType == pb.DouyinGeneralTradeReq_IosPayTypeUnknown {
+			return fmt.Errorf("invalid iosPayType:%v", req.IosPayType)
+		}
+	}
 	return nil
 }
 
@@ -416,7 +423,7 @@ func (l *OrderPayLogic) createDouyinGeneralTradeOrder(in *pb.OrderPayReq, payCon
 		},
 		OutOrderNo:       in.OrderSn,
 		TotalAmount:      int32(in.Amount),
-		PayExpireSeconds: 1800,
+		PayExpireSeconds: code.DouyinPayExpireSeconds,
 		PayNotifyUrl:     payConf.NotifyUrl,
 		MerchantUid:      payConf.MerchantUid,
 		OrderEntrySchema: &douyin.Schema{
@@ -425,15 +432,23 @@ func (l *OrderPayLogic) createDouyinGeneralTradeOrder(in *pb.OrderPayReq, payCon
 		},
 		LimitPayWayList: douyinReq.LimitPayWayList,
 	}
-	if in.Os == "ios" {
-		data.PayScene = "IM"
+
+	if in.Os == code.OsIos {
+		switch in.DouyinGeneralTradeReq.IosPayType {
+		case pb.DouyinGeneralTradeReq_IosPayTypeIm:
+			data.PayScene = douyin.PaySceneIM
+		case pb.DouyinGeneralTradeReq_IosPayTypeDiamond:
+			data.Currency = douyin.CurrencyDiamond
+		}
 	}
+
 	dataStr, byteAuthorization, err := payClient.RequestOrder(data)
 	if err != nil {
 		tiktokEcPayFailNum.CounterInc()
-		l.Errorf("pkgName= %s, tiktokEcPay，err:=%v", in.AppPkgName, err)
+		l.Errorf("pkgName= %s, douyinGeneralTradePay，err:=%v", in.AppPkgName, err)
 		return
 	}
+
 	reply = &pb.DouyinGeneralTradeReply{
 		Data:              dataStr,
 		ByteAuthorization: byteAuthorization,

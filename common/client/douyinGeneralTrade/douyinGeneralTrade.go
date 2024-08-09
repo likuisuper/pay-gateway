@@ -43,6 +43,7 @@ type RequestOrderData struct {
 	OrderEntrySchema *Schema `json:"orderEntrySchema,omitempty"` // 订单详情页 必填
 	LimitPayWayList  []int32 `json:"limitPayWayList,omitempty"`  // 屏蔽的支付方式，当开发者没有进件某个支付渠道，可在下单时屏蔽对应的支付方式。如：[1, 2]表示屏蔽微信和支付宝 枚举说明： 1-微信 2-支付宝 非必填
 	PayScene         string  `json:"payScene,omitempty"`         // 指定支付场景 ios 传IM 安卓不传
+	Currency         string  `json:"currency,omitempty"`         // 指定支付币种 ios 钻石支付传DIAMOND 安卓不传
 }
 
 type Sku struct {
@@ -66,6 +67,11 @@ type SkuTagGroupId string
 
 const (
 	SKuTagGroupIdContentRecharge SkuTagGroupId = "tag_group_7272625659888041996"
+)
+
+const (
+	PaySceneIM      = "IM"      // 支付场景值-im
+	CurrencyDiamond = "DIAMOND" // 支付币种-钻石
 )
 
 type Schema struct {
@@ -173,14 +179,15 @@ type GeneralTradeMsg struct {
 	OutOrderNo     string `json:"out_order_no,omitempty"`     // 必填 开发者系统订单号
 	OrderId        string `json:"order_id,omitempty"`         // 必填 抖音平台侧订单号
 	Status         string `json:"status,omitempty"`           // 必填 支付结果状态枚举 "SUCCESS" （支付成功 ） "CANCEL" （支付取消）
-	TotalAmount    int64  `json:"total_amount,omitempty"`     // 必填 订单总金额 单位分
+	TotalAmount    int64  `json:"total_amount,omitempty"`     // 必填 订单总金额 单位分 当用户以钻石兑换时，会填充为钻石数量
 	DiscountAmount int64  `json:"discount_amount,omitempty"`  // 非必填 订单优惠金额 单位分
-	PayChannel     int32  `json:"pay_channel,omitempty"`      // 非必填 支付渠道枚举 （支付成功时才有）：1：微信2：支付宝10：抖音支付
+	PayChannel     int32  `json:"pay_channel,omitempty"`      // 非必填 支付渠道枚举 （支付成功时才有）：1：微信2：支付宝10：抖音支付20:钻石支付
 	ChannelPayId   string `json:"channel_pay_id,omitempty"`   // 非必填 渠道支付单号，如微信/支付宝的支付单号，长度 <= 64byte 注：status="SUCCESS"时一定有值
 	MerchantUid    string `json:"merchant_uid,omitempty"`     // 非必填 交易卖家商户号 注：status="SUCCESS"时一定有值
 	Message        string `json:"message,omitempty"`          // 非必填 交易取消原因 如："USER_CANCEL"：用户取消"TIME_OUT"：超时取消
 	EventTime      int64  `json:"event_time,omitempty"`       // 必填 用户支付成功/支付取消时间戳，单位为毫秒
 	UserBillPayId  string `json:"user_bill_pay_id,omitempty"` // 非必填 对应用户抖音账单里的"支付单号" 注：status="SUCCESS"时一定有值
+	Currency       string `json:"currency,omitempty"`         // 非必填 当用户以钻石兑换时，currency=DIAMOND
 }
 
 // VerifyNotify 验签 https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/server/trade-system/general/order/notify-payment-result
