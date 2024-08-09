@@ -142,7 +142,10 @@ func (l *NotifyAlipayNewLogic) NotifyAlipayNew(r *http.Request, w http.ResponseW
 				if orderInfo.ProductType == code.PRODUCT_TYPE_SUBSCRIBE_FEE {
 					dataMap["external_agreement_no"] = orderInfo.ExternalAgreementNo
 				}
-				err = utils.CallbackWithRetry(orderInfo.AppNotifyUrl, dataMap, 5*time.Second)
+				headerMap := map[string]string{
+					"App-Origin": orderInfo.AppPkg,
+				}
+				err = utils.CallbackWithRetry(orderInfo.AppNotifyUrl, headerMap, dataMap, 5*time.Second)
 				if err != nil {
 					desc := fmt.Sprintf("回调通知用户付款成功 异常, app_pkg=%s, user_id=%d, out_trade_no=%s, 报错信息：%v", orderInfo.AppPkg, orderInfo.UserID, orderInfo.OutTradeNo, err)
 					alarm.ImmediateAlarm("notifyUserPayErr", desc, alarm.ALARM_LEVEL_FATAL)
@@ -223,7 +226,10 @@ func (l *NotifyAlipayNewLogic) NotifyAlipayNew(r *http.Request, w http.ResponseW
 				dataMap["refund_out_side_app"] = refundOutSideApp
 				dataMap["refund_status"] = model.REFUND_STATUS_SUCCESS
 				dataMap["refund_fee"] = refundAmount
-				err = utils.CallbackWithRetry(table.NotifyUrl, dataMap, 5*time.Second)
+				headerMap := map[string]string{
+					"App-Origin": table.AppPkg,
+				}
+				err = utils.CallbackWithRetry(table.NotifyUrl, headerMap, dataMap, 5*time.Second)
 				if err != nil {
 					desc := fmt.Sprintf("回调通知用户退款成功 异常, app_pkg=%s, out_trade_no=%s", table.AppPkg, table.OutTradeNo)
 					alarm.ImmediateAlarm("notifyUserRefundErr", desc, alarm.ALARM_LEVEL_FATAL)
@@ -274,7 +280,12 @@ func (l *NotifyAlipayNewLogic) NotifyAlipayNew(r *http.Request, w http.ResponseW
 			dataMap := l.transFormDataToMap(bodyData)
 			dataMap["out_trade_no"] = order.OutTradeNo
 			dataMap["notify_type"] = code.APP_NOTIFY_TYPE_SIGN
-			err = utils.CallbackWithRetry(order.AppNotifyUrl, dataMap, 5*time.Second)
+
+			headerMap := map[string]string{
+				"App-Origin": order.AppPkg,
+			}
+
+			err = utils.CallbackWithRetry(order.AppNotifyUrl, headerMap, dataMap, 5*time.Second)
 			if err != nil {
 				desc := fmt.Sprintf("回调通知用户签约成功 异常, app_pkg=%s, out_trade_no=%s", order.AppPkg, order.OutTradeNo)
 				alarm.ImmediateAlarm("notifyUserSignErr", desc, alarm.ALARM_LEVEL_FATAL)
@@ -296,7 +307,10 @@ func (l *NotifyAlipayNewLogic) NotifyAlipayNew(r *http.Request, w http.ResponseW
 			defer exception.Recover()
 			dataMap := l.transFormDataToMap(bodyData)
 			dataMap["notify_type"] = code.APP_NOTIFY_TYPE_UNSIGN
-			err = utils.CallbackWithRetry(order.AppNotifyUrl, dataMap, 5*time.Second)
+			headerMap := map[string]string{
+				"App-Origin": order.AppPkg,
+			}
+			err = utils.CallbackWithRetry(order.AppNotifyUrl,headerMap, dataMap, 5*time.Second)
 			if err != nil {
 				desc := fmt.Sprintf("回调通知用户解约 异常, app_pkg=%s, out_trade_no=%s", order.AppPkg, order.OutTradeNo)
 				alarm.ImmediateAlarm("notifyUserUnsignErr", desc, alarm.ALARM_LEVEL_FATAL)

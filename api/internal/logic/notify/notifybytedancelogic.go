@@ -130,7 +130,9 @@ func (l *NotifyBytedanceLogic) NotifyPayment(req *types.ByteDanceReq) (resp *typ
 	//回调业务方接口
 	go func() {
 		defer exception.Recover()
-		respData, requestErr := util.HttpPost(orderInfo.NotifyUrl, req, 5*time.Second)
+		headerMap := make(map[string]string,1)
+		headerMap["App-Origin"] = orderInfo.AppPkgName
+		respData, requestErr := util.HttpPostWithHeader(orderInfo.NotifyUrl, req, headerMap,5*time.Second)
 		if requestErr != nil {
 			util.CheckError("NotifyPayment-post, req:%+v, err:%v", req, requestErr)
 			return

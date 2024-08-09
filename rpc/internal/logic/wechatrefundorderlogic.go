@@ -84,7 +84,7 @@ func (l *WechatRefundOrderLogic) WechatRefundOrder(in *pb.WechatRefundOrderReq) 
 		OutTradeRefundNo: utils.GenerateOrderCode(l.svcCtx.Config.SnowFlake.MachineNo, l.svcCtx.Config.SnowFlake.WorkerNo),
 		Reason:           in.RefundReason,
 		RefundAmount:     int(in.RefundFee),
-		NotifyUrl:        payCfg.NotifyUrl,
+		NotifyUrl:        order.AppNotifyUrl,
 		Operator:         "系统",
 		AppPkg:           order.AppPkg,
 		RefundNo:         *refundRes.OutRefundNo,

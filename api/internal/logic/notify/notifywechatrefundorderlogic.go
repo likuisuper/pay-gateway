@@ -105,7 +105,9 @@ func (l *NotifyWechatRefundOrderLogic) NotifyWechatRefundOrder(req *types.Wechat
 			dataMap["refund_out_side_app"] = false
 			dataMap["refund_status"] = model.REFUND_STATUS_SUCCESS
 			dataMap["refund_fee"] = orderInfo.RefundAmount
-			_, _ = util.HttpPost(orderInfo.NotifyUrl, dataMap, 5*time.Second)
+			headerMap := make(map[string]string, 1)
+			headerMap["App-Origin"] = orderInfo.AppPkg
+			_, _ = util.HttpPostWithHeader(orderInfo.NotifyUrl, dataMap, headerMap, 5*time.Second)
 		}()
 	}
 	return &types.WeChatResp{
