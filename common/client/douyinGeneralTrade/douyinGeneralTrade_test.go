@@ -226,8 +226,6 @@ func TestPayClient_QueryOrder(t *testing.T) {
 					KeyVersion:        "1",
 					NotifyUrl:         "",
 					PlatformPublicKey: "",
-					AppSecret:         "",
-					GetClientTokenUrl: "http://test.base-app-config-server-api.yunxiacn.com/api_server/base/douyin/token/get",
 				},
 			},
 			args: args{
@@ -246,8 +244,6 @@ func TestPayClient_QueryOrder(t *testing.T) {
 					KeyVersion:        "1",
 					NotifyUrl:         "",
 					PlatformPublicKey: "",
-					AppSecret:         "",
-					GetClientTokenUrl: "http://test.base-app-config-server-api.yunxiacn.com/api_server/base/douyin/token/get",
 				},
 			},
 			args: args{
@@ -267,7 +263,7 @@ func TestPayClient_QueryOrder(t *testing.T) {
 			c := &PayClient{
 				config: tt.fields.config,
 			}
-			got, err := c.QueryOrder(tt.args.orderId, tt.args.outOrderId)
+			got, err := c.QueryOrder(tt.args.orderId, tt.args.outOrderId, "")
 			jsonData, _ := sonic.MarshalString(got)
 			t.Logf("err:%v, resp:%s,", err, jsonData)
 
@@ -316,50 +312,6 @@ func TestPayClient_CreateRefundOrder(t *testing.T) {
 			}
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("CreateRefundOrder() got = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestPayClient_GetClientToken(t *testing.T) {
-	type fields struct {
-		config *PayConfig
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		want    *GetClientTokenResp
-		wantErr bool
-	}{
-		{
-			name: "",
-			fields: fields{
-				config: &PayConfig{
-					AppId:             "tt1683603e89bd1ac801",
-					PrivateKey:        "",
-					KeyVersion:        "",
-					NotifyUrl:         "",
-					PlatformPublicKey: "",
-					AppSecret:         "040c366e8014ed70a549c47f88ac3cacb05f7f6c",
-				},
-			},
-			want:    nil,
-			wantErr: false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			c := &PayClient{
-				config: tt.fields.config,
-			}
-			got, err := c.GetClientToken()
-			t.Log(got, err)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("GetClientToken() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetClientToken() got = %v, want %v", got, tt.want)
 			}
 		})
 	}

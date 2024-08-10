@@ -24,7 +24,6 @@ type PayConfig struct {
 	NotifyUrl         string
 	PlatformPublicKey string // 平台公钥
 	CustomerImId      string
-	GetClientTokenUrl string
 	MerchantUid       string // 支付使用的商户号，为空抖音侧会使用默认值
 }
 
@@ -258,25 +257,6 @@ type GetClientTokenData struct {
 	ErrorCode   int64  `json:"error_code,omitempty"`
 }
 
-// GetClientToken 获取接口调用token https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/server/interface-request-credential/non-user-authorization/get-client_token#739149f2
-func (c *PayClient) GetClientToken() (*GetClientTokenResp, error) {
-	req := &GetClientTokenReq{
-		ClientKey:    c.config.AppId,
-		ClientSecret: "",
-		GrantType:    "client_credential",
-	}
-	result, err := util.HttpPost("https://open.douyin.com/oauth/client_token/", req, time.Second*3)
-	if err != nil {
-		return nil, err
-	}
-	resp := new(GetClientTokenResp)
-	err = sonic.UnmarshalString(result, resp)
-	if err != nil {
-		return nil, err
-	}
-	return resp, nil
-}
-
 type QueryOrderReq struct {
 	OrderId    string `json:"order_id,omitempty"`     // 非必填 交易订单号，order_id 与 out_order_no 二选一
 	OutOrderNo string `json:"out_order_no,omitempty"` // 非必填 开发者的单号，order_id 与 out_order_no 二选一
@@ -288,32 +268,31 @@ type QueryOrderResp struct {
 }
 
 type QueryOrderData struct {
-	AppId          string                 `json:"app_id,omitempty"`          // 必填 appId
-	OrderId        string                 `json:"order_id,omitempty"`        // 必填 抖音平台侧订单号
-	OutOrderNo     string                 `json:"out_order_no,omitempty"`    // 必填 开发者系统订单号
-	PayStatus      string                 `json:"pay_status,omitempty"`      // 必填 订单支付状态 PROCESS： 订单处理中 支付处理中 SUCCESS：成功 支付成功 FAIL：失败 支付失败 暂无该情况会支付失败 TIMEOUT：用户超时未支付
-	TotalAmount    int64                  `json:"total_amount,omitempty"`    // 必填 订单总金额 单位分 支付金额 = total_amount - discount_amount
-	TradeTime      int64                  `json:"trade_time,omitempty"`      // 必填 交易下单时间 毫秒
-	ChannelPayId   string                 `json:"channel_pay_id,omitempty"`  // 非必填 渠道支付单号，如：微信的支付单号、支付宝支付单号。 只有在支付成功时才会有值。
-	DiscountAmount int64                  `json:"discount_amount,omitempty"` // 非必填 订单优惠金额，单位：分，接入营销时请关注这个字段
-	ItemOrderList  []*QueryOrderItemOrder `json:"item_order_list,omitempty"` // 非必填 item单信息
-	MerchantUid    string                 `json:"merchant_uid,omitempty"`    // 非必填 收款商户号
-	PayChannel     int8                   `json:"pay_channel,omitempty"`     // 非必填 支付渠道枚举 （支付成功时才有）：1：微信2：支付宝10：抖音支付
-	PayTime        int64                  `json:"pay_time,omitempty"`        // 非必填 支付成功时间 毫秒
+	AppId               string                 `json:"app_id,omitempty"`          // 必填 appId
+	OrderId             string                 `json:"order_id,omitempty"`        // 必填 抖音平台侧订单号
+	OutOrderNo          string                 `json:"out_order_no,omitempty"`    // 必填 开发者系统订单号
+	PayStatus           string                 `json:"pay_status,omitempty"`      // 必填 订单支付状态 PROCESS： 订单处理中 支付处理中 SUCCESS：成功 支付成功 FAIL：失败 支付失败 暂无该情况会支付失败 TIMEOUT：用户超时未支付
+	TotalAmount         int64                  `json:"total_amount,omitempty"`    // 必填 订单总金额 单位分 支付金额 = total_amount - discount_amount
+	TradeTime           int64                  `json:"trade_time,omitempty"`      // 必填 交易下单时间 毫秒
+	ChannelPayId        string                 `json:"channel_pay_id,omitempty"`  // 非必填 渠道支付单号，如：微信的支付单号、支付宝支付单号。 只有在支付成功时才会有值。
+	DiscountAmount      int64                  `json:"discount_amount,omitempty"` // 非必填 订单优惠金额，单位：分，接入营销时请关注这个字段
+	ItemOrderList       []*QueryOrderItemOrder `json:"item_order_list,omitempty"` // 非必填 item单信息
+	MerchantUid         string                 `json:"merchant_uid,omitempty"`    // 非必填 收款商户号
+	PayChannel          int8                   `json:"pay_channel,omitempty"`     // 非必填 支付渠道枚举 （支付成功时才有）：1：微信2：支付宝10：抖音支付
+	PayTime             int64                  `json:"pay_time,omitempty"`        // 非必填 支付成功时间 毫秒
+	Currency            string                 `json:"currency,omitempty"`        // 非必填 支付币种 钻石支付为DIAMOND
+	TotalCurrencyAmount int64                  `json:"total_currency_amount"`     // 非必填 当用户以钻石兑换时，该字段会填充对应的钻石数量
 }
 
 type QueryOrderItemOrder struct {
-	ItemOrderAmount int64  `json:"item_order_amount,omitempty"` // 必填 item单金额 分
-	ItemOrderId     string `json:"item_order_id,omitempty"`     // 必填 抖音侧 交易系统商品单号
-	SkuId           string `json:"sku_id,omitempty"`            // 必填 用户下单传入的skuId
+	ItemOrderAmount         int64  `json:"item_order_amount,omitempty"`          // 必填 item单金额 分
+	ItemOrderId             string `json:"item_order_id,omitempty"`              // 必填 抖音侧 交易系统商品单号
+	SkuId                   string `json:"sku_id,omitempty"`                     // 必填 用户下单传入的skuId
+	ItemOrderCurrencyAmount int64  `json:"item_order_currency_amount,omitempty"` // 非必填 当用户以钻石兑换时，该字段会填充对应的钻石数量
 }
 
 // QueryOrder 查询订单 https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/server/trade-system/general/order/query_order
-func (c *PayClient) QueryOrder(orderId, outOrderId string) (*QueryOrderResp, error) {
-	clientToken, err := getClientToken(c.config.GetClientTokenUrl, c.config.AppId)
-	if err != nil {
-		return nil, err
-	}
+func (c *PayClient) QueryOrder(orderId, outOrderId, clientToken string) (*QueryOrderResp, error) {
 	header := map[string]string{
 		"access-token": clientToken,
 	}

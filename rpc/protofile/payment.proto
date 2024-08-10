@@ -16,6 +16,13 @@ message OrderPayReq {
   string WxOpenID = 8;//微信小程序支付时必传
   string os = 9; // 系统标识
   DouyinGeneralTradeReq douyinGeneralTradeReq = 10; //抖音小程序订单信息-通用交易系统
+  Currency currency = 11; // 币种
+}
+
+// 币种枚举
+enum Currency {
+  CNY = 0; // CNY
+  DYDIAMOND = 1; // 抖音钻石
 }
 
 //支付方式枚举

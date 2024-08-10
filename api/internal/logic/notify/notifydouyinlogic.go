@@ -169,7 +169,6 @@ func (l *NotifyDouyinLogic) notifyPayment(req *http.Request, body []byte, msgJso
 	orderInfo.NotifyAmount = int(msg.TotalAmount)
 	orderInfo.PayStatus = model.PmPayOrderTablePayStatusPaid
 	orderInfo.ThirdOrderNo = msg.OrderId
-	orderInfo.Currency = msg.Currency
 
 	err = l.payOrderModel.UpdateNotify(orderInfo)
 	if err != nil {
@@ -181,10 +180,10 @@ func (l *NotifyDouyinLogic) notifyPayment(req *http.Request, body []byte, msgJso
 	//回调业务方接口
 	go func() {
 		defer exception.Recover()
-		headMap :=map[string]string{
-			"App-Origin":orderInfo.AppPkgName,
+		headMap := map[string]string{
+			"App-Origin": orderInfo.AppPkgName,
 		}
-		respData, requestErr := util.HttpPostWithHeader(orderInfo.NotifyUrl, originData, headMap,5*time.Second)
+		respData, requestErr := util.HttpPostWithHeader(orderInfo.NotifyUrl, originData, headMap, 5*time.Second)
 		if requestErr != nil {
 			l.Errorf("NotifyPayment-post, req:%+v, err:%v", originData, requestErr)
 			CallbackBizFailNum.CounterInc()
