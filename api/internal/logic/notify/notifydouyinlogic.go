@@ -88,11 +88,10 @@ func (l *NotifyDouyinLogic) NotifyDouyin(req *http.Request) (resp *types.DouyinR
 	case douyin.EventRefund:
 		return l.notifyRefund(req, body, data.Msg, data)
 	case douyin.EventSettle: //该类型线上未接入，后续需要再实现对应逻辑
-		resp := &types.DouyinResp{
+		return &types.DouyinResp{
 			ErrNo:   0,
 			ErrTips: "success",
-		}
-		return resp, nil
+		}, nil
 	case douyin.EventPreCreateRefund:
 
 	}
@@ -134,8 +133,8 @@ func (l *NotifyDouyinLogic) notifyPayment(req *http.Request, body []byte, msgJso
 		}, nil
 	}
 
-	if msg.Status != "SUCCESS" {
-		logx.Slowf("douyin支付回调异常: %s", msgJson)
+	if msg.Status != "SUCCESS" { // todo: 处理非成功的状态
+		l.Slowf("douyin支付回调异常: %s", msgJson)
 		return nil, nil
 	}
 
@@ -154,9 +153,7 @@ func (l *NotifyDouyinLogic) notifyPayment(req *http.Request, body []byte, msgJso
 		}
 	}()
 
-	//获取订单信息
-	//orderInfo, err := l.payOrderModel.GetOneByCode(msg.OutOrderNo)
-	//升级为根据订单号和appid查询
+	//获取订单信息 根据订单号和appid查询
 	orderInfo, err := l.payOrderModel.GetOneByOrderSnAndAppId(msg.OutOrderNo, msg.AppId)
 	if err != nil {
 		err = fmt.Errorf("获取订单失败！err=%v,order_code = %s", err, msg.OutOrderNo)
@@ -172,7 +169,7 @@ func (l *NotifyDouyinLogic) notifyPayment(req *http.Request, body []byte, msgJso
 	orderInfo.NotifyAmount = int(msg.TotalAmount)
 	orderInfo.PayStatus = model.PmPayOrderTablePayStatusPaid
 	orderInfo.ThirdOrderNo = msg.OrderId
-	//orderInfo.PayType = model.PmPayOrderTablePayTypeDouyinGeneralTrade //改为创建订单时指定支付类型，用于补偿机制建设
+
 	err = l.payOrderModel.UpdateNotify(orderInfo)
 	if err != nil {
 		err = fmt.Errorf("orderSn = %s, UpdateNotify，err:=%v", orderInfo.OrderSn, err)
@@ -183,10 +180,10 @@ func (l *NotifyDouyinLogic) notifyPayment(req *http.Request, body []byte, msgJso
 	//回调业务方接口
 	go func() {
 		defer exception.Recover()
-		headMap :=map[string]string{
-			"App-Origin":orderInfo.AppPkgName,
+		headMap := map[string]string{
+			"App-Origin": orderInfo.AppPkgName,
 		}
-		respData, requestErr := util.HttpPostWithHeader(orderInfo.NotifyUrl, originData, headMap,5*time.Second)
+		respData, requestErr := util.HttpPostWithHeader(orderInfo.NotifyUrl, originData, headMap, 5*time.Second)
 		if requestErr != nil {
 			l.Errorf("NotifyPayment-post, req:%+v, err:%v", originData, requestErr)
 			CallbackBizFailNum.CounterInc()

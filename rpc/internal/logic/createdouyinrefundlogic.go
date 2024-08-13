@@ -70,7 +70,13 @@ func (l *CreateDouyinRefundLogic) CreateDouyinRefund(in *pb.CreateDouyinRefundRe
 		RefundAll:         false,
 	}
 
-	refundResp, err := payClient.CreateRefundOrder(refundReq)
+	clientToken, err := l.svcCtx.BaseAppConfigServerApi.GetDyClientToken(l.ctx, payCfg.AppID)
+	if err != nil {
+		l.Errorw("get douyin clientToken fail", logx.Field("err", err), logx.Field("appId", payCfg.AppID))
+		return nil, err
+	}
+
+	refundResp, err := payClient.CreateRefundOrder(refundReq, clientToken)
 	if err != nil || refundResp.ErrNo != 0 || refundResp.Data == nil {
 		l.Errorf("createRefund fail, err:%v, req:%+v, resp:%v", err, refundReq, refundResp)
 		return nil, err
