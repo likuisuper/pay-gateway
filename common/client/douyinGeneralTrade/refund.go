@@ -65,22 +65,23 @@ func (c *PayClient) CreateRefundOrder(req *CreateRefundOrderReq) (*CreateRefundR
 // RefundMsg 退款回调消息 https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/server/trade-system/general/refund/refund_notify
 type RefundMsg struct {
 	AppId             string `json:"app_id"`
-	Status            string `json:"status"`
-	OrderId           string `json:"order_id"`
-	CpExtra           string `json:"cp_extra"`
-	Message           string `json:"message"`
-	EventTime         int64  `json:"event_time"`
-	RefundId          string `json:"refund_id"`
-	OutRefundNo       string `json:"out_refund_no"`
-	RefundTotalAmount int    `json:"refund_total_amount"`
-	IsAllSettled      bool   `json:"is_all_settled"`
+	Status            string `json:"status"`              //退款状态枚举值：SUCCESS：退款成功FAIL：退款失败
+	OrderId           string `json:"order_id"`            //抖音开平侧订单号
+	CpExtra           string `json:"cp_extra"`            //退款时开发者传入字段
+	Message           string `json:"message"`             //结果描述信息，如失败原因
+	EventTime         int64  `json:"event_time"`          //退款时间戳，单位为毫秒
+	RefundId          string `json:"refund_id"`           //抖音开平侧退款单号
+	OutRefundNo       string `json:"out_refund_no"`       //开发者自定义的退款单号（可能为空)
+	RefundTotalAmount int    `json:"refund_total_amount"` //退款金额，单位分
+	IsAllSettled      bool   `json:"is_all_settled"`      //是否为分账后退款
+	RefundType        int64  `json:"refund_type"`         //退款来源类型，枚举值： 1: 用户发起 2：开发者发起 4：抖音客服退款
 	RefundItemDetail  struct {
-		ItemOrderQuantity int `json:"item_order_quantity"`
+		ItemOrderQuantity int `json:"item_order_quantity"` //用户退款商品单数量
 		ItemOrderDetail   []struct {
-			RefundAmount int    `json:"refund_amount"`
-			ItemOrderId  string `json:"item_order_id"`
-		} `json:"item_order_detail"`
-	} `json:"refund_item_detail"`
+			RefundAmount int    `json:"refund_amount"` //该商品单退款金额，单位[分]
+			ItemOrderId  string `json:"item_order_id"` // 抖音开平侧商品单id
+		} `json:"item_order_detail"` //本次退款的商品单
+	} `json:"refund_item_detail"` //退款商品单信息
 }
 
 // PreCreateRefundMsg 退款申请回调消息 https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/server/trade-system/general/refund/refund_callback

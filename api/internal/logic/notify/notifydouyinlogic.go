@@ -183,10 +183,10 @@ func (l *NotifyDouyinLogic) notifyPayment(req *http.Request, body []byte, msgJso
 	//回调业务方接口
 	go func() {
 		defer exception.Recover()
-		headMap :=map[string]string{
-			"App-Origin":orderInfo.AppPkgName,
+		headMap := map[string]string{
+			"App-Origin": orderInfo.AppPkgName,
 		}
-		respData, requestErr := util.HttpPostWithHeader(orderInfo.NotifyUrl, originData, headMap,5*time.Second)
+		respData, requestErr := util.HttpPostWithHeader(orderInfo.NotifyUrl, originData, headMap, 5*time.Second)
 		if requestErr != nil {
 			l.Errorf("NotifyPayment-post, req:%+v, err:%v", originData, requestErr)
 			CallbackBizFailNum.CounterInc()
@@ -202,6 +202,7 @@ func (l *NotifyDouyinLogic) notifyPayment(req *http.Request, body []byte, msgJso
 	return resp, nil
 }
 
+//抖音退款回调
 func (l *NotifyDouyinLogic) notifyRefund(req *http.Request, body []byte, msgJson string, originData interface{}) (*types.DouyinResp, error) {
 	msg := new(douyin.RefundMsg)
 	err := sonic.UnmarshalString(msgJson, msg)
@@ -240,7 +241,13 @@ func (l *NotifyDouyinLogic) notifyRefund(req *http.Request, body []byte, msgJson
 	}
 
 	//修改数据库
-	refundInfo, _ := l.refundOrderModel.GetInfo(msg.OutRefundNo)
+	refundInfo, _ := l.refundOrderModel.GetInfoByRefundNo(msg.RefundId)
+	//判断改退款订单是否已被处理过
+	if refundInfo.RefundStatus != model.PmRefundOrderTableRefundStatusSuccess {
+		notifyOrderHasDispose.CounterInc()
+		err = fmt.Errorf("订单已处理")
+		return nil, err
+	}
 	refundInfo.NotifyData = msgJson
 	refundInfo.RefundedAt = int(msg.EventTime)
 	if msg.Status == "SUCCESS" {

@@ -303,7 +303,7 @@ type QueryOrderItemOrder struct {
 
 // QueryOrder 查询订单 https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/server/trade-system/general/order/query_order
 func (c *PayClient) QueryOrder(orderId, outOrderId string) (*QueryOrderResp, error) {
-	clientToken, err := getClientToken(c.config.GetClientTokenUrl, c.config.AppId)
+	clientToken, err := getClientToken(c.config.GetClientTokenUrl, c.config.AppId) //todo
 	if err != nil {
 		return nil, err
 	}

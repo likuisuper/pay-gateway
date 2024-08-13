@@ -2,6 +2,7 @@ package logic
 
 import (
 	"context"
+	"errors"
 	douyin "gitee.com/zhuyunkj/pay-gateway/common/client/douyinGeneralTrade"
 	"gitee.com/zhuyunkj/pay-gateway/common/define"
 	"gitee.com/zhuyunkj/pay-gateway/db/mysql/model"
@@ -19,6 +20,7 @@ type CreateDouyinRefundLogic struct {
 	appConfigModel       *model.PmAppConfigModel
 	payConfigTiktokModel *model.PmPayConfigTiktokModel
 	refundOrderModel     *model.PmRefundOrderModel
+	orderModel           *model.PmPayOrderModel
 }
 
 func NewCreateDouyinRefundLogic(ctx context.Context, svcCtx *svc.ServiceContext) *CreateDouyinRefundLogic {
@@ -30,6 +32,7 @@ func NewCreateDouyinRefundLogic(ctx context.Context, svcCtx *svc.ServiceContext)
 		appConfigModel:       model.NewPmAppConfigModel(define.DbPayGateway),
 		payConfigTiktokModel: model.NewPmPayConfigTiktokModel(define.DbPayGateway),
 		refundOrderModel:     model.NewPmRefundOrderModel(define.DbPayGateway),
+		orderModel:           model.NewPmPayOrderModel(define.DbPayGateway),
 	}
 }
 
@@ -38,22 +41,54 @@ func (l *CreateDouyinRefundLogic) CreateDouyinRefund(in *pb.CreateDouyinRefundRe
 	//读取应用配置
 	pkgCfg, err := l.appConfigModel.GetOneByPkgName(in.AppPkgName)
 	if err != nil {
-		l.Errorf("pkgName= %s, 读取应用配置失败，err:=%v", in.AppPkgName, err)
+		l.Errorf("CreateDouyinRefund pkgName= %s, 读取应用配置失败，err:=%v", in.AppPkgName, err)
 		return nil, err
 	}
 
 	payCfg, cfgErr := l.payConfigTiktokModel.GetOneByAppID(pkgCfg.TiktokPayAppID)
 	if cfgErr != nil {
-		l.Errorf("pkgName= %s, 读取字节支付配置失败，err:=%v", in.AppPkgName, cfgErr)
+		l.Errorf("CreateDouyinRefund pkgName= %s, 读取字节支付配置失败，err:=%v", in.AppPkgName, cfgErr)
 		return nil, cfgErr
+	}
+
+	if in.OrderSn == "" && in.OutOrderNo == "" {
+		l.Errorf("CreateDouyinRefund pkgName= %s, 订单号和抖音订单号不能同时为空", in.AppPkgName)
+		return nil, errors.New("订单号和抖音订单号不能同时为空")
+	}
+
+	if in.OutOrderNo == "" && in.OrderSn != "" {
+		//查询抖音侧订单号
+		payOrderInfo, err := l.orderModel.GetOneByCode(in.OrderSn)
+		if err != nil {
+			l.Errorf("CreateDouyinRefund pkgName= %s, 读取抖音支付订单失败，err:=%v", in.AppPkgName, err)
+			return nil, err
+		}
+		in.OutOrderNo = payOrderInfo.ThirdOrderNo
 	}
 
 	clientConfig := payCfg.GetGeneralTradeConfig()
 	payClient := douyin.NewDouyinPay(clientConfig)
+
+	itemOrderDetail := make([]*douyin.ItemOrderDetail, 0)
+	//是否是全额退款
+	if !in.RefundAll {
+		//获取抖音侧订单信息 OutOrderNo等于抖音侧的oriderID
+		douyinOrder, err := payClient.QueryOrder(in.OutOrderNo, "")
+		if err != nil {
+			l.Errorf("CreateDouyinRefund pkgName= %s, 读取抖音支付订单失败，err:=%v", in.AppPkgName, err)
+			return nil, err
+		}
+		itemOrderDetail = append(itemOrderDetail, &douyin.ItemOrderDetail{
+			ItemOrderId:  douyinOrder.Data.ItemOrderList[0].SkuId,
+			RefundAmount: in.RefundAmount,
+		})
+
+	}
+
 	refundReq := &douyin.CreateRefundOrderReq{
-		OrderId:     in.OutOrderNo, // todo: 需要使用抖音侧支付订单号 这个理论上要保存在中台支付的订单表上
+		OrderId:     in.OutOrderNo,
 		OutRefundNo: in.OutRefundNo,
-		CpExtra:     "",
+		CpExtra:     "extra_info",
 		OrderEntrySchema: douyin.Schema{
 			Path:   in.GetOrderEntrySchema().GetPath(),
 			Params: in.GetOrderEntrySchema().GetParams(),
@@ -66,13 +101,13 @@ func (l *CreateDouyinRefundLogic) CreateDouyinRefund(in *pb.CreateDouyinRefundRe
 			},
 		},
 		RefundTotalAmount: in.RefundAmount,
-		ItemOrderDetail:   nil,
-		RefundAll:         false,
+		ItemOrderDetail:   itemOrderDetail,
+		RefundAll:         in.RefundAll,
 	}
 
 	refundResp, err := payClient.CreateRefundOrder(refundReq)
 	if err != nil || refundResp.ErrNo != 0 || refundResp.Data == nil {
-		l.Errorf("createRefund fail, err:%v, req:%+v, resp:%v", err, refundReq, refundResp)
+		l.Errorf("CreateDouyinRefund createRefund fail, err:%v, req:%+v, resp:%v", err, refundReq, refundResp)
 		return nil, err
 	}
 
@@ -85,11 +120,11 @@ func (l *CreateDouyinRefundLogic) CreateDouyinRefund(in *pb.CreateDouyinRefundRe
 		RefundAmount: int(in.RefundAmount),
 		NotifyUrl:    in.RefundNotifyUrl,
 		RefundNo:     refundResp.Data.RefundId,
-		RefundStatus: 0,
+		RefundStatus: model.PmRefundOrderTableRefundStatusApply,
 	}
 	err = l.refundOrderModel.Create(refundOrder)
 	if err != nil {
-		l.Errorf("create refund order fail, err:%v, refundOrder:%+v", err, refundOrder)
+		l.Errorf("CreateDouyinRefund create refund order fail, err:%v, refundOrder:%+v", err, refundOrder)
 	}
 
 	return &pb.CreateDouyinRefundResp{
