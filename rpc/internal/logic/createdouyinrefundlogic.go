@@ -72,8 +72,14 @@ func (l *CreateDouyinRefundLogic) CreateDouyinRefund(in *pb.CreateDouyinRefundRe
 	itemOrderDetail := make([]*douyin.ItemOrderDetail, 0)
 	//是否是全额退款
 	if !in.RefundAll {
+		clientToken, err := l.svcCtx.BaseAppConfigServerApi.GetDyClientToken(l.ctx, pkgCfg.TiktokPayAppID)
+		if err != nil {
+			l.Errorf("CreateDouyinRefund pkgName= %s get douyin client token fail", in.AppPkgName, err)
+			return nil, err
+		}
+
 		//获取抖音侧订单信息 OutOrderNo等于抖音侧的oriderID
-		douyinOrder, err := payClient.QueryOrder(in.OutOrderNo, "")
+		douyinOrder, err := payClient.QueryOrder(in.OutOrderNo, "", clientToken)
 		if err != nil {
 			l.Errorf("CreateDouyinRefund pkgName= %s, 读取抖音支付订单失败，err:=%v", in.AppPkgName, err)
 			return nil, err
@@ -105,7 +111,13 @@ func (l *CreateDouyinRefundLogic) CreateDouyinRefund(in *pb.CreateDouyinRefundRe
 		RefundAll:         in.RefundAll,
 	}
 
-	refundResp, err := payClient.CreateRefundOrder(refundReq)
+	clientToken, err := l.svcCtx.BaseAppConfigServerApi.GetDyClientToken(l.ctx, payCfg.AppID)
+	if err != nil {
+		l.Errorw("get douyin clientToken fail", logx.Field("err", err), logx.Field("appId", payCfg.AppID))
+		return nil, err
+	}
+
+	refundResp, err := payClient.CreateRefundOrder(refundReq, clientToken)
 	if err != nil || refundResp.ErrNo != 0 || refundResp.Data == nil {
 		l.Errorf("CreateDouyinRefund createRefund fail, err:%v, req:%+v, resp:%v", err, refundReq, refundResp)
 		return nil, err

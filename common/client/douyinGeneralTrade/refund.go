@@ -15,7 +15,8 @@ type CreateRefundOrderReq struct {
 	RefundReason      []*RefundReason    // 必填		退款原因，可填多个，不超过10个
 	RefundTotalAmount int64              // 必填		退款总金额 单位分
 	ItemOrderDetail   []*ItemOrderDetail // 非必填 	需要发起退款的商品单信息，数组长度<100，refund_all=false时必填
-	RefundAll         bool               // 非必填	是否整单退款
+	RefundAll         bool               // 非必填	是否整单退款 当订单未发生任何退款时，可设置refund_all=true，refund_total_amount=订单实付金额，发起整单退款。refund_all=true时不能设置item_order_detail
+	Currency          string             // 非必填 	支付币种 钻石订单发起退款必须指定currency=DIAMOND
 }
 
 type RefundReason struct {
@@ -39,11 +40,7 @@ type CreateRefundRespData struct {
 }
 
 // CreateRefundOrder 创建退款订单 https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/server/trade-system/general/refund/create_refund
-func (c *PayClient) CreateRefundOrder(req *CreateRefundOrderReq) (*CreateRefundResp, error) {
-	clientToken, err := getClientToken(c.config.GetClientTokenUrl, c.config.AppId)
-	if err != nil {
-		return nil, err
-	}
+func (c *PayClient) CreateRefundOrder(req *CreateRefundOrderReq, clientToken string) (*CreateRefundResp, error) {
 	header := map[string]string{
 		"access-token": clientToken,
 	}
@@ -65,23 +62,24 @@ func (c *PayClient) CreateRefundOrder(req *CreateRefundOrderReq) (*CreateRefundR
 // RefundMsg 退款回调消息 https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/server/trade-system/general/refund/refund_notify
 type RefundMsg struct {
 	AppId             string `json:"app_id"`
-	Status            string `json:"status"`              //退款状态枚举值：SUCCESS：退款成功FAIL：退款失败
-	OrderId           string `json:"order_id"`            //抖音开平侧订单号
-	CpExtra           string `json:"cp_extra"`            //退款时开发者传入字段
-	Message           string `json:"message"`             //结果描述信息，如失败原因
-	EventTime         int64  `json:"event_time"`          //退款时间戳，单位为毫秒
-	RefundId          string `json:"refund_id"`           //抖音开平侧退款单号
-	OutRefundNo       string `json:"out_refund_no"`       //开发者自定义的退款单号（可能为空)
-	RefundTotalAmount int    `json:"refund_total_amount"` //退款金额，单位分
-	IsAllSettled      bool   `json:"is_all_settled"`      //是否为分账后退款
-	RefundType        int64  `json:"refund_type"`         //退款来源类型，枚举值： 1: 用户发起 2：开发者发起 4：抖音客服退款
+	Status            string `json:"status"`              // 必填	退款状态枚举值：SUCCESS：退款成功FAIL：退款失败
+	OrderId           string `json:"order_id"`            // 必填	抖音开平侧订单号
+	CpExtra           string `json:"cp_extra"`            // 必填	开发者传入字段
+	Message           string `json:"message"`             // 非必填 结果描述信息，如失败原因
+	EventTime         int64  `json:"event_time"`          // 必填	退款时间戳，单位为毫秒
+	RefundId          string `json:"refund_id"`           // 必填	抖音开平侧退款单号
+	OutRefundNo       string `json:"out_refund_no"`       // 必填 开发者自定义的退款单号（可能为空)
+	RefundTotalAmount int    `json:"refund_total_amount"` // 必填	退款总金额 单位分 钻石订单退款会填充退钻石数量
+	IsAllSettled      bool   `json:"is_all_settled"`      // 必填	是否为分账后退款
 	RefundItemDetail  struct {
-		ItemOrderQuantity int `json:"item_order_quantity"` //用户退款商品单数量
+		ItemOrderQuantity int `json:"item_order_quantity"` // 必填	用户退款商品单数量
 		ItemOrderDetail   []struct {
-			RefundAmount int    `json:"refund_amount"` //该商品单退款金额，单位[分]
-			ItemOrderId  string `json:"item_order_id"` // 抖音开平侧商品单id
-		} `json:"item_order_detail"` //本次退款的商品单
-	} `json:"refund_item_detail"` //退款商品单信息
+			RefundAmount int    `json:"refund_amount"` // 必填	退款金额 单位分 钻石订单退款会填充退钻石数量
+			ItemOrderId  string `json:"item_order_id"` // 必填	抖音开平侧商品单id
+		} `json:"item_order_detail"`
+	} `json:"refund_item_detail"`
+	Currency   string `json:"currency,omitempty"`    // 非必填 支付币种 钻石支付为DIAMOND
+	RefundType int64  `json:"refund_type,omitempty"` // 非必填 来源类型，枚举值： 1: 用户发起 2：开发者发起 4：抖音客服退款
 }
 
 // PreCreateRefundMsg 退款申请回调消息 https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/server/trade-system/general/refund/refund_callback
@@ -91,7 +89,7 @@ type PreCreateRefundMsg struct {
 	RefundId            string   `json:"refund_id"`
 	OrderId             string   `json:"order_id"`
 	OutOrderNo          string   `json:"out_order_no"`
-	RefundTotalAmount   int64    `json:"refund_total_amount"`
+	RefundTotalAmount   int64    `json:"refund_total_amount"` // 必填	退款总金额 单位分 钻石订单退款会填充退钻石数量
 	NeedRefundAudit     int8     `json:"need_refund_audit"`
 	RefundAuditDeadline int64    `json:"refund_audit_deadline"`
 	CreateRefundTime    int64    `json:"create_refund_time"`
@@ -103,9 +101,10 @@ type PreCreateRefundMsg struct {
 		ItemOrderQuantity int64 `json:"item_order_quantity"`
 		ItemOrderDetail   []struct {
 			ItemOrderId  string `json:"item_order_id"`
-			RefundAmount int    `json:"refund_amount"`
+			RefundAmount int    `json:"refund_amount"` // 必填	退款金额 单位分 钻石订单退款会填充退钻石数量
 		} `json:"item_order_detail"`
 	} `json:"refund_item_detail"`
+	Currency string `json:"currency,omitempty"` // 非必填 支付币种 钻石支付为DIAMOND
 }
 
 type AuditRefundReq struct {
@@ -115,11 +114,7 @@ type AuditRefundReq struct {
 }
 
 // AuditRefund 审核退款订单 https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/server/trade-system/general/refund/refund_audit
-func (c *PayClient) AuditRefund(req *AuditRefundReq) (*ApiCommonResp, error) {
-	clientToken, err := getClientToken(c.config.GetClientTokenUrl, c.config.AppId)
-	if err != nil {
-		return nil, err
-	}
+func (c *PayClient) AuditRefund(req *AuditRefundReq, clientToken string) (*ApiCommonResp, error) {
 	header := map[string]string{
 		"access-token": clientToken,
 	}
@@ -159,24 +154,21 @@ type QueryRefundRespData struct {
 		CreateAt          int64  `json:"create_at"`
 		RefundAt          int64  `json:"refund_at"`
 		RefundStatus      string `json:"refund_status"`
-		RefundTotalAmount int64  `json:"refund_total_amount"`
+		RefundTotalAmount int64  `json:"refund_total_amount"` // 必填	退款总金额 单位分 钻石订单退款会填充退钻石数量
 		ItemOrderDetail   []struct {
 			ItemOrderId  string `json:"item_order_id"`
-			RefundAmount int64  `json:"refund_amount"`
+			RefundAmount int64  `json:"refund_amount"` // 必填	退款金额 单位分 钻石订单退款会填充退钻石数量
 		} `json:"item_order_detail"`
 		Message     string `json:"message"`
 		OrderId     string `json:"order_id"`
 		OutRefundNo string `json:"out_refund_no"`
 		RefundId    string `json:"refund_id"`
+		Currency    string `json:"currency,omitempty"` // 非必填 支付币种 钻石支付为DIAMOND
 	} `json:"refund_list"`
 }
 
 // QueryRefund 查询退款订单 https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/server/trade-system/general/refund/query_refund
-func (c *PayClient) QueryRefund(req *QueryRefundReq) (*QueryRefundResp, error) {
-	clientToken, err := getClientToken(c.config.GetClientTokenUrl, c.config.AppId)
-	if err != nil {
-		return nil, err
-	}
+func (c *PayClient) QueryRefund(req *QueryRefundReq, clientToken string) (*QueryRefundResp, error) {
 	header := map[string]string{
 		"access-token": clientToken,
 	}
