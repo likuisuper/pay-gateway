@@ -192,6 +192,7 @@ func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (out *pb.OrderPayResp, err 
 	case pb.PayType_DouyinGeneralTrade:
 		checkParamErr := l.checkDouyinGeneralTradeParam(in)
 		if checkParamErr != nil {
+			err = checkParamErr
 			util.CheckError("checkParam fail pkgName= %s, tiktokEcPay，err:=%v", in.AppPkgName, checkParamErr)
 			return
 		}
@@ -376,11 +377,11 @@ func (l *OrderPayLogic) checkDouyinGeneralTradeParam(in *pb.OrderPayReq) error {
 		return errors.New("invalid sku type")
 	}
 
-	if in.Os == code.OsIos {
-		if _, ok := pb.DouyinGeneralTradeReq_IosPayType_name[int32(req.IosPayType)]; !ok || req.IosPayType == pb.DouyinGeneralTradeReq_IosPayTypeUnknown {
-			return fmt.Errorf("invalid iosPayType:%v", req.IosPayType)
-		}
-	}
+	//if in.Os == code.OsIos {
+	//	if _, ok := pb.DouyinGeneralTradeReq_IosPayType_name[int32(req.IosPayType)]; !ok || req.IosPayType == pb.DouyinGeneralTradeReq_IosPayTypeUnknown {
+	//		return fmt.Errorf("invalid iosPayType:%v", req.IosPayType)
+	//	}
+	//}
 	return nil
 }
 
@@ -430,6 +431,8 @@ func (l *OrderPayLogic) createDouyinGeneralTradeOrder(in *pb.OrderPayReq, payCon
 			data.PayScene = douyin.PaySceneIM
 		case pb.DouyinGeneralTradeReq_IosPayTypeDiamond:
 			data.Currency = douyin.CurrencyDiamond
+		default:
+			data.PayScene = douyin.PaySceneIM // 版本兼容
 		}
 	}
 
