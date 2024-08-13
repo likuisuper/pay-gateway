@@ -7,13 +7,11 @@ import (
 	douyin "gitee.com/zhuyunkj/pay-gateway/common/client/douyinGeneralTrade"
 	"gitee.com/zhuyunkj/pay-gateway/common/define"
 	"gitee.com/zhuyunkj/pay-gateway/db/mysql/model"
+	"gitee.com/zhuyunkj/pay-gateway/rpc/internal/svc"
+	"gitee.com/zhuyunkj/pay-gateway/rpc/pb/pb"
 	"gitee.com/zhuyunkj/zhuyun-core/util"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/wechatpay-apiv3/wechatpay-go/services/payments"
-	"time"
-
-	"gitee.com/zhuyunkj/pay-gateway/rpc/internal/svc"
-	"gitee.com/zhuyunkj/pay-gateway/rpc/pb/pb"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -45,7 +43,7 @@ func NewOrderStatusLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Order
 	}
 }
 
-// 查询订单
+// OrderStatus 查询订单
 func (l *OrderStatusLogic) OrderStatus(in *pb.OrderStatusReq) (resp *pb.OrderStatusResp, err error) {
 	resp = new(pb.OrderStatusResp)
 	resp.OrderSn = in.OrderSn
@@ -119,25 +117,26 @@ func (l *OrderStatusLogic) OrderStatus(in *pb.OrderStatusReq) (resp *pb.OrderSta
 		payCfg, cfgErr := l.payConfigTiktokModel.GetOneByAppID(pkgCfg.TiktokPayAppID)
 		if cfgErr != nil {
 			err = fmt.Errorf("pkgName= %s, 读取抖音支付配置失败，err:=%v", in.AppPkgName, cfgErr)
-			util.CheckError(err.Error())
+			util.Error(l.ctx, err.Error())
 			return
 		}
 
 		douyinPayConfig := payCfg.GetGeneralTradeConfig()
-		douyinPayConfig.GetClientTokenUrl = l.svcCtx.Config.DouyinClientTokenUrl
 		payClient := douyin.NewDouyinPay(douyinPayConfig)
 
-		defer func(t time.Time) {
-			l.Slowf("payClient.QueryOrder timecost:%v", time.Since(t))
-		}(time.Now())
-
-		orderInfo, err := payClient.QueryOrder("", in.OrderSn)
-		l.Slowf("queryOrder, orderSn:%s, err:%v, resp:%v", in.OrderSn, err, orderInfo)
+		clientToken, err := l.svcCtx.BaseAppConfigServerApi.GetDyClientToken(l.ctx, douyinPayConfig.AppId)
 		if err != nil {
-			err = fmt.Errorf("查询抖音订单失败, orderSn=%s, err=%v", in.OrderSn, err)
-			util.CheckError(err.Error())
+			l.Errorw("get douyin client token fail", logx.Field("err", err), logx.Field("appId", douyinPayConfig.AppId))
 			return nil, err
 		}
+
+		orderInfo, err := payClient.QueryOrder("", in.OrderSn, clientToken)
+		if err != nil {
+			err = fmt.Errorf("查询抖音订单失败, orderSn=%s, err=%v", in.OrderSn, err)
+			util.Error(l.ctx, err.Error())
+			return nil, err
+		}
+
 		if orderInfo.Data != nil && orderInfo.Data.PayStatus == "SUCCESS" {
 			resp.Status = 1
 			resp.PayAmount = orderInfo.Data.TotalAmount

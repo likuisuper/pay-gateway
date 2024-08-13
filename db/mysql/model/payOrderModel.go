@@ -52,6 +52,7 @@ type PmPayOrderTable struct {
 	CreatedAt    time.Time `gorm:"column:created_at;type:datetime" json:"created_at"`
 	UpdatedAt    time.Time `gorm:"column:updated_at;type:datetime" json:"updated_at"`
 	ThirdOrderNo string    `gorm:"column:third_order_no;NULL" json:"third_order_no"` //三方订单号
+	Currency     string    `gorm:"column:currency;type:varchar(16);NOT NULL"`        // 支付币种
 }
 
 func (m *PmPayOrderTable) TableName() string {

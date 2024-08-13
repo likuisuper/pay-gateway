@@ -8,11 +8,11 @@ import (
 
 type Config struct {
 	zrpc.RpcServerConf
-	Mysql                []*db.DbConfig `json:"Mysql"`
-	Nacos                NacosConfig
-	RedisConfig          []*cache.RedisConfigs `json:"RedisConfig"`
-	SnowFlake            SnowFlake             `json:"SnowFlake,optional"`            //雪花算法参数
-	DouyinClientTokenUrl string                `json:"DouyinClientTokenUrl,optional"` // 获取抖音client_token链接
+	Mysql                  []*db.DbConfig `json:"Mysql"`
+	Nacos                  NacosConfig
+	RedisConfig            []*cache.RedisConfigs `json:"RedisConfig"`
+	SnowFlake              SnowFlake             `json:"SnowFlake,optional"`     //雪花算法参数
+	BaseAppConfigServerUrl string                `json:"BaseAppConfigServerUrl"` // baseAppConfigServer地址
 }
 
 // mysql配置

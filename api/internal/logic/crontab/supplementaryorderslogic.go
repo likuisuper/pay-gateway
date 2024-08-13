@@ -207,10 +207,15 @@ func (l *SupplementaryOrdersLogic) handleDouyinOrder(orderInfo *model.PmPayOrder
 	}
 
 	douyinPayConfig := payCfg.GetGeneralTradeConfig()
-	douyinPayConfig.GetClientTokenUrl = l.svcCtx.Config.DouyinClientTokenUrl
 	payClient := douyin.NewDouyinPay(douyinPayConfig)
 
-	douyinOrder, err := payClient.QueryOrder("", orderInfo.OrderSn)
+	clientToken, err := l.svcCtx.BaseAppConfigServerApi.GetDyClientToken(l.ctx, douyinPayConfig.AppId)
+	if err != nil {
+		l.Errorw("get douyin client token fail", logx.Field("err", err), logx.Field("appId", douyinPayConfig.AppId))
+		return err
+	}
+
+	douyinOrder, err := payClient.QueryOrder("", orderInfo.OrderSn, clientToken)
 	if err != nil {
 		return fmt.Errorf("handleDouyinOrder:查询抖音订单失败, orderSn=%s, err=%v", orderInfo.OrderSn, err)
 	}
