@@ -161,8 +161,6 @@ message DyOrderRefundReq {
   string Reason = 4;  //退款原因
   int64  RefundAmount = 5; //退款金额，单位分
   string NotifyUrl = 6; //商户自定义回调地址，必须以 https 开头，支持 443 端口
-  bool RefundAll = 7; //是否退款全部金额
-  string OrderSn = 8; //orderCode订单号
 }
 
 //抖音支付-退款
@@ -293,6 +291,8 @@ message CreateDouyinRefundReq {
   string refundReason = 5; // 退款原因
   string refundNotifyUrl = 6; // 退款回调地址
   Schema orderEntrySchema = 7; // 退款单的跳转的 schema
+  bool RefundAll = 8; //是否退款全部金额
+  string OrderSn = 9; //orderCode订单号
 }
 
 message CreateDouyinRefundResp {
