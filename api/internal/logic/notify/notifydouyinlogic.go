@@ -81,6 +81,7 @@ func (l *NotifyDouyinLogic) NotifyDouyin(req *http.Request) (resp *types.DouyinR
 			ErrTips: "unmarshal body fail",
 		}, nil
 	}
+	l.Slowf("NotifyDouyin  body:%s", body)
 
 	switch data.Type {
 	case douyin.EventPayment:
