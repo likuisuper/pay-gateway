@@ -204,7 +204,7 @@ func (l *NotifyDouyinLogic) notifyRefund(req *http.Request, body []byte, msgJson
 	msg := new(douyin.RefundMsg)
 	err := sonic.UnmarshalString(msgJson, msg)
 	if err != nil {
-		err = fmt.Errorf("unmarshalString fial, msgJson:%v, err:%v", msgJson, err)
+		err = fmt.Errorf("notifyRefund unmarshalString fial, msgJson:%v, err:%v", msgJson, err)
 		util.CheckError(err.Error())
 		return nil, err
 	}
@@ -213,7 +213,7 @@ func (l *NotifyDouyinLogic) notifyRefund(req *http.Request, body []byte, msgJson
 
 	payCfg, cfgErr := l.payConfigTiktokModel.GetOneByAppID(msg.AppId)
 	if cfgErr != nil {
-		err = fmt.Errorf("appid = %s, 读取抖音支付配置失败，err:=%v", msg.AppId, cfgErr)
+		err = fmt.Errorf("notifyRefund appid = %s, 读取抖音支付配置失败，err:=%v", msg.AppId, cfgErr)
 		util.CheckError(err.Error())
 		return nil, cfgErr
 	}
@@ -222,7 +222,7 @@ func (l *NotifyDouyinLogic) notifyRefund(req *http.Request, body []byte, msgJson
 	client := douyin.NewDouyinPay(payCfg.GetGeneralTradeConfig())
 	err = client.VerifyNotify(req, body)
 	if err != nil {
-		l.Errorf("验签未通过，或者解密失败！err=%v", err)
+		l.Errorf("notifyRefund 验签未通过，或者解密失败！err=%v", err)
 		return &types.DouyinResp{
 			ErrNo:   400,
 			ErrTips: "验签未通过，或者解密失败",
@@ -233,18 +233,30 @@ func (l *NotifyDouyinLogic) notifyRefund(req *http.Request, body []byte, msgJson
 	concurrentKey, value := fmt.Sprintf("payGateway:refundNotify:douyin:%s", msg.OutRefundNo), uuid.New().String()
 	isLock, err := l.Rdb.TryLockWithTimeout(context.Background(), concurrentKey, value, 1000)
 	if err != nil || !isLock {
-		l.Slowf("redis lock fail, err:%s, isLock:%v, key:%v", err.Error(), isLock, concurrentKey)
+		l.Slowf("notifyRefund redis lock fail, err:%s, isLock:%v, key:%v", err.Error(), isLock, concurrentKey)
 		return nil, fmt.Errorf("redis lock fail, err:%s, isLock:%v, key:%v", err.Error(), isLock, concurrentKey)
 	}
 
 	//修改数据库
-	refundInfo, _ := l.refundOrderModel.GetInfoByRefundNo(msg.RefundId)
+	refundInfo, err := l.refundOrderModel.GetInfoByRefundNo(msg.RefundId)
+	if err != nil {
+		l.Errorf("notifyRefund 获取退款订单失败！err=%v,order_code = %s", err, msg.RefundId)
+		return nil, err
+	}
 	//判断改退款订单是否已被处理过
 	if refundInfo.RefundStatus == model.PmRefundOrderTableRefundStatusSuccess {
 		notifyOrderHasDispose.CounterInc()
 		err = fmt.Errorf("订单已处理")
 		return nil, err
 	}
+
+	//查询订单的包名信息
+	orderInfo, err := l.payOrderModel.GetOneByOrderSnAndAppId(refundInfo.OutOrderNo, msg.AppId)
+	if err != nil {
+		l.Errorf("notifyRefund 获取订单失败！err=%v,order_code = %s", err, msg.RefundId)
+		return nil, err
+	}
+
 	refundInfo.NotifyData = msgJson
 	refundInfo.RefundedAt = msg.EventTime
 	if msg.Status == "SUCCESS" {
@@ -256,13 +268,16 @@ func (l *NotifyDouyinLogic) notifyRefund(req *http.Request, body []byte, msgJson
 	//回调业务方接口
 	go func() {
 		defer exception.Recover()
-		respData, requestErr := util.HttpPost(refundInfo.NotifyUrl, originData, 5*time.Second)
+		headMap := map[string]string{
+			"App-Origin": orderInfo.AppPkgName,
+		}
+		respData, requestErr := util.HttpPostWithHeader(refundInfo.NotifyUrl, originData, headMap, 5*time.Second)
 		if requestErr != nil {
 			CallbackBizFailNum.CounterInc()
-			util.CheckError("NotifyRefund-post, req:%+v, err:%v", originData, requestErr)
+			util.CheckError("notifyRefund NotifyRefund-post, req:%+v, err:%v", originData, requestErr)
 			return
 		}
-		logx.Slowf("NotifyRefund-post, req:%+v, respData:%s", originData, respData)
+		logx.Slowf("notifyRefund NotifyRefund-post, req:%+v, respData:%s", originData, respData)
 	}()
 
 	resp := &types.DouyinResp{
