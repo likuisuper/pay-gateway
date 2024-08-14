@@ -291,8 +291,9 @@ message CreateDouyinRefundReq {
   string refundReason = 5; // 退款原因
   string refundNotifyUrl = 6; // 退款回调地址
   Schema orderEntrySchema = 7; // 退款单的跳转的 schema
-  bool refundAll = 8; //是否退款全部金额
-  string orderSn = 9; //orderCode订单号
+  string orderSn = 8; //orderCode订单号
+  bool refundAll = 9; //是否退款全部金额
+
 }
 
 message CreateDouyinRefundResp {
