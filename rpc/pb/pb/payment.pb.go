@@ -2675,6 +2675,20 @@ func (x *CreateDouyinRefundReq) GetRefundNotifyUrl() string {
 	return ""
 }
 
+func (x *CreateDouyinRefundReq) GetRefundAll() bool {
+	if x != nil {
+		return x.RefundAll
+	}
+	return false
+}
+
+func (x *CreateDouyinRefundReq) GetOrderSn() string {
+	if x != nil {
+		return x.OrderSn
+	}
+	return ""
+}
+
 func (x *CreateDouyinRefundReq) GetOrderEntrySchema() *Schema {
 	if x != nil {
 		return x.OrderEntrySchema
