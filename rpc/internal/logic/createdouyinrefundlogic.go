@@ -60,18 +60,39 @@ func (l *CreateDouyinRefundLogic) CreateDouyinRefund(in *pb.CreateDouyinRefundRe
 		return nil, errors.New("订单号和抖音订单号不能同时为空")
 	}
 
+	//查询订单是否存在
+	payOrderInfo, err := l.orderModel.GetOneByCode(in.OrderSn)
+	if err != nil {
+		l.Errorf("CreateDouyinRefund pkgName= %s, order_sn: %v 获取抖音支付订单失败，err:=%v", in.AppPkgName, in.OrderSn, err)
+		return nil, err
+	}
+
 	if in.OutOrderNo == "" && in.OrderSn != "" {
-		//查询抖音侧订单号
-		payOrderInfo, err := l.orderModel.GetOneByCode(in.OrderSn)
-		if err != nil {
-			l.Errorf("CreateDouyinRefund pkgName= %s, 读取抖音支付订单失败，err:=%v", in.AppPkgName, err)
-			return nil, err
-		}
 		in.OutOrderNo = payOrderInfo.ThirdOrderNo
 	}
 
 	clientConfig := payCfg.GetGeneralTradeConfig()
 	payClient := douyin.NewDouyinPay(clientConfig)
+
+	refundReq := &douyin.CreateRefundOrderReq{
+		OrderId:     in.OutOrderNo,
+		OutRefundNo: in.OutRefundNo,
+		CpExtra:     "extra_info",
+		OrderEntrySchema: douyin.Schema{
+			Path:   in.GetOrderEntrySchema().GetPath(),
+			Params: in.GetOrderEntrySchema().GetParams(),
+		},
+		NotifyUrl: clientConfig.NotifyUrl,
+		RefundReason: []*douyin.RefundReason{
+			{
+				Code: 999,
+				Text: in.RefundReason,
+			},
+		},
+		RefundTotalAmount: in.RefundAmount,
+		RefundAll:         in.RefundAll,
+		Currency:          payOrderInfo.Currency,
+	}
 
 	itemOrderDetail := make([]*douyin.ItemOrderDetail, 0)
 	//是否是全额退款
@@ -92,27 +113,7 @@ func (l *CreateDouyinRefundLogic) CreateDouyinRefund(in *pb.CreateDouyinRefundRe
 			ItemOrderId:  douyinOrder.Data.ItemOrderList[0].SkuId,
 			RefundAmount: in.RefundAmount,
 		})
-
-	}
-
-	refundReq := &douyin.CreateRefundOrderReq{
-		OrderId:     in.OutOrderNo,
-		OutRefundNo: in.OutRefundNo,
-		CpExtra:     "extra_info",
-		OrderEntrySchema: douyin.Schema{
-			Path:   in.GetOrderEntrySchema().GetPath(),
-			Params: in.GetOrderEntrySchema().GetParams(),
-		},
-		NotifyUrl: clientConfig.NotifyUrl,
-		RefundReason: []*douyin.RefundReason{
-			{
-				Code: 999,
-				Text: in.RefundReason,
-			},
-		},
-		RefundTotalAmount: in.RefundAmount,
-		ItemOrderDetail:   itemOrderDetail,
-		RefundAll:         in.RefundAll,
+		refundReq.ItemOrderDetail = itemOrderDetail
 	}
 
 	clientToken, err := l.svcCtx.BaseAppConfigServerApi.GetDyClientToken(l.ctx, payCfg.AppID)
