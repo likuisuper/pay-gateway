@@ -2597,7 +2597,7 @@ type CreateDouyinRefundReq struct {
 	RefundReason     string  `protobuf:"bytes,5,opt,name=refundReason,proto3" json:"refundReason,omitempty"`         // 退款原因
 	RefundNotifyUrl  string  `protobuf:"bytes,6,opt,name=refundNotifyUrl,proto3" json:"refundNotifyUrl,omitempty"`   // 退款回调地址
 	OrderEntrySchema *Schema `protobuf:"bytes,7,opt,name=orderEntrySchema,proto3" json:"orderEntrySchema,omitempty"` // 退款单的跳转的 schema
-	RefundAll bool `protobuf:"varint,8,opt,name=refundAll,proto3" json:"orderEntrySchema,omitempty"` // 是否全额退款 当订单未发生任何退款时，可设置refund_all=true，refund_total_amount=订单实付金额，发起整单退款。refund_all=true时不能设置item_order_detail
+	RefundAll bool `protobuf:"bool,8,opt,name=refundAll,proto3" json:"refundAll,omitempty"` // 是否全额退款 当订单未发生任何退款时，可设置refund_all=true，refund_total_amount=订单实付金额，发起整单退款。refund_all=true时不能设置item_order_detail
 	OrderSn        string  `protobuf:"bytes,9,opt,name=orderSn,proto3" json:"orderSn,omitempty"` //内部订单号
 }
 
