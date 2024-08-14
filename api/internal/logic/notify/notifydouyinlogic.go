@@ -240,7 +240,7 @@ func (l *NotifyDouyinLogic) notifyRefund(req *http.Request, body []byte, msgJson
 	//修改数据库
 	refundInfo, _ := l.refundOrderModel.GetInfoByRefundNo(msg.RefundId)
 	//判断改退款订单是否已被处理过
-	if refundInfo.RefundStatus != model.PmRefundOrderTableRefundStatusSuccess {
+	if refundInfo.RefundStatus == model.PmRefundOrderTableRefundStatusSuccess {
 		notifyOrderHasDispose.CounterInc()
 		err = fmt.Errorf("订单已处理")
 		return nil, err
