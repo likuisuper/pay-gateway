@@ -246,7 +246,7 @@ func (l *NotifyDouyinLogic) notifyRefund(req *http.Request, body []byte, msgJson
 		return nil, err
 	}
 	refundInfo.NotifyData = msgJson
-	refundInfo.RefundedAt = int(msg.EventTime)
+	refundInfo.RefundedAt = msg.EventTime
 	if msg.Status == "SUCCESS" {
 		refundInfo.RefundStatus = model.PmRefundOrderTableRefundStatusSuccess
 	} else {

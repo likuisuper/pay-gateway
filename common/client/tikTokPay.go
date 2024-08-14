@@ -164,7 +164,7 @@ type TikTokNotifyMsgRefundData struct {
 	Status       string `json:"status"`         //状态枚举值： SUCCESS：成功  FAIL：失败
 	RefundAmount int    `json:"refund_amount"`  //退款金额，单位为分
 	IsAllSettled bool   `json:"is_all_settled"` //是否为分账后退款
-	RefundedAt   int    `json:"refunded_at"`    //退款时间，Unix 时间戳，10 位，整型数，秒级
+	RefundedAt   int64  `json:"refunded_at"`    //退款时间，Unix 时间戳，10 位，整型数，秒级
 	Message      string `json:"message"`        //退款失败原因描述，详见发起退款错误码
 	OrderId      string `json:"order_id"`       //抖音侧订单号
 	RefundNo     string `json:"refund_no"`      //抖音侧退款单号
