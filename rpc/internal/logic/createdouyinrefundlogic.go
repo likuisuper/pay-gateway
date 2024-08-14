@@ -8,6 +8,7 @@ import (
 	"gitee.com/zhuyunkj/pay-gateway/db/mysql/model"
 	"gitee.com/zhuyunkj/pay-gateway/rpc/internal/svc"
 	"gitee.com/zhuyunkj/pay-gateway/rpc/pb/pb"
+	jsoniter "github.com/json-iterator/go"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -38,6 +39,9 @@ func NewCreateDouyinRefundLogic(ctx context.Context, svcCtx *svc.ServiceContext)
 
 // CreateDouyinRefund 抖音退款 使用通用交易系统
 func (l *CreateDouyinRefundLogic) CreateDouyinRefund(in *pb.CreateDouyinRefundReq) (*pb.CreateDouyinRefundResp, error) {
+	params, _ := jsoniter.Marshal(in)
+	l.Slowf("CreateDouyinRefund params: %v", string(params))
+
 	//读取应用配置
 	pkgCfg, err := l.appConfigModel.GetOneByPkgName(in.AppPkgName)
 	if err != nil {
