@@ -24,7 +24,7 @@ const (
 	PmPayOrderTablePayStatusNo     = 0 // 未支付
 	PmPayOrderTablePayStatusPaid   = 1 // 支付成功
 	PmPayOrderTablePayStatusFailed = 2 // 支付失败
-	PmPayOrderTablePayStatusRefund = 3 // 退款
+	PmPayOrderTablePayStatusCancel = 3 // 支付取消
 	// 支付方式
 	PmPayOrderTablePayTypeWechatPayUni       = 1 // 微信JSAPI支付
 	PmPayOrderTablePayTypeTiktokPayEc        = 2

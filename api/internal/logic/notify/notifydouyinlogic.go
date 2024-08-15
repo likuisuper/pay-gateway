@@ -134,11 +134,6 @@ func (l *NotifyDouyinLogic) notifyPayment(req *http.Request, body []byte, msgJso
 		}, nil
 	}
 
-	if msg.Status != "SUCCESS" { // todo: 处理非成功的状态
-		l.Slowf("douyin支付回调异常: %s", msgJson)
-		return nil, nil
-	}
-
 	// redis 并发控制
 	concurrentKey, value := fmt.Sprintf("payGateway:paymentNotify:douyin:%s", msg.OutOrderNo), uuid.New().String()
 	isLock, err := l.Rdb.TryLockWithTimeout(context.Background(), concurrentKey, value, 1000)
@@ -156,21 +151,26 @@ func (l *NotifyDouyinLogic) notifyPayment(req *http.Request, body []byte, msgJso
 
 	//获取订单信息 根据订单号和appid查询
 	orderInfo, err := l.payOrderModel.GetOneByOrderSnAndAppId(msg.OutOrderNo, msg.AppId)
-	if err != nil {
+	if err != nil || orderInfo == nil {
 		err = fmt.Errorf("获取订单失败！err=%v,order_code = %s", err, msg.OutOrderNo)
 		util.CheckError(err.Error())
 		return nil, err
 	}
+
 	if orderInfo.PayStatus != model.PmPayOrderTablePayStatusNo {
 		notifyOrderHasDispose.CounterInc()
 		err = fmt.Errorf("订单已处理")
 		return nil, err
 	}
-	//修改数据库
-	orderInfo.NotifyAmount = int(msg.TotalAmount)
-	orderInfo.PayStatus = model.PmPayOrderTablePayStatusPaid
-	orderInfo.ThirdOrderNo = msg.OrderId
 
+	if msg.Status == "SUCCESS" {
+		orderInfo.PayStatus = model.PmPayOrderTablePayStatusPaid
+		//修改数据库
+		orderInfo.NotifyAmount = int(msg.TotalAmount)
+	} else {
+		orderInfo.PayStatus = model.PmPayOrderTablePayStatusCancel
+	}
+	orderInfo.ThirdOrderNo = msg.OrderId
 	err = l.payOrderModel.UpdateNotify(orderInfo)
 	if err != nil {
 		err = fmt.Errorf("orderSn = %s, UpdateNotify，err:=%v", orderInfo.OrderSn, err)
