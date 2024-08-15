@@ -37,8 +37,8 @@ type CreateRefundResp struct {
 }
 
 type CreateRefundRespData struct {
-	RefundId            string // 必填 抖音开放平台交易系统侧退款单号
-	RefundAuditDeadline int64  // 必填 退款审核的最后期限，13 位 unix 时间戳，精度：毫秒 通常是3天(从退款发起时间开始算)
+	RefundId            string `json:"refund_id,omitempty"`             // 必填 抖音开放平台交易系统侧退款单号
+	RefundAuditDeadline int64  `json:"refund_audit_deadline,omitempty"` // 必填 退款审核的最后期限，13 位 unix 时间戳，精度：毫秒 通常是3天(从退款发起时间开始算)
 }
 
 // CreateRefundOrder 创建退款订单 https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/server/trade-system/general/refund/create_refund
