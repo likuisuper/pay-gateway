@@ -137,6 +137,8 @@ func (l *OrderStatusLogic) OrderStatus(in *pb.OrderStatusReq) (resp *pb.OrderSta
 			return nil, err
 		}
 
+		jsonStr, _ := jsoniter.MarshalToString(orderInfo)
+		resp.ThirdRespJson = jsonStr
 		if orderInfo.Data != nil && orderInfo.Data.PayStatus == "SUCCESS" {
 			resp.Status = 1
 			resp.PayAmount = orderInfo.Data.TotalAmount
