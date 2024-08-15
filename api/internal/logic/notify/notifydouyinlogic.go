@@ -249,8 +249,19 @@ func (l *NotifyDouyinLogic) notifyRefund(req *http.Request, body []byte, msgJson
 		l.Errorf("notifyRefund 获取退款订单失败！err=%v,order_code = %s", err, msg.RefundId)
 		return &types.DouyinResp{
 			ErrNo:   400,
-			ErrTips: "订单不存在",
+			ErrTips: "获取退款订单失败",
 		}, nil
+	}
+	//根据支付网关的退款单号查询 创建退款订单超时未拿到抖音侧退款单号 还需更新退款单号信息
+	if refundInfo.ID == 0 {
+		refundInfo, err = l.refundOrderModel.GetInfo(msg.OutRefundNo)
+		if err != nil || refundInfo.ID == 0 {
+			l.Errorf("notifyRefund 获取退款订单失败！err=%v,order_code = %s", err, msg.RefundId)
+			return &types.DouyinResp{
+				ErrNo:   400,
+				ErrTips: "获取退款订单失败",
+			}, nil
+		}
 	}
 	//判断改退款订单是否已被处理过
 	if refundInfo.RefundStatus != model.PmRefundOrderTableRefundStatusApply {
@@ -264,7 +275,7 @@ func (l *NotifyDouyinLogic) notifyRefund(req *http.Request, body []byte, msgJson
 
 	//查询订单的包名信息
 	orderInfo, err := l.payOrderModel.GetOneByThirdOrderNoAndAppId(msg.OrderId, msg.AppId)
-	if err != nil || orderInfo == nil {
+	if err != nil || orderInfo.ID == 0 {
 		l.Errorf("notifyRefund 获取订单失败！err=%v,order_code = %s", err, msg.RefundId)
 		return &types.DouyinResp{
 			ErrNo:   400,
@@ -274,6 +285,10 @@ func (l *NotifyDouyinLogic) notifyRefund(req *http.Request, body []byte, msgJson
 
 	refundInfo.NotifyData = msgJson
 	refundInfo.RefundedAt = msg.EventTime
+	if refundInfo.RefundNo == "" {
+		//创建退款订单超时未拿到抖音侧退款单号 还需更新退款单号信息
+		refundInfo.RefundNo = msg.RefundId
+	}
 	if msg.Status == "SUCCESS" {
 		refundInfo.RefundStatus = model.PmRefundOrderTableRefundStatusSuccess
 	} else {

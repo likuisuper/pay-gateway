@@ -1,6 +1,7 @@
 package model
 
 import (
+	"errors"
 	"gitee.com/zhuyunkj/pay-gateway/db"
 	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
 	"github.com/zeromicro/go-zero/core/logx"
@@ -84,7 +85,7 @@ func (o *PmRefundOrderModel) GetInfo(outRefundNo string) (info *PmRefundOrderTab
 func (o *PmRefundOrderModel) GetInfoByRefundNo(refundNo string) (info *PmRefundOrderTable, err error) {
 	info = new(PmRefundOrderTable)
 	err = o.DB.Where("refund_no = ?", refundNo).Find(info).Error
-	if err != nil {
+	if err != nil && !errors.Is(gorm.ErrRecordNotFound, err) {
 		logx.Errorf("GetInfo, refundNo:%s, err:%v", refundNo, err)
 		refundOrderMysqlErr.CounterInc()
 	}

@@ -128,9 +128,13 @@ func (l *CreateDouyinRefundLogic) CreateDouyinRefund(in *pb.CreateDouyinRefundRe
 	}
 
 	refundResp, err := payClient.CreateRefundOrder(refundReq, clientToken)
-	if err != nil || refundResp.ErrNo != 0 {
+	if err != nil {
 		l.Errorf("CreateDouyinRefund createRefund fail, err:%v, req:%+v, resp:%+v", err, refundReq, refundResp)
 		return nil, err
+	}
+	if refundResp.ErrNo != 0 {
+		l.Errorf("CreateDouyinRefund createRefund fail, req:%+v, resp:%+v", refundReq, refundResp)
+		return nil, errors.New(refundResp.ErrMsg)
 	}
 	l.Slowf("CreateDouyinRefund createRefund success, req:%+v,refundResp:%+v", refundReq, refundResp)
 	//写入数据库

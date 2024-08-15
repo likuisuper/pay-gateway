@@ -7,13 +7,11 @@ import (
 	"crypto/sha256"
 	"crypto/x509"
 	"encoding/base64"
-	"encoding/json"
 	"encoding/pem"
 	"errors"
 	"fmt"
 	"gitee.com/zhuyunkj/zhuyun-core/util"
 	"github.com/bytedance/sonic"
-	"github.com/zeromicro/go-zero/core/logx"
 	"net/http"
 	"strconv"
 	"time"
@@ -306,11 +304,6 @@ func (c *PayClient) QueryOrder(orderId, outOrderId, clientToken string) (*QueryO
 	if err != nil {
 		return nil, err
 	}
-
-	str, _ := json.Marshal(req)
-	str1, _ := json.Marshal(result)
-	logx.Slowf("---------------00000---------%v,--------%v", string(str), string(str1))
-
 	resp := new(QueryOrderResp)
 	err = sonic.UnmarshalString(result, resp)
 	if err != nil {
