@@ -124,7 +124,7 @@ func (l *CreateDouyinRefundLogic) CreateDouyinRefund(in *pb.CreateDouyinRefundRe
 
 	refundResp, err := payClient.CreateRefundOrder(refundReq, clientToken)
 	if err != nil || refundResp.ErrNo != 0 || refundResp.Data == nil {
-		l.Errorf("CreateDouyinRefund createRefund fail, err:%v, req:%+v, resp:%v", err, refundReq, refundResp)
+		l.Errorf("CreateDouyinRefund createRefund fail, err:%v, req:%+v, resp:%+v", err, refundReq, refundResp)
 		return nil, err
 	}
 	l.Slowf("CreateDouyinRefund createRefund success, req:%+v,refundResp:%+v", refundReq, refundResp)
