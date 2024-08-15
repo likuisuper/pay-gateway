@@ -308,7 +308,8 @@ func (c *PayClient) QueryOrder(orderId, outOrderId, clientToken string) (*QueryO
 	}
 
 	str, _ := json.Marshal(req)
-	logx.Slowf("---------------00000---------%v", string(str))
+	str1, _ := json.Marshal(result)
+	logx.Slowf("---------------00000---------%v,--------%v", string(str), string(str1))
 
 	resp := new(QueryOrderResp)
 	err = sonic.UnmarshalString(result, resp)
