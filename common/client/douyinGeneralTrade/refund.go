@@ -53,7 +53,7 @@ func (c *PayClient) CreateRefundOrder(req *CreateRefundOrderReq, clientToken str
 	}
 
 	str, _ := json.Marshal(result)
-	logx.Slowf("-----dddddddd-----------", string(str))
+	logx.Slowf("-----dddddddd-----------%v", string(str))
 	resp := new(CreateRefundResp)
 	err = sonic.UnmarshalString(result, resp)
 	if err != nil {
