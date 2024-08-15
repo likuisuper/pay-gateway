@@ -127,7 +127,7 @@ func (l *CreateDouyinRefundLogic) CreateDouyinRefund(in *pb.CreateDouyinRefundRe
 		l.Errorf("CreateDouyinRefund createRefund fail, err:%v, req:%+v, resp:%v", err, refundReq, refundResp)
 		return nil, err
 	}
-
+	l.Slowf("CreateDouyinRefund createRefund success, req:%+v,refundResp:%v", refundReq, refundResp)
 	//写入数据库
 	refundOrder := &model.PmRefundOrderTable{
 		AppID:        clientConfig.AppId,
