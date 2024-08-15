@@ -237,18 +237,29 @@ func (l *NotifyDouyinLogic) notifyRefund(req *http.Request, body []byte, msgJson
 		l.Slowf("notifyRefund redis lock fail, err:%s, isLock:%v, key:%v", err.Error(), isLock, concurrentKey)
 		return nil, fmt.Errorf("redis lock fail, err:%s, isLock:%v, key:%v", err.Error(), isLock, concurrentKey)
 	}
-
+	defer func() {
+		unlockErr := l.Rdb.Unlock(context.Background(), concurrentKey, value)
+		if unlockErr != nil {
+			l.Slowf("redis unlock fail, key:%s, value:%s", concurrentKey, value)
+		}
+	}()
 	//修改数据库
 	refundInfo, err := l.refundOrderModel.GetInfoByRefundNo(msg.RefundId)
 	if err != nil {
 		l.Errorf("notifyRefund 获取退款订单失败！err=%v,order_code = %s", err, msg.RefundId)
-		return nil, err
+		return &types.DouyinResp{
+			ErrNo:   400,
+			ErrTips: "订单不存在",
+		}, nil
 	}
 	//判断改退款订单是否已被处理过
 	if refundInfo.RefundStatus == model.PmRefundOrderTableRefundStatusSuccess {
-		notifyOrderHasDispose.CounterInc()
-		err = fmt.Errorf("订单已处理")
-		return nil, err
+		l.Slowf("notifyRefund 退款订单已被处理过！order_code = %s", msg.RefundId)
+		resp := &types.DouyinResp{
+			ErrNo:   0,
+			ErrTips: "success",
+		}
+		return resp, nil
 	}
 
 	//查询订单的包名信息
@@ -276,9 +287,10 @@ func (l *NotifyDouyinLogic) notifyRefund(req *http.Request, body []byte, msgJson
 		if requestErr != nil {
 			CallbackBizFailNum.CounterInc()
 			util.CheckError("notifyRefund NotifyRefund-post, req:%+v, err:%v", originData, requestErr)
+			l.Errorf("notifyRefund NotifyRefund-post, req:%+v, err:%v", originData, requestErr)
 			return
 		}
-		logx.Slowf("notifyRefund NotifyRefund-post, req:%+v, respData:%s", originData, respData)
+		l.Slowf("notifyRefund NotifyRefund-post, req:%+v, respData:%s", originData, respData)
 	}()
 
 	resp := &types.DouyinResp{
