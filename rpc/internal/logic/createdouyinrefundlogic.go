@@ -135,7 +135,7 @@ func (l *CreateDouyinRefundLogic) CreateDouyinRefund(in *pb.CreateDouyinRefundRe
 		OutRefundNo:  in.OutRefundNo,
 		Reason:       in.RefundReason,
 		RefundAmount: int(in.RefundAmount),
-		NotifyUrl:    in.RefundNotifyUrl,
+		NotifyUrl:    payOrderInfo.NotifyUrl, //退款回调地址和支付回调地址一致
 		RefundNo:     refundResp.Data.RefundId,
 		RefundStatus: model.PmRefundOrderTableRefundStatusApply,
 	}

@@ -253,7 +253,7 @@ func (l *NotifyDouyinLogic) notifyRefund(req *http.Request, body []byte, msgJson
 		}, nil
 	}
 	//判断改退款订单是否已被处理过
-	if refundInfo.RefundStatus == model.PmRefundOrderTableRefundStatusSuccess {
+	if refundInfo.RefundStatus != model.PmRefundOrderTableRefundStatusApply {
 		l.Slowf("notifyRefund 退款订单已被处理过！order_code = %s", msg.RefundId)
 		resp := &types.DouyinResp{
 			ErrNo:   0,
@@ -297,7 +297,7 @@ func (l *NotifyDouyinLogic) notifyRefund(req *http.Request, body []byte, msgJson
 		if requestErr != nil {
 			CallbackBizFailNum.CounterInc()
 			util.CheckError("notifyRefund NotifyRefund-post, req:%+v, err:%v", originData, requestErr)
-			l.Errorf("notifyRefund NotifyRefund-post, req:%+v, err:%v", originData, requestErr)
+			l.Errorf("notifyRefund NotifyRefund-post, req:%+v, err:%v, url:%v", originData, requestErr, refundInfo.NotifyUrl)
 			return
 		}
 		l.Slowf("notifyRefund NotifyRefund-post, req:%+v, respData:%s", originData, respData)
