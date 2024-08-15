@@ -86,7 +86,7 @@ func (l *CreateDouyinRefundLogic) CreateDouyinRefund(in *pb.CreateDouyinRefundRe
 		RefundReason: []*douyin.RefundReason{
 			{
 				Code: 999,
-				Text: in.RefundReason,
+				Text: "其他",
 			},
 		},
 		RefundTotalAmount: in.RefundAmount,
