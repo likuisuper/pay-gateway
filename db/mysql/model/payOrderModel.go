@@ -193,3 +193,18 @@ func (o *PmPayOrderModel) GetListByCreateTimeRange(startTime, endTime time.Time)
 
 	return pmPayList, nil
 }
+
+//
+func (o *PmPayOrderModel) GetOneByThirdOrderNoAndAppId(orderSn, appId string) (info *PmPayOrderTable, err error) {
+	var orderInfo PmPayOrderTable
+	err = o.DB.Where("`third_order_no` = ? and pay_app_id = ?", orderSn, appId).First(&orderInfo).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	if err != nil {
+		logx.Errorf("GetOneByThirdOrderNoAndAppId 获取订单信息失败，err:=%v,order_sn=%s", err, orderSn)
+		getPayOrderErr.CounterInc()
+		return nil, err
+	}
+	return &orderInfo, nil
+}

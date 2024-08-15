@@ -263,10 +263,13 @@ func (l *NotifyDouyinLogic) notifyRefund(req *http.Request, body []byte, msgJson
 	}
 
 	//查询订单的包名信息
-	orderInfo, err := l.payOrderModel.GetOneByOrderSnAndAppId(refundInfo.OutOrderNo, msg.AppId)
-	if err != nil {
+	orderInfo, err := l.payOrderModel.GetOneByThirdOrderNoAndAppId(msg.OrderId, msg.AppId)
+	if err != nil || orderInfo == nil {
 		l.Errorf("notifyRefund 获取订单失败！err=%v,order_code = %s", err, msg.RefundId)
-		return nil, err
+		return &types.DouyinResp{
+			ErrNo:   400,
+			ErrTips: "获取订单失败",
+		}, nil
 	}
 
 	refundInfo.NotifyData = msgJson
@@ -276,7 +279,14 @@ func (l *NotifyDouyinLogic) notifyRefund(req *http.Request, body []byte, msgJson
 	} else {
 		refundInfo.RefundStatus = model.PmRefundOrderTableRefundStatusFail
 	}
-	_ = l.refundOrderModel.Update(msg.OutRefundNo, refundInfo)
+	err = l.refundOrderModel.Update(msg.OutRefundNo, refundInfo)
+	if err != nil {
+		l.Errorf("notifyRefund 更新退款订单失败！err=%v,order_code = %s", err, msg.RefundId)
+		return &types.DouyinResp{
+			ErrNo:   400,
+			ErrTips: "更新退款订单失败",
+		}, nil
+	}
 	//回调业务方接口
 	go func() {
 		defer exception.Recover()
