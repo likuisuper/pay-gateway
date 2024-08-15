@@ -123,7 +123,7 @@ func (l *CreateDouyinRefundLogic) CreateDouyinRefund(in *pb.CreateDouyinRefundRe
 	}
 
 	refundResp, err := payClient.CreateRefundOrder(refundReq, clientToken)
-	if err != nil || refundResp.ErrNo != 0 || refundResp.Data == nil {
+	if err != nil || refundResp.ErrNo != 0 {
 		l.Errorf("CreateDouyinRefund createRefund fail, err:%v, req:%+v, resp:%+v", err, refundReq, refundResp)
 		return nil, err
 	}

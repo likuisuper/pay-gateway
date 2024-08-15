@@ -31,7 +31,7 @@ type ItemOrderDetail struct {
 
 type CreateRefundResp struct {
 	ApiCommonResp
-	Data *CreateRefundRespData `json:"data,omitempty"` // 非必填
+	Data CreateRefundRespData `json:"data,omitempty"` // 非必填
 }
 
 type CreateRefundRespData struct {
