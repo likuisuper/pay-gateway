@@ -431,6 +431,8 @@ func (l *OrderPayLogic) createDouyinGeneralTradeOrder(in *pb.OrderPayReq, payCon
 			data.PayScene = douyin.PaySceneIM
 		case pb.DouyinGeneralTradeReq_IosPayTypeDiamond:
 			data.Currency = douyin.CurrencyDiamond
+			// 钻石支付暂不使用自定义商户号：钻石支付的商户号是新生成的，和普通支付不同
+			data.MerchantUid = ""
 		default:
 			data.PayScene = douyin.PaySceneIM // 版本兼容
 		}
