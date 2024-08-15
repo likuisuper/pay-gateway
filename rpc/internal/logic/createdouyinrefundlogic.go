@@ -71,6 +71,11 @@ func (l *CreateDouyinRefundLogic) CreateDouyinRefund(in *pb.CreateDouyinRefundRe
 		in.OutOrderNo = payOrderInfo.ThirdOrderNo
 	}
 
+	currency := ""
+	if payOrderInfo.Currency == "DYDIAMOND" {
+		currency = "DIAMOND"
+	}
+
 	clientConfig := payCfg.GetGeneralTradeConfig()
 	payClient := douyin.NewDouyinPay(clientConfig)
 
@@ -91,7 +96,7 @@ func (l *CreateDouyinRefundLogic) CreateDouyinRefund(in *pb.CreateDouyinRefundRe
 		},
 		RefundTotalAmount: in.RefundAmount,
 		RefundAll:         in.RefundAll,
-		Currency:          payOrderInfo.Currency,
+		Currency:          currency,
 	}
 
 	itemOrderDetail := make([]*douyin.ItemOrderDetail, 0)
