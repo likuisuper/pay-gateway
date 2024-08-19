@@ -8,10 +8,13 @@ import (
 	"gitee.com/zhuyunkj/pay-gateway/db/mysql/model"
 	"gitee.com/zhuyunkj/pay-gateway/rpc/internal/svc"
 	"gitee.com/zhuyunkj/pay-gateway/rpc/pb/pb"
+	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
 	jsoniter "github.com/json-iterator/go"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
+
+var CreateDyRefundFailNum = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "CreateDyRefundFailNum", nil, "抖音创建退款订单异常", nil})}
 
 type CreateDouyinRefundLogic struct {
 	ctx    context.Context
@@ -45,17 +48,20 @@ func (l *CreateDouyinRefundLogic) CreateDouyinRefund(in *pb.CreateDouyinRefundRe
 	//读取应用配置
 	pkgCfg, err := l.appConfigModel.GetOneByPkgName(in.AppPkgName)
 	if err != nil {
+		CreateDyRefundFailNum.CounterInc()
 		l.Errorf("CreateDouyinRefund pkgName= %s, 读取应用配置失败，err:=%v", in.AppPkgName, err)
 		return nil, err
 	}
 
 	payCfg, cfgErr := l.payConfigTiktokModel.GetOneByAppID(pkgCfg.TiktokPayAppID)
 	if cfgErr != nil {
+		CreateDyRefundFailNum.CounterInc()
 		l.Errorf("CreateDouyinRefund pkgName= %s, 读取字节支付配置失败，err:=%v", in.AppPkgName, cfgErr)
 		return nil, cfgErr
 	}
 
 	if in.OrderSn == "" && in.OutOrderNo == "" {
+		CreateDyRefundFailNum.CounterInc()
 		l.Errorf("CreateDouyinRefund pkgName= %s, 订单号和抖音订单号不能同时为空", in.AppPkgName)
 		return nil, errors.New("订单号和抖音订单号不能同时为空")
 	}
@@ -63,6 +69,7 @@ func (l *CreateDouyinRefundLogic) CreateDouyinRefund(in *pb.CreateDouyinRefundRe
 	//查询订单是否存在
 	payOrderInfo, err := l.orderModel.GetOneByCode(in.OrderSn)
 	if err != nil {
+		CreateDyRefundFailNum.CounterInc()
 		l.Errorf("CreateDouyinRefund pkgName= %s, order_sn: %v 获取抖音支付订单失败，err:=%v", in.AppPkgName, in.OrderSn, err)
 		return nil, err
 	}
@@ -104,6 +111,7 @@ func (l *CreateDouyinRefundLogic) CreateDouyinRefund(in *pb.CreateDouyinRefundRe
 	if !in.RefundAll {
 		clientToken, err := l.svcCtx.BaseAppConfigServerApi.GetDyClientToken(l.ctx, pkgCfg.TiktokPayAppID)
 		if err != nil {
+			CreateDyRefundFailNum.CounterInc()
 			l.Errorf("CreateDouyinRefund pkgName= %s get douyin client token fail", in.AppPkgName, err)
 			return nil, err
 		}
@@ -111,6 +119,7 @@ func (l *CreateDouyinRefundLogic) CreateDouyinRefund(in *pb.CreateDouyinRefundRe
 		//获取抖音侧订单信息 OutOrderNo等于抖音侧的orderID
 		douyinOrder, err := payClient.QueryOrder(in.OutOrderNo, "", clientToken)
 		if err != nil {
+			CreateDyRefundFailNum.CounterInc()
 			l.Errorf("CreateDouyinRefund pkgName= %s, 读取抖音支付订单失败，err:=%v", in.AppPkgName, err)
 			return nil, err
 		}
@@ -123,16 +132,19 @@ func (l *CreateDouyinRefundLogic) CreateDouyinRefund(in *pb.CreateDouyinRefundRe
 
 	clientToken, err := l.svcCtx.BaseAppConfigServerApi.GetDyClientToken(l.ctx, payCfg.AppID)
 	if err != nil {
+		CreateDyRefundFailNum.CounterInc()
 		l.Errorw("get douyin clientToken fail", logx.Field("err", err), logx.Field("appId", payCfg.AppID))
 		return nil, err
 	}
 
 	refundResp, err := payClient.CreateRefundOrder(refundReq, clientToken)
 	if err != nil {
+		CreateDyRefundFailNum.CounterInc()
 		l.Errorf("CreateDouyinRefund createRefund fail, err:%v, req:%+v, resp:%+v", err, refundReq, refundResp)
 		return nil, err
 	}
 	if refundResp.ErrNo != 0 {
+		CreateDyRefundFailNum.CounterInc()
 		l.Errorf("CreateDouyinRefund createRefund fail, req:%+v, resp:%+v", refundReq, refundResp)
 		return nil, errors.New(refundResp.ErrMsg)
 	}
@@ -150,6 +162,7 @@ func (l *CreateDouyinRefundLogic) CreateDouyinRefund(in *pb.CreateDouyinRefundRe
 	}
 	err = l.refundOrderModel.Create(refundOrder)
 	if err != nil {
+		CreateDyRefundFailNum.CounterInc()
 		l.Errorf("CreateDouyinRefund create refund order fail, err:%v, refundOrder:%+v", err, refundOrder)
 	}
 

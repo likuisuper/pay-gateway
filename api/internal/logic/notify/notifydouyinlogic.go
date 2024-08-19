@@ -24,6 +24,7 @@ import (
 )
 
 var CallbackBizFailNum = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "callbackBizFailNum", nil, "网关回调业务异常", nil})}
+var CallbackRefundFailNum = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "CallbackRefundFailNum", nil, "网关回调退款业务异常", nil})}
 
 type NotifyDouyinLogic struct {
 	logx.Logger
@@ -207,6 +208,7 @@ func (l *NotifyDouyinLogic) notifyRefund(req *http.Request, body []byte, msgJson
 	if err != nil {
 		err = fmt.Errorf("notifyRefund unmarshalString fial, msgJson:%v, err:%v", msgJson, err)
 		util.CheckError(err.Error())
+		CallbackRefundFailNum.CounterInc()
 		return nil, err
 	}
 
@@ -216,6 +218,7 @@ func (l *NotifyDouyinLogic) notifyRefund(req *http.Request, body []byte, msgJson
 	if cfgErr != nil {
 		err = fmt.Errorf("notifyRefund appid = %s, 读取抖音支付配置失败，err:=%v", msg.AppId, cfgErr)
 		util.CheckError(err.Error())
+		CallbackRefundFailNum.CounterInc()
 		return nil, cfgErr
 	}
 
@@ -224,6 +227,7 @@ func (l *NotifyDouyinLogic) notifyRefund(req *http.Request, body []byte, msgJson
 	err = client.VerifyNotify(req, body)
 	if err != nil {
 		l.Errorf("notifyRefund 验签未通过，或者解密失败！err=%v", err)
+		CallbackRefundFailNum.CounterInc()
 		return &types.DouyinResp{
 			ErrNo:   400,
 			ErrTips: "验签未通过，或者解密失败",
@@ -246,6 +250,7 @@ func (l *NotifyDouyinLogic) notifyRefund(req *http.Request, body []byte, msgJson
 	//修改数据库
 	refundInfo, err := l.refundOrderModel.GetInfoByRefundNo(msg.RefundId)
 	if err != nil {
+		CallbackRefundFailNum.CounterInc()
 		l.Errorf("notifyRefund 获取退款订单失败！err=%v,order_code = %s", err, msg.RefundId)
 		return &types.DouyinResp{
 			ErrNo:   400,
@@ -256,6 +261,7 @@ func (l *NotifyDouyinLogic) notifyRefund(req *http.Request, body []byte, msgJson
 	if refundInfo.ID == 0 {
 		refundInfo, err = l.refundOrderModel.GetInfo(msg.OutRefundNo)
 		if err != nil || refundInfo.ID == 0 {
+			CallbackRefundFailNum.CounterInc()
 			l.Errorf("notifyRefund 获取退款订单失败！err=%v,order_code = %s", err, msg.RefundId)
 			return &types.DouyinResp{
 				ErrNo:   400,
@@ -276,6 +282,7 @@ func (l *NotifyDouyinLogic) notifyRefund(req *http.Request, body []byte, msgJson
 	//查询订单的包名信息
 	orderInfo, err := l.payOrderModel.GetOneByThirdOrderNoAndAppId(msg.OrderId, msg.AppId)
 	if err != nil || orderInfo.ID == 0 {
+		CallbackRefundFailNum.CounterInc()
 		l.Errorf("notifyRefund 获取订单失败！err=%v,order_code = %s", err, msg.RefundId)
 		return &types.DouyinResp{
 			ErrNo:   400,
@@ -296,6 +303,7 @@ func (l *NotifyDouyinLogic) notifyRefund(req *http.Request, body []byte, msgJson
 	}
 	err = l.refundOrderModel.Update(msg.OutRefundNo, refundInfo)
 	if err != nil {
+		CallbackRefundFailNum.CounterInc()
 		l.Errorf("notifyRefund 更新退款订单失败！err=%v,order_code = %s", err, msg.RefundId)
 		return &types.DouyinResp{
 			ErrNo:   400,
@@ -310,6 +318,7 @@ func (l *NotifyDouyinLogic) notifyRefund(req *http.Request, body []byte, msgJson
 		}
 		respData, requestErr := util.HttpPostWithHeader(refundInfo.NotifyUrl, originData, headMap, 5*time.Second)
 		if requestErr != nil {
+			CallbackRefundFailNum.CounterInc()
 			CallbackBizFailNum.CounterInc()
 			util.CheckError("notifyRefund NotifyRefund-post, req:%+v, err:%v", originData, requestErr)
 			l.Errorf("notifyRefund NotifyRefund-post, req:%+v, err:%v, url:%v", originData, requestErr, refundInfo.NotifyUrl)
