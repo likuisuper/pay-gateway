@@ -237,7 +237,8 @@ func (l *SupplementaryOrdersLogic) handleDouyinOrder(orderInfo *model.PmPayOrder
 				ChannelPayId: douyinOrderData.ChannelPayId,
 			})
 			req := &types.ByteDanceReq{
-				Msg: msg,
+				Msg:  msg,
+				Type: "payment",
 			}
 			_, err = util.HttpPost(orderInfo.NotifyUrl, req, 5*time.Second)
 			if err != nil {
