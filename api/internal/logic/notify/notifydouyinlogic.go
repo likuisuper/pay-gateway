@@ -168,8 +168,11 @@ func (l *NotifyDouyinLogic) notifyPayment(req *http.Request, body []byte, msgJso
 		orderInfo.PayStatus = model.PmPayOrderTablePayStatusPaid
 		//修改数据库
 		orderInfo.NotifyAmount = int(msg.TotalAmount)
-	} else {
+	} else if msg.Status == "CANCEL" {
 		orderInfo.PayStatus = model.PmPayOrderTablePayStatusCancel
+	} else {
+		l.Slowf("douyin支付回调异常: %s", msgJson)
+		return nil, nil
 	}
 	orderInfo.ThirdOrderNo = msg.OrderId
 	err = l.payOrderModel.UpdateNotify(orderInfo)

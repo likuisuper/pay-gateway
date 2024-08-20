@@ -230,7 +230,11 @@ func (l *SupplementaryOrdersLogic) handleDouyinOrder(orderInfo *model.PmPayOrder
 		if isSupplementary { //成功补单
 			//回调业务方接口
 			msg, _ := sonic.MarshalString(douyin.GeneralTradeMsg{
-				OutOrderNo: orderInfo.OrderSn,
+				OutOrderNo:   orderInfo.OrderSn,
+				OrderId:      douyinOrderData.OrderId,
+				PayChannel:   int32(douyinOrderData.PayChannel),
+				MerchantUid:  douyinOrderData.MerchantUid,
+				ChannelPayId: douyinOrderData.ChannelPayId,
 			})
 			req := &types.ByteDanceReq{
 				Msg: msg,
