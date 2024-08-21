@@ -7,16 +7,16 @@ import (
 )
 
 type CreateRefundOrderReq struct {
-	OrderId           string             // 必填 	交易系统订单号
-	OutRefundNo       string             // 必填		开发者侧退款单号
-	CpExtra           string             // 非必填 	开发者自定义字段
-	OrderEntrySchema  Schema             // 必填 	退款单的跳转的 schema
-	NotifyUrl         string             // 必填 	退款结果通知地址，必须是 HTTPS 类型， 长度 <= 512 byte
-	RefundReason      []*RefundReason    // 必填		退款原因，可填多个，不超过10个
-	RefundTotalAmount int64              // 必填		退款总金额 单位分
-	ItemOrderDetail   []*ItemOrderDetail // 非必填 	需要发起退款的商品单信息，数组长度<100，refund_all=false时必填
-	RefundAll         bool               // 非必填	是否整单退款 当订单未发生任何退款时，可设置refund_all=true，refund_total_amount=订单实付金额，发起整单退款。refund_all=true时不能设置item_order_detail
-	Currency          string             // 非必填 	支付币种 钻石订单发起退款必须指定currency=DIAMOND
+	OrderId           string             `json:"order_id"`            // 必填 	交易系统订单号
+	OutRefundNo       string             `json:"out_refund_no"`       // 必填		开发者侧退款单号
+	CpExtra           string             `json:"cp_extra"`            // 非必填 	开发者自定义字段
+	OrderEntrySchema  Schema             `json:"order_entry_schema"`  // 必填 	退款单的跳转的 schema
+	NotifyUrl         string             `json:"notify_url"`          // 必填 	退款结果通知地址，必须是 HTTPS 类型， 长度 <= 512 byte
+	RefundReason      []*RefundReason    `json:"refund_reason"`       // 必填		退款原因，可填多个，不超过10个
+	RefundTotalAmount int64              `json:"refund_total_amount"` // 必填		退款总金额 单位分
+	ItemOrderDetail   []*ItemOrderDetail `json:"item_order_detail"`   // 非必填 	需要发起退款的商品单信息，数组长度<100，refund_all=false时必填
+	RefundAll         bool               `json:"refund_all"`          // 非必填	是否整单退款 当订单未发生任何退款时，可设置refund_all=true，refund_total_amount=订单实付金额，发起整单退款。refund_all=true时不能设置item_order_detail
+	Currency          string             `json:"currency"`            // 非必填 	支付币种 钻石订单发起退款必须指定currency=DIAMOND
 }
 
 type RefundReason struct {
@@ -31,12 +31,12 @@ type ItemOrderDetail struct {
 
 type CreateRefundResp struct {
 	ApiCommonResp
-	Data *CreateRefundRespData `json:"data,omitempty"` // 非必填
+	Data CreateRefundRespData `json:"data,omitempty"` // 非必填
 }
 
 type CreateRefundRespData struct {
-	RefundId            string // 必填 抖音开放平台交易系统侧退款单号
-	RefundAuditDeadline int64  // 必填 退款审核的最后期限，13 位 unix 时间戳，精度：毫秒 通常是3天(从退款发起时间开始算)
+	RefundId            string `json:"refund_id,omitempty"`             // 必填 抖音开放平台交易系统侧退款单号
+	RefundAuditDeadline int64  `json:"refund_audit_deadline,omitempty"` // 必填 退款审核的最后期限，13 位 unix 时间戳，精度：毫秒 通常是3天(从退款发起时间开始算)
 }
 
 // CreateRefundOrder 创建退款订单 https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/server/trade-system/general/refund/create_refund

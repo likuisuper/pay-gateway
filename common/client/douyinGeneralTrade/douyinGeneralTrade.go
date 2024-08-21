@@ -304,7 +304,6 @@ func (c *PayClient) QueryOrder(orderId, outOrderId, clientToken string) (*QueryO
 	if err != nil {
 		return nil, err
 	}
-
 	resp := new(QueryOrderResp)
 	err = sonic.UnmarshalString(result, resp)
 	if err != nil {

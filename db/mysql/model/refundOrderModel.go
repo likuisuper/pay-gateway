@@ -1,6 +1,7 @@
 package model
 
 import (
+	"errors"
 	"gitee.com/zhuyunkj/pay-gateway/db"
 	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
 	"github.com/zeromicro/go-zero/core/logx"
@@ -30,7 +31,7 @@ type PmRefundOrderTable struct {
 	NotifyUrl    string    `gorm:"column:notify_url;NOT NULL" json:"notify_url"`                 // 回调应用机地址
 	RefundNo     string    `gorm:"column:refund_no;NOT NULL" json:"refund_no"`                   // 担保交易服务端退款单号
 	RefundStatus int       `gorm:"column:refund_status;default:0;NOT NULL" json:"refund_status"` // 0申请中  1成功  2失败
-	RefundedAt   int       `gorm:"column:refunded_at;default:0;NOT NULL" json:"refunded_at"`     // 退款时间
+	RefundedAt   int64     `gorm:"column:refunded_at;default:0;NOT NULL" json:"refunded_at"`     // 退款时间
 	NotifyData   string    `gorm:"column:notify_data" json:"notify_data"`                        // 退款回调数据
 	CreatedAt    time.Time `gorm:"column:created_at" json:"created_at"`
 	UpdatedAt    time.Time `gorm:"column:updated_at" json:"updated_at"`
@@ -76,6 +77,16 @@ func (o *PmRefundOrderModel) GetInfo(outRefundNo string) (info *PmRefundOrderTab
 	err = o.DB.Where("out_refund_no = ?", outRefundNo).Find(info).Error
 	if err != nil {
 		logx.Errorf("GetInfo, outRefundNo:%s, err:%v", outRefundNo, err)
+		refundOrderMysqlErr.CounterInc()
+	}
+	return
+}
+
+func (o *PmRefundOrderModel) GetInfoByRefundNo(refundNo string) (info *PmRefundOrderTable, err error) {
+	info = new(PmRefundOrderTable)
+	err = o.DB.Where("refund_no = ?", refundNo).Find(info).Error
+	if err != nil && !errors.Is(gorm.ErrRecordNotFound, err) {
+		logx.Errorf("GetInfo, refundNo:%s, err:%v", refundNo, err)
 		refundOrderMysqlErr.CounterInc()
 	}
 	return
