@@ -10,11 +10,13 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
-	"gitee.com/zhuyunkj/zhuyun-core/util"
-	"github.com/bytedance/sonic"
 	"net/http"
 	"strconv"
 	"time"
+
+	"gitee.com/zhuyunkj/zhuyun-core/util"
+	"github.com/bytedance/sonic"
+	"github.com/zeromicro/go-zero/core/logx"
 )
 
 type PayConfig struct {
@@ -304,6 +306,10 @@ func (c *PayClient) QueryOrder(orderId, outOrderId, clientToken string) (*QueryO
 	if err != nil {
 		return nil, err
 	}
+
+	// 记录返回日志
+	logx.Sloww("QueryOrder", logx.Field("result", result), logx.Field("OrderId", orderId), logx.Field("OutOrderNo", outOrderId))
+
 	resp := new(QueryOrderResp)
 	err = sonic.UnmarshalString(result, resp)
 	if err != nil {

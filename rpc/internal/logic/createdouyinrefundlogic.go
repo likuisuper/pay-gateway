@@ -3,6 +3,7 @@ package logic
 import (
 	"context"
 	"errors"
+
 	douyin "gitee.com/zhuyunkj/pay-gateway/common/client/douyinGeneralTrade"
 	"gitee.com/zhuyunkj/pay-gateway/common/define"
 	"gitee.com/zhuyunkj/pay-gateway/db/mysql/model"
@@ -114,11 +115,12 @@ func (l *CreateDouyinRefundLogic) CreateDouyinRefund(in *pb.CreateDouyinRefundRe
 
 		//获取抖音侧订单信息 OutOrderNo等于抖音侧的orderID
 		douyinOrder, err := payClient.QueryOrder(in.OutOrderNo, "", clientToken)
-		if err != nil || len(douyinOrder.Data.ItemOrderList) == 0 {
+		if err != nil || douyinOrder == nil || douyinOrder.Data == nil || len(douyinOrder.Data.ItemOrderList) == 0 {
 			CreateDyRefundFailNum.CounterInc()
-			l.Errorf("CreateDouyinRefund pkgName= %s, 读取抖音支付订单失败，err:=%v", in.AppPkgName, err)
+			l.Errorf("CreateDouyinRefund pkgName=%s, 读取抖音支付订单失败 err:=%v", in.AppPkgName, err)
 			return nil, err
 		}
+
 		itemOrderDetail = append(itemOrderDetail, &douyin.ItemOrderDetail{
 			ItemOrderId:  douyinOrder.Data.ItemOrderList[0].ItemOrderId,
 			RefundAmount: in.RefundAmount,
