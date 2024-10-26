@@ -300,7 +300,7 @@ func (c *PayClient) QueryOrder(orderId, outOrderId, clientToken string) (*QueryO
 	}
 	req := &QueryOrderReq{
 		OrderId:    orderId,
-		OutOrderNo: outOrderId,
+		OutOrderNo: outOrderId, // 类似1299699190104985600
 	}
 	result, err := util.HttpPostWithHeader("https://open.douyin.com/api/trade_basic/v1/developer/order_query/", req, header, time.Second*3)
 	if err != nil {
