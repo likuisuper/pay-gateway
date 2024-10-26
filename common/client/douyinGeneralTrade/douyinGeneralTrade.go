@@ -307,12 +307,13 @@ func (c *PayClient) QueryOrder(orderId, outOrderId, clientToken string) (*QueryO
 		OutOrderNo: outOrderId, // 类似1235700313565384704
 	}
 	result, err := util.HttpPostWithHeader("https://open.douyin.com/api/trade_basic/v1/developer/order_query/", req, header, time.Second*3)
+
+	// 记录返回日志
+	logx.Sloww("QueryOrder", logx.Field("result", result), logx.Field("OrderId", orderId), logx.Field("OutOrderNo", outOrderId), logx.Field("err", err))
+
 	if err != nil {
 		return nil, err
 	}
-
-	// 记录返回日志
-	logx.Sloww("QueryOrder", logx.Field("result", result), logx.Field("OrderId", orderId), logx.Field("OutOrderNo", outOrderId))
 
 	resp := new(QueryOrderResp)
 	err = sonic.UnmarshalString(result, resp)
