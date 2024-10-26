@@ -126,6 +126,7 @@ func (l *CreateDouyinRefundLogic) CreateDouyinRefund(in *pb.CreateDouyinRefundRe
 			RefundAmount: in.RefundAmount,
 		})
 		refundReq.ItemOrderDetail = itemOrderDetail
+		refundReq.OrderId = douyinOrder.Data.ItemOrderList[0].ItemOrderId
 	}
 
 	clientToken, err := l.svcCtx.BaseAppConfigServerApi.GetDyClientToken(l.ctx, payCfg.AppID)
@@ -141,11 +142,13 @@ func (l *CreateDouyinRefundLogic) CreateDouyinRefund(in *pb.CreateDouyinRefundRe
 		l.Errorf("CreateDouyinRefund createRefund fail, err:%v, req:%+v, resp:%+v", err, refundReq, refundResp)
 		return nil, err
 	}
+
 	if refundResp.ErrNo != 0 {
 		CreateDyRefundFailNum.CounterInc()
 		l.Errorf("CreateDouyinRefund createRefund fail, req:%+v, resp:%+v", refundReq, refundResp)
 		return nil, errors.New(refundResp.ErrMsg)
 	}
+
 	l.Slowf("CreateDouyinRefund createRefund success, req:%+v,refundResp:%+v", refundReq, refundResp)
 	//写入数据库
 	refundOrder := &model.PmRefundOrderTable{

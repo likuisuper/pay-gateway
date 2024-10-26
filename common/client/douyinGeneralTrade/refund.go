@@ -1,9 +1,11 @@
 package douyin
 
 import (
+	"time"
+
 	"gitee.com/zhuyunkj/zhuyun-core/util"
 	"github.com/bytedance/sonic"
-	"time"
+	"github.com/zeromicro/go-zero/core/logx"
 )
 
 type CreateRefundOrderReq struct {
@@ -46,6 +48,8 @@ func (c *PayClient) CreateRefundOrder(req *CreateRefundOrderReq, clientToken str
 	}
 
 	result, err := util.HttpPostWithHeader("https://open.douyin.com/api/trade_basic/v1/developer/refund_create/", req, header, time.Second*3)
+	logx.Sloww("CreateRefundOrder", logx.Field("err", err), logx.Field("result", result), logx.Field("req", req))
+
 	if err != nil {
 		return nil, err
 	}
