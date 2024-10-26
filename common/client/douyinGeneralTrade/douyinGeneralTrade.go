@@ -295,12 +295,16 @@ type QueryOrderItemOrder struct {
 
 // QueryOrder 查询订单 https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/server/trade-system/general/order/query_order
 func (c *PayClient) QueryOrder(orderId, outOrderId, clientToken string) (*QueryOrderResp, error) {
+	if orderId == "" && outOrderId == "" {
+		return nil, errors.New("OrderId and OutOrderNo can not empty same time")
+	}
+
 	header := map[string]string{
 		"access-token": clientToken,
 	}
 	req := &QueryOrderReq{
 		OrderId:    orderId,
-		OutOrderNo: outOrderId, // 类似1299699190104985600
+		OutOrderNo: outOrderId, // 类似1235700313565384704
 	}
 	result, err := util.HttpPostWithHeader("https://open.douyin.com/api/trade_basic/v1/developer/order_query/", req, header, time.Second*3)
 	if err != nil {

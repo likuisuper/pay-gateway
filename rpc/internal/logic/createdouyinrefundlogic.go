@@ -113,8 +113,8 @@ func (l *CreateDouyinRefundLogic) CreateDouyinRefund(in *pb.CreateDouyinRefundRe
 			return nil, err
 		}
 
-		//获取抖音侧订单信息 OutOrderNo等于抖音侧的orderID
-		douyinOrder, err := payClient.QueryOrder(in.OutOrderNo, in.OutRefundNo, clientToken)
+		//获取抖音侧订单信息
+		douyinOrder, err := payClient.QueryOrder("", in.OrderSn, clientToken)
 		if err != nil || douyinOrder == nil || douyinOrder.Data == nil || len(douyinOrder.Data.ItemOrderList) == 0 {
 			CreateDyRefundFailNum.CounterInc()
 			l.Errorf("CreateDouyinRefund pkgName=%s, 读取抖音支付订单失败 err:=%v", in.AppPkgName, err)
