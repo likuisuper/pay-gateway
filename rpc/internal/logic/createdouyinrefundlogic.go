@@ -126,7 +126,7 @@ func (l *CreateDouyinRefundLogic) CreateDouyinRefund(in *pb.CreateDouyinRefundRe
 			RefundAmount: in.RefundAmount,
 		})
 		refundReq.ItemOrderDetail = itemOrderDetail
-		refundReq.OrderId = douyinOrder.Data.ItemOrderList[0].ItemOrderId
+		refundReq.OrderId = douyinOrder.Data.OrderId
 	}
 
 	clientToken, err := l.svcCtx.BaseAppConfigServerApi.GetDyClientToken(l.ctx, payCfg.AppID)
