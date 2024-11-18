@@ -4,6 +4,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
+	"time"
+
 	alipay2 "gitee.com/yan-yixin0612/alipay/v3"
 	"gitee.com/zhuyunkj/pay-gateway/common/clientMgr"
 	"gitee.com/zhuyunkj/pay-gateway/common/code"
@@ -12,8 +15,6 @@ import (
 	"gitee.com/zhuyunkj/pay-gateway/common/types"
 	"gitee.com/zhuyunkj/pay-gateway/common/utils"
 	"gitee.com/zhuyunkj/zhuyun-core/alarm"
-	"strconv"
-	"time"
 
 	"gitee.com/zhuyunkj/pay-gateway/api/internal/config"
 	"gitee.com/zhuyunkj/pay-gateway/api/internal/svc"
@@ -162,10 +163,11 @@ func (c *CrontabOrder) PaySubscribeFee(tb *dbmodel.OrderTable) error {
 	if err != nil || result.Content.Code != alipay2.CodeSuccess {
 		errDesc := ""
 		if err != nil {
-			errDesc = fmt.Sprintf("订阅扣款：扣款失败 outTradeNo=%s, err=%s", result, err.Error())
+			errDesc = fmt.Sprintf("订阅扣款: 扣款失败 outTradeNo=%v, err=%s", result, err.Error())
 		} else {
-			errDesc = fmt.Sprintf("续费失败：out_trade_no = %v, msg = %v, subMsg = %v", tb.OutTradeNo, result.Content.Msg, result.Content.SubMsg)
+			errDesc = fmt.Sprintf("续费失败: out_trade_no = %v, msg = %v, subMsg = %v", tb.OutTradeNo, result.Content.Msg, result.Content.SubMsg)
 		}
+
 		logx.Errorf(errDesc)
 		go func() {
 			defer exception.Recover()
@@ -174,10 +176,10 @@ func (c *CrontabOrder) PaySubscribeFee(tb *dbmodel.OrderTable) error {
 			dataMap["external_agreement_no"] = tb.ExternalAgreementNo
 			dataMap["out_trade_no"] = tb.OutTradeNo
 			dataMap["err_info"] = errDesc
-			headerMap :=map[string]string{
+			headerMap := map[string]string{
 				"App-Origin": tb.AppPkg,
 			}
-			err = utils.CallbackWithRetry(tb.AppNotifyUrl, headerMap,dataMap, 5*time.Second)
+			err = utils.CallbackWithRetry(tb.AppNotifyUrl, headerMap, dataMap, 5*time.Second)
 			if err != nil {
 				desc := fmt.Sprintf("回调通知用户续约失败 异常, app_pkg=%s, user_id=%s, out_trade_no=%s", tb.AppPkg, tb.UserID, tb.OutTradeNo)
 				alarm.ImmediateAlarm("notifyUserSignFeeFailedErr", desc, alarm.ALARM_LEVEL_FATAL)

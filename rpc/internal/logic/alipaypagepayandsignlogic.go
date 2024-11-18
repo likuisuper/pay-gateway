@@ -5,6 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
+	"time"
+
 	alipay2 "gitee.com/yan-yixin0612/alipay/v3"
 	"gitee.com/zhuyunkj/pay-gateway/common/clientMgr"
 	"gitee.com/zhuyunkj/pay-gateway/common/code"
@@ -16,8 +19,6 @@ import (
 	"gitee.com/zhuyunkj/pay-gateway/rpc/pb/pb"
 	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
 	"github.com/zeromicro/go-zero/core/logx"
-	"strconv"
-	"time"
 )
 
 type AlipayPagePayAndSignLogic struct {
@@ -143,7 +144,7 @@ func (l *AlipayPagePayAndSignLogic) AlipayPagePayAndSign(in *pb.AlipayPageSignRe
 	}
 
 	bytes, err := json.Marshal(appPay)
-	logx.Slowf("请求参数: %v", string(bytes))
+	logx.Slowf("请求参数: %v, err:%v", string(bytes), err)
 
 	result, err := payClient.TradeAppPay(appPay)
 	if err != nil {

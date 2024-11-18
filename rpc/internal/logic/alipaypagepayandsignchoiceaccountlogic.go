@@ -44,9 +44,14 @@ func NewAlipayPagePayAndSignChoiceAccountLogic(ctx context.Context, svcCtx *svc.
 
 // 支付宝新的充值订阅 可以选择不同的支付宝账号：支付并签约
 func (l *AlipayPagePayAndSignChoiceAccountLogic) AlipayPagePayAndSignChoiceAccount(in *pb.AlipayPageSignReq) (*pb.AlipayPageSignResp, error) {
-	payClient, payAppId, notifyUrl, err := clientMgr.GetAlipayClientByAppPkgWithCache(in.AppPkgName)
+	// 选择不同的支付宝号
+	payClient, payAppId, notifyUrl, merchantNo, merchantName, err := clientMgr.GetAlipayClienMerchantInfo(in.AppPkgName)
 	if err != nil {
 		return nil, err
+	}
+
+	if merchantNo == "" {
+		return nil, errors.New("获取商户号信息失败")
 	}
 
 	var amount, prepaidAmount string
@@ -63,6 +68,7 @@ func (l *AlipayPagePayAndSignChoiceAccountLogic) AlipayPagePayAndSignChoiceAccou
 			logx.Errorf("创建订单异常：商品信息错误 err = %s product = %s", err.Error(), in.ProductDesc)
 			return nil, errors.New("商品信息错误")
 		}
+
 		productType = product.ProductType
 		if productType == code.PRODUCT_TYPE_SUBSCRIBE {
 			intAmount = int(product.PrepaidAmount * 100)
@@ -92,6 +98,7 @@ func (l *AlipayPagePayAndSignChoiceAccountLogic) AlipayPagePayAndSignChoiceAccou
 		ProductDesc:  in.ProductDesc,
 		ProductType:  productType,
 		ProductID:    int(in.ProductId),
+		DeviceId:     in.DeviceId, // 在回调的时候 需要带到app_alipay_order表
 	}
 
 	trade := alipay2.Trade{
@@ -106,7 +113,7 @@ func (l *AlipayPagePayAndSignChoiceAccountLogic) AlipayPagePayAndSignChoiceAccou
 	externalAgreementNo := ""
 
 	if productType == code.PRODUCT_TYPE_SUBSCRIBE {
-
+		// 订阅商品
 		accessParam := &alipay2.AccessParams{
 			Channel: "ALIPAYAPP",
 		}
@@ -131,6 +138,12 @@ func (l *AlipayPagePayAndSignChoiceAccountLogic) AlipayPagePayAndSignChoiceAccou
 		externalAgreementNo = signParams.ExternalAgreementNo
 		orderInfo.ExternalAgreementNo = externalAgreementNo
 
+		signParams.SubMerchant = &alipay2.SubMerchantParams{
+			SubMerchantId:          merchantNo,
+			SubMerchantName:        merchantName,
+			SubMerchantServiceName: "【客服电话：18150156227】如您需办理退款，请拨打VIP售后电话，将极速为您办理，感谢您的订阅！",
+		}
+
 		trade.AgreementSignParams = signParams
 	}
 
@@ -139,7 +152,7 @@ func (l *AlipayPagePayAndSignChoiceAccountLogic) AlipayPagePayAndSignChoiceAccou
 	}
 
 	bytes, err := json.Marshal(appPay)
-	logx.Slowf("请求参数: %v", string(bytes))
+	logx.Slowf("请求参数: %v, err:%v", string(bytes), err)
 
 	result, err := payClient.TradeAppPay(appPay)
 	if err != nil {

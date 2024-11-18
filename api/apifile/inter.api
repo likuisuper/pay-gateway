@@ -32,7 +32,7 @@ type (
         TransAmount string `json:"trans_amount"` //订单总金额 [0.1,100]
         PayAccount string `json:"pay_account"`   //收款方账户
         PayName string `json:"pay_name"`         //收款方真实姓名
-        PeriodType string `json:"period_type"`   //
+        PeriodType string `json:"period_type"`   //周期类型
     }
 
     RefundReq {

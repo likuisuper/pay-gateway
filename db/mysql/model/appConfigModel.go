@@ -1,12 +1,13 @@
 package model
 
 import (
+	"time"
+
 	"gitee.com/zhuyunkj/pay-gateway/db"
 	"gitee.com/zhuyunkj/zhuyun-core/cache"
 	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
 	"github.com/zeromicro/go-zero/core/logx"
 	"gorm.io/gorm"
-	"time"
 )
 
 var (
@@ -19,7 +20,7 @@ type PmAppConfigTable struct {
 	AlipayAppID    string    `gorm:"column:alipay_app_id;NOT NULL" json:"alipay_app_id"`         // 对应的支付宝appid
 	WechatPayAppID string    `gorm:"column:wechat_pay_app_id;NOT NULL" json:"wechat_pay_app_id"` // 对应的微信支付appid
 	TiktokPayAppID string    `gorm:"column:tiktok_pay_app_id;NOT NULL" json:"tiktok_pay_app_id"` // 对应的字节支付appid
-	KsPayAppID     string    `gorm:"column:ks_pay_app_id;NOT NULL" json:"ks_pay_app_id"`         //对应的快手支付appid
+	KsPayAppID     string    `gorm:"column:ks_pay_app_id;NOT NULL" json:"ks_pay_app_id"`         // 对应的快手支付appid
 	CreatedAt      time.Time `gorm:"column:created_at" json:"created_at"`
 	UpdatedAt      time.Time `gorm:"column:updated_at" json:"updated_at"`
 }
@@ -40,7 +41,7 @@ func NewPmAppConfigModel(dbName string) *PmAppConfigModel {
 	}
 }
 
-//获取应用配置信息
+// 获取应用配置信息
 func (o *PmAppConfigModel) GetOneByPkgName(pkgName string) (appConfig *PmAppConfigTable, err error) {
 	var cfg PmAppConfigTable
 	err = o.DB.Where(" `app_pkg_name` = ?", pkgName).First(&cfg).Error

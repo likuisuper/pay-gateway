@@ -3,13 +3,14 @@ package model
 import (
 	"errors"
 	"fmt"
+	"time"
+
 	"gitee.com/zhuyunkj/pay-gateway/common/code"
 	"gitee.com/zhuyunkj/pay-gateway/db"
 	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
 	"gitee.com/zhuyunkj/zhuyun-core/util"
 	"github.com/zeromicro/go-zero/core/logx"
 	"gorm.io/gorm"
-	"time"
 )
 
 var (
@@ -37,6 +38,7 @@ type OrderTable struct {
 	AgreementNo         string    `gorm:"column:agreement_no;NOT NULL"`                            // 支付宝/微信平台订阅协议号
 	ExternalAgreementNo string    `gorm:"column:external_agreement_no;NOT NULL"`                   // 内部协议号
 	PayAppID            string    `gorm:"column:pay_app_id;NOT NULL"`                              // 第三方支付的appid
+	DeviceId            string    `gorm:"column:device_id;NOT NULL"`                               // 用户设备号
 	CreatedAt           time.Time `gorm:"column:created_at;default:CURRENT_TIMESTAMP;NOT NULL"`    // 创建时间
 	UpdatedAt           time.Time `gorm:"column:updated_at;default:CURRENT_TIMESTAMP;NOT NULL"`    // 修改时间
 	DeductTime          time.Time `gorm:"column:deduct_time;default:0000-00-00 00:00:00;NOT NULL"` // 可开始扣款时间(默认是0,不需要关注,只是为了满足产品延迟扣款的需求)
@@ -56,7 +58,7 @@ func NewOrderModel(dbName string) *OrderModel {
 	}
 }
 
-//创建订单
+// 创建订单
 func (o *OrderModel) Create(info *OrderTable) error {
 	err := o.DB.Create(info).Error
 	if err != nil {
@@ -66,7 +68,7 @@ func (o *OrderModel) Create(info *OrderTable) error {
 	return err
 }
 
-//获取订单信息
+// 获取订单信息
 func (o *OrderModel) GetOneByOutTradeNo(outTradeNo string) (info *OrderTable, err error) {
 	var orderInfo OrderTable
 	err = o.DB.Where("`out_trade_no` = ? ", outTradeNo).First(&orderInfo).Error
@@ -81,7 +83,7 @@ func (o *OrderModel) GetOneByOutTradeNo(outTradeNo string) (info *OrderTable, er
 	return &orderInfo, nil
 }
 
-//根据协议号获取订单信息
+// 根据协议号获取订单信息
 func (o *OrderModel) GetOneByExternalAgreementNo(externalAgreementNo string) (info *OrderTable, err error) {
 	var orderInfo OrderTable
 	err = o.DB.Where("`external_agreement_no` = ? and `product_type` = ?", externalAgreementNo, code.PRODUCT_TYPE_SUBSCRIBE).First(&orderInfo).Error
@@ -143,7 +145,7 @@ func (o *OrderModel) UpdateStatusByOutTradeNo(outTradeNo string, status int) err
 	return nil
 }
 
-//根据协议号关闭续费订单
+// 根据协议号关闭续费订单
 func (o *OrderModel) CloseUnpaidSubscribeFeeOrderByExternalAgreementNo(externalAgreementNo string) (err error) {
 	err = o.DB.Table("order").Where("`external_agreement_no` = ? and `product_type` = ? and `status` = ?", externalAgreementNo, code.PRODUCT_TYPE_SUBSCRIBE_FEE, 0).
 		Update("`status`", -1).Error
