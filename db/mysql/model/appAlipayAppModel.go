@@ -36,11 +36,9 @@ func NewAppAlipayAppModel(dbName string) *AppAlipayAppModel {
 const app_alipay_app_list_key = "app:alipay:list:%s" // %s是包名
 func (o *AppAlipayAppModel) GetValidConfig(appPkg string) (AppAlipayAppTable, error) {
 	list := make([]AppAlipayAppTable, 0)
-
 	rkey := o.RDB.GetRedisKey(app_alipay_app_list_key, appPkg)
 	o.RDB.GetObject(context.TODO(), rkey, &list)
 	if len(list) > 0 {
-		// 缓存一下
 		return list[0], nil
 	}
 
@@ -57,7 +55,7 @@ func (o *AppAlipayAppModel) GetValidConfig(appPkg string) (AppAlipayAppTable, er
 
 	if len(list) > 0 {
 		tbl = list[0]
-		// 缓存一下 10秒过期
+		// 缓存一下 5秒过期
 		o.RDB.Set(context.TODO(), rkey, list, 5)
 	}
 

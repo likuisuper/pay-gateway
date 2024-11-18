@@ -1,6 +1,7 @@
 package clientMgr
 
 import (
+	"context"
 	"fmt"
 	"sync"
 
@@ -49,7 +50,7 @@ func getAlipayClientWithCache(pkgName string, aliAppId string) (payClient *alipa
 	} else {
 		// 没有传商户app_id，先根据包名找appPkg的缓存
 		rKeyAppCfg = appConfigModel.RDB.GetRedisKey(RedisAppConfigKey, pkgName)
-		appConfigModel.RDB.GetObject(nil, rKeyAppCfg, pkgCfg)
+		appConfigModel.RDB.GetObject(context.TODO(), rKeyAppCfg, pkgCfg)
 	}
 
 	payCfg := &model.PmPayConfigAlipayTable{}
@@ -57,7 +58,7 @@ func getAlipayClientWithCache(pkgName string, aliAppId string) (payClient *alipa
 	if pkgCfg.AlipayAppID != "" {
 		// 根据商户app_id找商户配置的缓存
 		rKeyPayCfg = payConfigAlipayModel.RDB.GetRedisKey(RedisAliPayConfigKey, pkgCfg.AlipayAppID)
-		payConfigAlipayModel.RDB.GetObject(nil, rKeyPayCfg, payCfg)
+		payConfigAlipayModel.RDB.GetObject(context.TODO(), rKeyPayCfg, payCfg)
 	}
 
 	if payCfg.ID != 0 && pkgCfg.AlipayAppID != "" { // Redis缓存还在，直接从内存缓存中获取客户端
@@ -87,10 +88,10 @@ func getAlipayClientWithCache(pkgName string, aliAppId string) (payClient *alipa
 		config := *payCfg.TransClientConfig()
 		cliCache.Delete(config.AppId)
 
-		appConfigModel.RDB.Set(nil, rKeyAppCfg, *pkgCfg, 3*3600)
+		appConfigModel.RDB.Set(context.TODO(), rKeyAppCfg, *pkgCfg, 3*3600)
 
 		rKeyPayCfg = payConfigAlipayModel.RDB.GetRedisKey(RedisAliPayConfigKey, pkgCfg.AlipayAppID)
-		payConfigAlipayModel.RDB.Set(nil, rKeyPayCfg, *payCfg, 3*3600)
+		payConfigAlipayModel.RDB.Set(context.TODO(), rKeyPayCfg, *payCfg, 3*3600)
 
 		payClient, err = client.GetAlipayClient(config)
 		if err == nil && payClient != nil {
@@ -99,7 +100,7 @@ func getAlipayClientWithCache(pkgName string, aliAppId string) (payClient *alipa
 	}
 
 	if err != nil {
-		err = fmt.Errorf("pkgName= %s, 初始化支付错误，err:=%v", pkgName, err)
+		err = fmt.Errorf("pkgName= %s, 初始化支付错误 err:=%v", pkgName, err)
 		util.CheckError(err.Error())
 		return nil, "", "", err
 	}
@@ -120,25 +121,25 @@ func getAlipayClientWithCache2(pkgName string) (payClient *alipay2.Client, appId
 
 	var appConfigModel *model.PmAppConfigModel
 	var payConfigAlipayModel *model.PmPayConfigAlipayModel
-	var rKeyAppCfg, rKeyPayCfg, aliAppId string
+	var rKeyPayCfgKey, aliAppId string
 
 	pkgCfg := &model.PmAppConfigTable{}
 	appConfigModel = model.NewPmAppConfigModel(define.DbPayGateway)
-	rKeyAppCfg = appConfigModel.RDB.GetRedisKey(RedisAppConfigKey2, pkgName)
-	appConfigModel.RDB.GetObject(nil, rKeyAppCfg, pkgCfg)
+	rKeyAppCfgKey := appConfigModel.RDB.GetRedisKey(RedisAppConfigKey2, pkgName)
+	appConfigModel.RDB.GetObject(context.TODO(), rKeyAppCfgKey, pkgCfg)
 
 	payCfg := &model.PmPayConfigAlipayTable{}
 	payConfigAlipayModel = model.NewPmPayConfigAlipayModel(define.DbPayGateway)
+
 	if pkgCfg.AlipayAppID != "" {
 		// 根据商户app_id找商户配置的缓存
-		rKeyPayCfg = payConfigAlipayModel.RDB.GetRedisKey(RedisAliPayConfigKey, pkgCfg.AlipayAppID)
-		payConfigAlipayModel.RDB.GetObject(nil, rKeyPayCfg, payCfg)
+		rKeyPayCfgKey = payConfigAlipayModel.RDB.GetRedisKey(RedisAliPayConfigKey2, pkgCfg.AlipayAppID)
+		payConfigAlipayModel.RDB.GetObject(context.TODO(), rKeyPayCfgKey, payCfg)
 	}
 
 	if payCfg.ID != 0 && pkgCfg.AlipayAppID != "" {
 		// Redis缓存还在，直接从内存缓存中获取客户端
-		config := *payCfg.TransClientConfig()
-		if cli, ok := cliCache.Load(config.AppId); ok {
+		if cli, ok := cliCache.Load(payCfg.AppID); ok {
 			payClient = cli.(*alipay2.Client)
 		}
 	}
@@ -148,7 +149,7 @@ func getAlipayClientWithCache2(pkgName string) (payClient *alipay2.Client, appId
 		aliAppId = appConfig.AppID
 		payCfg, err = payConfigAlipayModel.GetOneByAppID(aliAppId)
 		if err != nil {
-			err = fmt.Errorf("pkgName=%s, aliAppId=%s 读取支付宝配置失败 err=%v", pkgName, aliAppId, err)
+			err = fmt.Errorf("pkgName=%s, aliAppId=%s 读取支付宝配置2失败 err=%v", pkgName, aliAppId, err)
 			util.CheckError(err.Error())
 			return nil, "", "", "", "", err
 		}
@@ -156,19 +157,25 @@ func getAlipayClientWithCache2(pkgName string) (payClient *alipay2.Client, appId
 		config := *payCfg.TransClientConfig()
 		cliCache.Delete(config.AppId)
 
-		appConfigModel.RDB.Set(nil, rKeyAppCfg, *pkgCfg, 3600)
+		appConfigModel.RDB.Set(context.TODO(), rKeyAppCfgKey, *pkgCfg, 3600)
 
-		rKeyPayCfg = payConfigAlipayModel.RDB.GetRedisKey(RedisAliPayConfigKey, pkgCfg.AlipayAppID)
-		payConfigAlipayModel.RDB.Set(nil, rKeyPayCfg, *payCfg, 3600)
+		rKeyPayCfgKey = payConfigAlipayModel.RDB.GetRedisKey(RedisAliPayConfigKey2, pkgCfg.AlipayAppID)
+		payConfigAlipayModel.RDB.Set(context.TODO(), rKeyPayCfgKey, *payCfg, 3600)
 
 		payClient, err = client.GetAlipayClient(config)
-		if err == nil && payClient != nil {
+		if err != nil {
+			err = fmt.Errorf("pkgName= %s, 初始化支付2错误 err:=%v", pkgName, err)
+			util.CheckError(err.Error())
+			return nil, "", "", "", "", err
+		}
+
+		if payClient != nil {
 			cliCache.Store(config.AppId, payClient)
 		}
 	}
 
 	if err != nil {
-		err = fmt.Errorf("pkgName= %s, 初始化支付错误，err:=%v", pkgName, err)
+		err = fmt.Errorf("pkgName= %s, 初始化支付2错误 err:=%v", pkgName, err)
 		util.CheckError(err.Error())
 		return nil, "", "", "", "", err
 	}

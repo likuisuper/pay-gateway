@@ -138,6 +138,7 @@ func (l *AlipayPagePayAndSignChoiceAccountLogic) AlipayPagePayAndSignChoiceAccou
 		externalAgreementNo = signParams.ExternalAgreementNo
 		orderInfo.ExternalAgreementNo = externalAgreementNo
 
+		// 指定商户信息
 		signParams.SubMerchant = &alipay2.SubMerchantParams{
 			SubMerchantId:          merchantNo,
 			SubMerchantName:        merchantName,
@@ -166,6 +167,7 @@ func (l *AlipayPagePayAndSignChoiceAccountLogic) AlipayPagePayAndSignChoiceAccou
 			logx.Errorf("创建续费订单异常：获取所属的签约订单失败， err = %s", err.Error())
 			return nil, errors.New("创建订单异常")
 		}
+
 		orderInfo.AgreementNo = tb.AgreementNo
 		orderInfo.ExternalAgreementNo = tb.ExternalAgreementNo
 		orderInfo.ProductType = int(in.ProductType)
@@ -176,7 +178,7 @@ func (l *AlipayPagePayAndSignChoiceAccountLogic) AlipayPagePayAndSignChoiceAccou
 	err = l.orderModel.Create(&orderInfo)
 	if err != nil {
 		payAndSignCreateOrderErr.CounterInc()
-		logx.Errorf("创建订单异常：创建订单表失败， err = %s", err.Error())
+		logx.Errorf("创建订单异常,创建订单表失败 err:%s, orderInfo: %+v", err.Error(), orderInfo)
 		return nil, errors.New("创建订单异常")
 	}
 
