@@ -2,6 +2,7 @@ package clientMgr
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 
@@ -37,6 +38,9 @@ func GetAlipayClienMerchantInfo(pkgName string) (payClient *alipay2.Client, appI
 // appCfg: 应用的配置，比如使用的商户id
 // 一般的场景是'包名->商户id->阿里client`, 但存在极端情况，收到支付宝回调的时候切换了商户, 所以收到回调的时候要使用商户app_id来找client
 func getAlipayClientWithCache(pkgName string, aliAppId string) (payClient *alipay2.Client, appId string, notifyUrl string, err error) {
+	if pkgName == "" && aliAppId == "" {
+		return nil, "", "", errors.New("pkg name and aliAppId all empty")
+	}
 
 	var appConfigModel *model.PmAppConfigModel
 	var payConfigAlipayModel *model.PmPayConfigAlipayModel
