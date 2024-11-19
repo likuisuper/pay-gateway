@@ -4,6 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
+	"net/url"
+	"strconv"
+	"time"
+
 	"gitee.com/yan-yixin0612/alipay/v3"
 	"gitee.com/zhuyunkj/pay-gateway/common/clientMgr"
 	"gitee.com/zhuyunkj/pay-gateway/common/code"
@@ -15,10 +20,6 @@ import (
 	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
 	"gitee.com/zhuyunkj/zhuyun-core/util"
 	"gorm.io/gorm"
-	"net/http"
-	"net/url"
-	"strconv"
-	"time"
 
 	"gitee.com/zhuyunkj/pay-gateway/api/internal/svc"
 	"gitee.com/zhuyunkj/pay-gateway/api/internal/types"
@@ -58,14 +59,13 @@ var (
 )
 
 func (l *NotifyAlipayNewLogic) NotifyAlipayNew(r *http.Request, w http.ResponseWriter) (resp *types.EmptyReq, err error) {
-	// todo: add your logic here and delete this line
-
 	err = r.ParseForm()
 	if err != nil {
 		logx.Errorf("NotifyAlipay err: %v", err)
 		notifyAlipayErrNum.CounterInc()
 		return
 	}
+
 	bodyData := r.Form.Encode()
 	logx.Slowf("NotifyAlipay form %s", bodyData)
 
@@ -91,21 +91,22 @@ func (l *NotifyAlipayNewLogic) NotifyAlipayNew(r *http.Request, w http.ResponseW
 	}
 
 	if ALI_NOTIFY_TYPE_TRADE_SYNC == notifyType {
-
 		var outTradeNo = r.Form.Get("out_trade_no")
 		var tradeNo = r.Form.Get("trade_no")
 		var tradeQuery = alipay.TradeQuery{
 			OutTradeNo: outTradeNo,
 		}
 		refundFee := r.Form.Get("refund_fee")
-		if refundFee == "" { // 支付成功
+		if refundFee == "" {
+			// 支付成功
 			res, aliErr := client.TradeQuery(tradeQuery)
 			if aliErr != nil {
 				aliErr = fmt.Errorf("TradeQuery err=%v", aliErr)
 				logx.Error(aliErr)
 				notifyAlipayErrNum.CounterInc()
 			}
-			if res.IsSuccess() == false {
+
+			if !res.IsSuccess() {
 				logx.Errorf("NotifyAlipay success false %s", outTradeNo)
 				notifyAlipayErrNum.CounterInc()
 				return
@@ -118,11 +119,13 @@ func (l *NotifyAlipayNewLogic) NotifyAlipayNew(r *http.Request, w http.ResponseW
 				util.CheckError(dbErr.Error())
 				return
 			}
+
 			if orderInfo.Status != model.PmPayOrderTablePayStatusNo {
 				notifyOrderHasDispose.CounterInc()
 				err = fmt.Errorf("订单已处理")
 				return
 			}
+
 			//修改数据库
 			orderInfo.Status = model.PmPayOrderTablePayStatusPaid
 			orderInfo.PayType = model.PmPayOrderTablePayTypeAlipay
@@ -151,8 +154,8 @@ func (l *NotifyAlipayNewLogic) NotifyAlipayNew(r *http.Request, w http.ResponseW
 					alarm.ImmediateAlarm("notifyUserPayErr", desc, alarm.ALARM_LEVEL_FATAL)
 				}
 			}()
-		} else { // 退款
-
+		} else {
+			// 退款
 			amountFloat, parseErr := strconv.ParseFloat(refundFee, 64)
 			if parseErr != nil || amountFloat <= 0 {
 				if parseErr != nil {
@@ -183,7 +186,8 @@ func (l *NotifyAlipayNewLogic) NotifyAlipayNew(r *http.Request, w http.ResponseW
 				err = fmt.Errorf("退款回调db服务异常， out_trade_no = %s, err:=%v", outTradeNo, dbErr)
 				util.CheckError(err.Error())
 			}
-			if table != nil { // 已经有退款单，是用户主动退款，不在这处理
+			if table != nil {
+				// 已经有退款单，是用户主动退款，不在这处理
 				return
 			}
 
@@ -238,7 +242,6 @@ func (l *NotifyAlipayNewLogic) NotifyAlipayNew(r *http.Request, w http.ResponseW
 		}
 
 	} else if ALI_NOTIFY_TYPE_SIGN == notifyType {
-
 		agreementNo := r.Form.Get("agreement_no")
 		externalAgreementNo := r.Form.Get("external_agreement_no")
 
@@ -310,7 +313,7 @@ func (l *NotifyAlipayNewLogic) NotifyAlipayNew(r *http.Request, w http.ResponseW
 			headerMap := map[string]string{
 				"App-Origin": order.AppPkg,
 			}
-			err = utils.CallbackWithRetry(order.AppNotifyUrl,headerMap, dataMap, 5*time.Second)
+			err = utils.CallbackWithRetry(order.AppNotifyUrl, headerMap, dataMap, 5*time.Second)
 			if err != nil {
 				desc := fmt.Sprintf("回调通知用户解约 异常, app_pkg=%s, out_trade_no=%s", order.AppPkg, order.OutTradeNo)
 				alarm.ImmediateAlarm("notifyUserUnsignErr", desc, alarm.ALARM_LEVEL_FATAL)
