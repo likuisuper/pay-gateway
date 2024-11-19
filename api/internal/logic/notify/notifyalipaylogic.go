@@ -3,6 +3,10 @@ package notify
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"net/url"
+	"time"
+
 	"gitee.com/yan-yixin0612/alipay/v3"
 	"gitee.com/zhuyunkj/pay-gateway/api/internal/svc"
 	"gitee.com/zhuyunkj/pay-gateway/api/internal/types"
@@ -13,9 +17,6 @@ import (
 	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
 	"gitee.com/zhuyunkj/zhuyun-core/util"
 	"github.com/zeromicro/go-zero/core/logx"
-	"net/http"
-	"net/url"
-	"time"
 )
 
 //短剧表-暂未使用
@@ -52,8 +53,10 @@ func (l *NotifyAlipayLogic) NotifyAlipay(r *http.Request, w http.ResponseWriter)
 		notifyAlipayErrNum.CounterInc()
 		return
 	}
+
 	bodyData := r.Form.Encode()
 	logx.Slowf("NotifyAlipay form %s", bodyData)
+
 	appId := r.Form.Get("app_id")
 	logx.Slowf(appId)
 	payCfg, err := l.payConfigAlipayModel.GetOneByAppID(appId)
@@ -78,7 +81,8 @@ func (l *NotifyAlipayLogic) NotifyAlipay(r *http.Request, w http.ResponseWriter)
 		logx.Error(err)
 		notifyAlipayErrNum.CounterInc()
 	}
-	if res.IsSuccess() == false {
+
+	if !res.IsSuccess() {
 		logx.Errorf("NotifyAlipay success false %s", outTradeNo)
 		notifyAlipayErrNum.CounterInc()
 		return
@@ -116,9 +120,9 @@ func (l *NotifyAlipayLogic) NotifyAlipay(r *http.Request, w http.ResponseWriter)
 	go func() {
 		defer exception.Recover()
 		dataMap := l.transFormDataToMap(bodyData)
-		headerMap := make(map[string]string,1)
+		headerMap := make(map[string]string, 1)
 		headerMap["App-Origin"] = orderInfo.AppPkgName
-		_, _ = util.HttpPostWithHeader(orderInfo.NotifyUrl, dataMap,headerMap, 5*time.Second)
+		_, _ = util.HttpPostWithHeader(orderInfo.NotifyUrl, dataMap, headerMap, 5*time.Second)
 	}()
 
 	bytes := []byte("success")

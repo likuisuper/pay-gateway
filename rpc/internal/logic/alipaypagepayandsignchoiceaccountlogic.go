@@ -157,7 +157,7 @@ func (l *AlipayPagePayAndSignChoiceAccountLogic) AlipayPagePayAndSignChoiceAccou
 
 	result, err := payClient.TradeAppPay(appPay)
 	if err != nil {
-		logx.Errorf("创建订单异常：生成支付宝加签串失败， err = %s", err.Error())
+		logx.Errorf("创建订单异常,生成支付宝加签串失败,err=%s", err.Error())
 		return nil, errors.New("创建订单异常")
 	}
 

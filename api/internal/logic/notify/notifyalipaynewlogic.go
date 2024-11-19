@@ -31,19 +31,21 @@ import (
 
 type NotifyAlipayNewLogic struct {
 	logx.Logger
-	ctx         context.Context
-	svcCtx      *svc.ServiceContext
-	orderModel  *model.OrderModel
-	refundModel *model.RefundModel
+	ctx                 context.Context
+	svcCtx              *svc.ServiceContext
+	orderModel          *model.OrderModel
+	refundModel         *model.RefundModel
+	appAlipayOrderModel *model.AppAlipayOrderModel
 }
 
 func NewNotifyAlipayNewLogic(ctx context.Context, svcCtx *svc.ServiceContext) *NotifyAlipayNewLogic {
 	return &NotifyAlipayNewLogic{
-		Logger:      logx.WithContext(ctx),
-		ctx:         ctx,
-		svcCtx:      svcCtx,
-		orderModel:  model.NewOrderModel(define.DbPayGateway),
-		refundModel: model.NewRefundModel(define.DbPayGateway),
+		Logger:              logx.WithContext(ctx),
+		ctx:                 ctx,
+		svcCtx:              svcCtx,
+		orderModel:          model.NewOrderModel(define.DbPayGateway),
+		refundModel:         model.NewRefundModel(define.DbPayGateway),
+		appAlipayOrderModel: model.NewAppAlipayOrderModel(define.DbPayGateway),
 	}
 }
 
@@ -98,6 +100,14 @@ func (l *NotifyAlipayNewLogic) NotifyAlipayNew(r *http.Request, w http.ResponseW
 		}
 		refundFee := r.Form.Get("refund_fee")
 		if refundFee == "" {
+			//获取订单信息
+			orderInfo, dbErr := l.orderModel.GetOneByOutTradeNo(outTradeNo)
+			if dbErr != nil || orderInfo == nil {
+				dbErr = fmt.Errorf("获取订单失败 err=%v, order_code=%s", dbErr, outTradeNo)
+				util.CheckError(dbErr.Error())
+				return
+			}
+
 			// 支付成功
 			res, aliErr := client.TradeQuery(tradeQuery)
 			if aliErr != nil {
@@ -106,17 +116,22 @@ func (l *NotifyAlipayNewLogic) NotifyAlipayNew(r *http.Request, w http.ResponseW
 				notifyAlipayErrNum.CounterInc()
 			}
 
+			// 写入冗余的交易信息
+			code, _ := strconv.Atoi(string(res.Content.Code))
+			tmpTpl := &model.AppAlipayOrderTable{
+				AppPkg:    orderInfo.AppPkg,
+				AppId:     appId,
+				DeviceId:  orderInfo.DeviceId,
+				Code:      code,
+				PayMoney:  orderInfo.Amount,
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
+			}
+			l.appAlipayOrderModel.Create(tmpTpl)
+
 			if !res.IsSuccess() {
 				logx.Errorf("NotifyAlipay success false %s", outTradeNo)
 				notifyAlipayErrNum.CounterInc()
-				return
-			}
-
-			//获取订单信息
-			orderInfo, dbErr := l.orderModel.GetOneByOutTradeNo(outTradeNo)
-			if dbErr != nil || orderInfo == nil {
-				dbErr = fmt.Errorf("获取订单失败 err=%v, order_code=%s", dbErr, outTradeNo)
-				util.CheckError(dbErr.Error())
 				return
 			}
 
