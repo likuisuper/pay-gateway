@@ -117,12 +117,12 @@ func (l *NotifyAlipayNewLogic) NotifyAlipayNew(r *http.Request, w http.ResponseW
 			}
 
 			// 写入冗余的交易信息
-			code, _ := strconv.Atoi(string(res.Content.Code))
+			respCode, _ := strconv.Atoi(string(res.Content.Code))
 			tmpTpl := &model.AppAlipayOrderTable{
 				AppPkg:    orderInfo.AppPkg,
 				AppId:     appId,
 				DeviceId:  orderInfo.DeviceId,
-				Code:      code,
+				Code:      respCode,
 				PayMoney:  orderInfo.Amount,
 				CreatedAt: time.Now(),
 				UpdatedAt: time.Now(),
