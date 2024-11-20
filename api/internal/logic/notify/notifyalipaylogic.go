@@ -7,7 +7,7 @@ import (
 	"net/url"
 	"time"
 
-	"gitee.com/yan-yixin0612/alipay/v3"
+	"gitee.com/zhuyunkj/alipay/v3"
 	"gitee.com/zhuyunkj/pay-gateway/api/internal/svc"
 	"gitee.com/zhuyunkj/pay-gateway/api/internal/types"
 	"gitee.com/zhuyunkj/pay-gateway/common/client"

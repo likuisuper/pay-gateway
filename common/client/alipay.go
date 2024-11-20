@@ -1,18 +1,19 @@
 package client
 
 import (
-	alipay2 "gitee.com/yan-yixin0612/alipay/v3"
-	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
-	"github.com/zeromicro/go-zero/core/logx"
 	"net/http"
 	"time"
+
+	alipay2 "gitee.com/zhuyunkj/alipay/v3"
+	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
+	"github.com/zeromicro/go-zero/core/logx"
 )
 
 var (
 	aliPayClientInitFailNum = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "aliPayClientInitFailNum", nil, "支付宝 client 初始化失败", nil})}
 )
 
-//支付宝配置
+// 支付宝配置
 type AliPayConfig struct {
 	AppId            string
 	PrivateKey       string

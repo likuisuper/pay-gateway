@@ -5,7 +5,9 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"gitee.com/yan-yixin0612/alipay/v3"
+	"strconv"
+
+	"gitee.com/zhuyunkj/alipay/v3"
 	"gitee.com/zhuyunkj/pay-gateway/common/client"
 	douyin "gitee.com/zhuyunkj/pay-gateway/common/client/douyinGeneralTrade"
 	"gitee.com/zhuyunkj/pay-gateway/common/code"
@@ -17,7 +19,6 @@ import (
 	"gitee.com/zhuyunkj/zhuyun-core/util"
 	"github.com/skip2/go-qrcode"
 	"github.com/zeromicro/go-zero/core/logx"
-	"strconv"
 )
 
 var (

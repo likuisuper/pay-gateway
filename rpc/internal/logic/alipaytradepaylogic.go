@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	alipay2 "gitee.com/yan-yixin0612/alipay/v3"
+	"time"
+
+	alipay2 "gitee.com/zhuyunkj/alipay/v3"
 	"gitee.com/zhuyunkj/pay-gateway/common/clientMgr"
 	"gitee.com/zhuyunkj/pay-gateway/common/code"
 	"gitee.com/zhuyunkj/pay-gateway/common/define"
@@ -15,7 +17,6 @@ import (
 	"gitee.com/zhuyunkj/pay-gateway/db/mysql/model"
 	"gitee.com/zhuyunkj/zhuyun-core/alarm"
 	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
-	"time"
 
 	"gitee.com/zhuyunkj/pay-gateway/rpc/internal/svc"
 	"gitee.com/zhuyunkj/pay-gateway/rpc/pb/pb"
@@ -108,7 +109,7 @@ func (l *AlipayTradePayLogic) AlipayTradePay(in *pb.AlipayTradePayReq) (*pb.Alip
 				"App-Origin": tb.AppPkg,
 			}
 
-			err = utils.CallbackWithRetry(tb.AppNotifyUrl,headerMap, dataMap, 5*time.Second)
+			err = utils.CallbackWithRetry(tb.AppNotifyUrl, headerMap, dataMap, 5*time.Second)
 			if err != nil {
 				desc := fmt.Sprintf("回调通知用户续约 异常, app_pkg=%s, out_trade_no=%s", tb.AppPkg, tb.OutTradeNo)
 				alarm.ImmediateAlarm("notifyUserSignFeeErr", desc, alarm.ALARM_LEVEL_FATAL)

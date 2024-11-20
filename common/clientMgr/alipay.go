@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"sync"
 
-	alipay2 "gitee.com/yan-yixin0612/alipay/v3"
+	alipay2 "gitee.com/zhuyunkj/alipay/v3"
 	"gitee.com/zhuyunkj/pay-gateway/common/client"
 	"gitee.com/zhuyunkj/pay-gateway/common/define"
 	"gitee.com/zhuyunkj/pay-gateway/db/mysql/model"
