@@ -48,6 +48,7 @@ func (o *AppAlipayAppModel) GetValidConfig(appPkg string) (AppAlipayAppTable, er
 	err := o.DB.Table("app_alipay_config").Where("status = 1").Select("app_id").Find(&tmpAppIds).Error
 	if err != nil {
 		logx.Errorf("app_alipay_config, pkg:%s, err:%v", appPkg, err)
+		return tbl, err
 	}
 
 	// sort_no升序
