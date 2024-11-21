@@ -3,7 +3,7 @@ module gitee.com/zhuyunkj/pay-gateway
 go 1.16
 
 require (
-	gitee.com/zhuyunkj/alipay/v3 v3.3.6
+	gitee.com/zhuyunkj/alipay/v3 v3.3.8
 	gitee.com/zhuyunkj/zero-contrib v1.3.2
 	gitee.com/zhuyunkj/zhuyun-core v1.9.60
 	github.com/bytedance/sonic v1.11.6

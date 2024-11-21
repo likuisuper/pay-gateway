@@ -44,12 +44,17 @@ func (o *AppAlipayAppModel) GetValidConfig(appPkg string) (AppAlipayAppTable, er
 
 	var tbl AppAlipayAppTable
 
-	// status 状态（1：正常，2停用）
+	tmpAppIds := make([]string, 0, 10)
+	err := o.DB.Table("app_alipay_config").Where("status = 1").Select("app_id").Find(&tmpAppIds).Error
+	if err != nil {
+		logx.Errorf("app_alipay_config, pkg:%s, err:%v", appPkg, err)
+	}
+
 	// sort_no升序
 	// relate_type 关联类型（1：备用，2：兜底）
-	err := o.DB.Where("`app_pkg` = ? and `status` = 1", appPkg).Order("sort_no asc").Order("relate_type asc").Find(&list).Error
+	err = o.DB.Where("`app_pkg` = ? and `app_id` in ?", appPkg, tmpAppIds).Order("sort_no asc").Order("relate_type asc").Find(&list).Error
 	if err != nil {
-		logx.Errorf("获取关联的支付宝配置信息失败, pkg:%s, err:%v", appPkg, err)
+		logx.Errorf("app_alipay_app, pkg:%s, err:%v", appPkg, err)
 		return tbl, err
 	}
 
