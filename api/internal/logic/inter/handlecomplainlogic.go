@@ -47,9 +47,12 @@ func (l *HandleComplainLogic) HandleComplain(req *types.ComplainReq) (resp *type
 		res := response.MakeResult(code.CODE_ERROR, err.Error(), nil)
 		return &res, nil
 	}
+
 	p := alipay2.ComplainList{
-		EndTime:   req.EndTime,
-		BeginTime: req.StartTime,
+		GmtComplaintStart: req.StartTime,
+		GmtComplaintEnd:   req.EndTime,
+		PageSize:          2,
+		CurrentPageNum:    1,
 	}
 	rest, err := payClient.GetComplainList(p)
 	if err != nil {
@@ -57,7 +60,7 @@ func (l *HandleComplainLogic) HandleComplain(req *types.ComplainReq) (resp *type
 		return &res, nil
 	}
 	data := map[string]interface{}{
-		"totalNum": rest.AlipayMerchantTradecomplainBatchqueryResponse.TotalNum,
+		"totalNum": rest.AlipaySecurityRiskComplaintInfoBatchqueryResponse.TotalSize,
 	}
 	res := response.MakeResult(code.CODE_OK, "操作成功", data)
 	return &res, nil
