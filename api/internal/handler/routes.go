@@ -107,15 +107,12 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 	)
 
 	server.AddRoutes(
-		rest.WithMiddlewares(
-			[]rest.Middleware{serverCtx.Inter},
-			[]rest.Route{
-				{
-					Method:  http.MethodPost,
-					Path:    "/internal/complain",
-					Handler: inter.HandleComplainHandler(serverCtx),
-				},
-			}...,
-		),
+		[]rest.Route{
+			{
+				Method:  http.MethodPost,
+				Path:    "/internal/complain",
+				Handler: inter.HandleComplainHandler(serverCtx),
+			},
+		},
 	)
 }

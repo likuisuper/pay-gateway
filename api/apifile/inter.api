@@ -81,7 +81,6 @@ service payment {
 
 @server(
     group: inter
-    middleware: Inter //内部接口中间件
 )
 service payment {
        @doc(
