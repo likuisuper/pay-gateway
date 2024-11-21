@@ -41,6 +41,12 @@ type (
         Reviewer string `json:"reviewer"` // 操作者
         ReviewerComment string `json:"reviewer_comment"` // 操作者备注
     }
+
+    ComplainReq{
+       AppId string `json:"app_id"`
+       StartTime string `json:"start_time"`
+       EndTime string `json:"end_time"`
+    }
 )
 
 @server(
@@ -71,4 +77,16 @@ service payment {
     )
     @handler handleRefund
     post /internal/handleRefund(RefundReq) returns (ResultResp)
+}
+
+@server(
+    group: inter
+    middleware: Inter //内部接口中间件
+)
+service payment {
+       @doc(
+           summary: "内部接口-获取投诉条数"
+       )
+       @handler handleComplain
+       post /internal/complain(ComplainReq) returns (ResultResp)
 }
