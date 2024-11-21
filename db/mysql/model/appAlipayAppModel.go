@@ -53,7 +53,7 @@ func (o *AppAlipayAppModel) GetValidConfig(appPkg string) (AppAlipayAppTable, er
 
 	// sort_no升序
 	// relate_type 关联类型（1：备用，2：兜底）
-	err = o.DB.Where("`app_pkg` = ? and `app_id` in ?", appPkg, tmpAppIds).Order("sort_no asc").Order("relate_type asc").Find(&list).Error
+	err = o.DB.Where("`app_pkg` = ? and `app_id` in ?", appPkg, tmpAppIds).Order("relate_type asc, sort_no asc").Find(&list).Error
 	if err != nil {
 		logx.Errorf("app_alipay_app, pkg:%s, err:%v", appPkg, err)
 		return tbl, err
