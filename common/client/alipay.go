@@ -45,19 +45,20 @@ func GetAlipayClient(config AliPayConfig) (client *alipay2.Client, err error) {
 	}
 	err = client.LoadAppPublicCertFromFile(config.AppCertPublicKey) // 加载应用公钥证书
 	if err != nil {
-		logx.Errorf("加载应用公钥证书失败：%v", err.Error())
+		logx.Errorf("加载应用公钥证书失败：%v, appId:%s", err.Error(), config.AppId)
 		aliPayClientInitFailNum.CounterInc()
 		return nil, err
 	}
+
 	err = client.LoadAliPayRootCertFromFile(config.PayRootCert) // 加载支付宝根证书
 	if err != nil {
-		logx.Errorf("加载支付宝根证书：%v", err.Error())
+		logx.Errorf("加载支付宝根证书：%v, appId:%s", err.Error(), config.AppId)
 		aliPayClientInitFailNum.CounterInc()
 		return nil, err
 	}
 	err = client.LoadAliPayPublicCertFromFile(config.PublicKey) // 加载支付宝公钥证书
 	if err != nil {
-		logx.Errorf("加载支付宝公钥证书：%v", err.Error())
+		logx.Errorf("加载支付宝公钥证书：%v, appId:%s", err.Error(), config.AppId)
 		aliPayClientInitFailNum.CounterInc()
 		return nil, err
 	}
