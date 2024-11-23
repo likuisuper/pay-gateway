@@ -89,7 +89,7 @@ func (l *AlipayRefundLogic) AlipayRefund(in *pb.AlipayRefundReq) (*pb.AliRefundR
 		err = l.refundModel.Create(&refund)
 		if err != nil {
 			errInfo := fmt.Sprintf("创建退款订单失败!!! %s", in.OutTradeNo)
-			logx.Errorf(errInfo)
+			logx.Error(errInfo)
 			createRefundErr.CounterInc()
 			return nil, errors.New(errInfo)
 		}
