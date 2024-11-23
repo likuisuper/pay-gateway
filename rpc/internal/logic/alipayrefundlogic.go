@@ -75,7 +75,7 @@ func (l *AlipayRefundLogic) AlipayRefund(in *pb.AlipayRefundReq) (*pb.AliRefundR
 
 	result, err := payClient.TradeRefund(tradeRefund)
 	if err != nil {
-		logx.Errorf(err.Error())
+		logx.Error(err.Error())
 	}
 
 	if result.Content.Code == alipay2.CodeSuccess && result.Content.FundChange == "Y" {
