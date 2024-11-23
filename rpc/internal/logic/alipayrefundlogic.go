@@ -41,16 +41,25 @@ func NewAlipayRefundLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Alip
 // 支付宝：退款
 func (l *AlipayRefundLogic) AlipayRefund(in *pb.AlipayRefundReq) (*pb.AliRefundResp, error) {
 	order, err := l.orderModel.GetOneByOutTradeNo(in.OutTradeNo)
-	if err != nil || order.PayAppID == "" {
+	if err != nil {
 		errInfo := fmt.Sprintf("创建退款订单：获取订单失败!!! %s", in.OutTradeNo)
 		logx.Error(errInfo)
 		createRefundErr.CounterInc()
 		return nil, errors.New(errInfo)
 	}
 
-	payClient, _, _, err := clientMgr.GetAlipayClientByAppIdWithCache(order.PayAppID)
-	if err != nil {
-		return nil, err
+	var payClient *alipay2.Client
+	if order.PayAppID != "" {
+		// 优先根据app id获取
+		payClient, _, _, err = clientMgr.GetAlipayClientByAppIdWithCache(order.PayAppID)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		payClient, _, _, err = clientMgr.GetAlipayClientByAppPkgWithCache(in.AppPkgName)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	refund := model.RefundTable{

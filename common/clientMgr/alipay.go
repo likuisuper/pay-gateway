@@ -29,9 +29,31 @@ func GetAlipayClientByAppIdWithCache(aliAppId string) (payClient *alipay2.Client
 	return getAlipayClientWithCache("", aliAppId)
 }
 
-// 会选择不同的支付宝号
+// 需要选用不同的支付宝账号
 func GetAlipayClienMerchantInfo(pkgName string) (payClient *alipay2.Client, appId string, notifyUrl string, merchantNo string, merchantName string, err error) {
-	return getAlipayClientWithCache2(pkgName)
+	// 需要根本包名去找不同的支付号 然后筛选出来可用的
+	appConfig, err := model.NewAppAlipayAppModel(define.DbPayGateway).GetValidConfig(pkgName)
+	if err != nil {
+		return
+	}
+
+	aliAppId := appConfig.AppID
+	payCfg, err := model.NewPmPayConfigAlipayModel(define.DbPayGateway).GetOneByAppID(aliAppId)
+	if err != nil {
+		err = fmt.Errorf("getAlipayClientChoiceDiff读取支付宝配置失败 pkgName=%s, aliAppId=%s err=%v", pkgName, aliAppId, err)
+		util.CheckError(err.Error())
+		return nil, "", "", "", "", err
+	}
+
+	config := *payCfg.TransClientConfig()
+	payClient, err = client.GetAlipayClient(config)
+	if err != nil {
+		err = fmt.Errorf("getAlipayClientChoiceDiff初始化支付错误 pkgName= %s, err:=%v", pkgName, err)
+		util.CheckError(err.Error())
+		return nil, "", "", "", "", err
+	}
+
+	return payClient, aliAppId, payCfg.NotifyUrl, payCfg.MerchantNo, payCfg.MerchantName, nil
 }
 
 // payCfg: 商户的配置，比如证书、回调地址
@@ -110,79 +132,4 @@ func getAlipayClientWithCache(pkgName string, aliAppId string) (payClient *alipa
 	}
 
 	return payClient, pkgCfg.AlipayAppID, payCfg.NotifyUrl, err
-}
-
-// payCfg: 商户的配置，比如证书、回调地址
-// appCfg: 应用的配置，比如使用的商户id
-// 一般的场景是'包名->商户id->阿里client`, 但存在极端情况，收到支付宝回调的时候切换了商户, 所以收到回调的时候要使用商户app_id来找client
-// 需要选用不同的支付宝账号
-func getAlipayClientWithCache2(pkgName string) (payClient *alipay2.Client, appId string, notifyUrl string, merchantNo string, merchantName string, err error) {
-	// 需要根本包名去找不同的支付号 然后筛选出来可用的
-	appConfig, err := model.NewAppAlipayAppModel(define.DbPayGateway).GetValidConfig(pkgName)
-	if err != nil {
-		return
-	}
-
-	var appConfigModel *model.PmAppConfigModel
-	var payConfigAlipayModel *model.PmPayConfigAlipayModel
-	var rKeyPayCfgKey, aliAppId string
-
-	pkgCfg := &model.PmAppConfigTable{}
-	appConfigModel = model.NewPmAppConfigModel(define.DbPayGateway)
-	rKeyAppCfgKey := appConfigModel.RDB.GetRedisKey(RedisAppConfigKey2, pkgName)
-	appConfigModel.RDB.GetObject(context.TODO(), rKeyAppCfgKey, pkgCfg)
-
-	payCfg := &model.PmPayConfigAlipayTable{}
-	payConfigAlipayModel = model.NewPmPayConfigAlipayModel(define.DbPayGateway)
-
-	if pkgCfg.AlipayAppID != "" {
-		// 根据商户app_id找商户配置的缓存
-		rKeyPayCfgKey = payConfigAlipayModel.RDB.GetRedisKey(RedisAliPayConfigKey2, pkgCfg.AlipayAppID)
-		payConfigAlipayModel.RDB.GetObject(context.TODO(), rKeyPayCfgKey, payCfg)
-	}
-
-	if payCfg.ID != 0 && pkgCfg.AlipayAppID != "" {
-		// Redis缓存还在，直接从内存缓存中获取客户端
-		if cli, ok := cliCache.Load(payCfg.AppID); ok {
-			payClient = cli.(*alipay2.Client)
-		}
-	}
-
-	if payCfg.ID == 0 || pkgCfg.ID == 0 || payClient == nil {
-		// Redis缓存失效，或者内存缓存中没有客户端，再去读取配置还有证书，创建客户端
-		aliAppId = appConfig.AppID
-		payCfg, err = payConfigAlipayModel.GetOneByAppID(aliAppId)
-		if err != nil {
-			err = fmt.Errorf("pkgName=%s, aliAppId=%s 读取支付宝配置2失败 err=%v", pkgName, aliAppId, err)
-			util.CheckError(err.Error())
-			return nil, "", "", "", "", err
-		}
-
-		config := *payCfg.TransClientConfig()
-		cliCache.Delete(config.AppId)
-
-		appConfigModel.RDB.Set(context.TODO(), rKeyAppCfgKey, *pkgCfg, 3600)
-
-		rKeyPayCfgKey = payConfigAlipayModel.RDB.GetRedisKey(RedisAliPayConfigKey2, pkgCfg.AlipayAppID)
-		payConfigAlipayModel.RDB.Set(context.TODO(), rKeyPayCfgKey, *payCfg, 3600)
-
-		payClient, err = client.GetAlipayClient(config)
-		if err != nil {
-			err = fmt.Errorf("pkgName= %s, 初始化支付2错误 err:=%v", pkgName, err)
-			util.CheckError(err.Error())
-			return nil, "", "", "", "", err
-		}
-
-		if payClient != nil {
-			cliCache.Store(config.AppId, payClient)
-		}
-	}
-
-	if err != nil {
-		err = fmt.Errorf("pkgName= %s, 初始化支付2错误 err:=%v", pkgName, err)
-		util.CheckError(err.Error())
-		return nil, "", "", "", "", err
-	}
-
-	return payClient, pkgCfg.AlipayAppID, payCfg.NotifyUrl, payCfg.MerchantNo, payCfg.MerchantName, err
 }
