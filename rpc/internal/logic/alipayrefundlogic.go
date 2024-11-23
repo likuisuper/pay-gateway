@@ -4,6 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
+	"time"
+
 	alipay2 "gitee.com/yan-yixin0612/alipay/v3"
 	"gitee.com/zhuyunkj/pay-gateway/common/clientMgr"
 	"gitee.com/zhuyunkj/pay-gateway/common/code"
@@ -12,8 +15,6 @@ import (
 	"gitee.com/zhuyunkj/pay-gateway/db/mysql/model"
 	"gitee.com/zhuyunkj/pay-gateway/rpc/internal/svc"
 	"gitee.com/zhuyunkj/pay-gateway/rpc/pb/pb"
-	"strconv"
-	"time"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -78,7 +79,6 @@ func (l *AlipayRefundLogic) AlipayRefund(in *pb.AlipayRefundReq) (*pb.AliRefundR
 	}
 
 	if result.Content.Code == alipay2.CodeSuccess && result.Content.FundChange == "Y" {
-
 		floatAmount, _ := strconv.ParseFloat(result.Content.RefundFee, 64)
 		intAmount := int(floatAmount * 100)
 		refund.RefundAmount = intAmount

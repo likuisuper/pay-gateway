@@ -248,30 +248,40 @@ message WechatRefundOrderReq {
   int64  RefundFee = 3;  //退款总金额，订单总金额，单位为分
   string RefundReason = 4; //退款理由
 }
-
 // 抖音通用交易系统 https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/api/industry/general_trade/create_order/requestOrder#33efe69e
+// https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/server/trade-system/general/order/request-order-data-sign
+// SkuList[]​ SkuList说明见下文​
 message DouyinGeneralTradeReq {
   enum SkuType {
     Unknown = 0;
     ContentRecharge = 401; // 内容充值
+    RechargeVip = 402; // ​充值包月/包季/包年等会员​
+    RechargeCoin = 403; // 充值金币
+    UnlockPartVideo = 404; // 解锁单集/解锁N集​
+    UnlockFullVideo = 405; // 解锁全剧/购买全剧，解锁一部完整剧 ，而404只是解锁了一部剧的部分集
   }
+
   enum IosPayType {
     IosPayTypeUnknown = 0;
     IosPayTypeIm = 1; // 跳转im支付
     IosPayTypeDiamond = 2; // 钻石支付
   }
+
   string skuId = 1; // 外部商品id
   int32 price = 2; // 价格 分
-  int32 quantity = 3; // 数量
+  int32 quantity = 3; // 购买数量​ 0 < quantity <= 100 ​
   string title = 4; // 商品标题，长度 <= 256字节
   repeated string imageList = 5; // 商品图片链接，长度 <= 512 字节，只取第一项
   SkuType type = 6; // 商品类型
-  Schema entrySchema = 8; // 商品详情页链接
+  Schema entrySchema = 8; // 非必填 商品详情页链接 https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/server/trade-system/general/order/request-order-data-sign
   Schema orderEntrySchema = 9; // 订单详情页链接 必填
-  repeated int32 limitPayWayList = 10; // 限制的支付方式 1 微信 2 支付宝
+  repeated int32 limitPayWayList = 10; // 限制的支付方式 1 微信 2 支付宝 屏蔽的支付方式，当开发者没有进件某个支付渠道，可在下单时屏蔽对应的支付方式。如：[1, 2]表示屏蔽微信和支付宝​ 枚举说明：​1-微信​ 2-支付宝​
   IosPayType iosPayType = 11; // ios场景下支付方式
+  string tagGroupId = 12; // 交易规则标签组​ https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/server/trade-system/general/tag/tag-group-query
+  string skuAttr = 13; // 商品信息：需要将不同商品类型定义的具体结构，转换成json string​ ​号卡类商品必填，即当前商品类型 type in [101、102、103、104、105、106、107]的商品必填，内部结构请详见下文 ”skuAttr“ 小节说明。​
 }
 
+// https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/server/trade-system/general/order/request-order-data-sign
 message Schema {
   string path = 1; // 详情页跳转路径，没有前导的“/”，路径后不可携带query参数
   string params = 2; // 详情页路径参数

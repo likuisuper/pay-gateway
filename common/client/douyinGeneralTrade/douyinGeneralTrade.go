@@ -56,6 +56,7 @@ type Sku struct {
 	Type        SkuType       `json:"type,omitempty"`        // 商品类型 必填
 	TagGroupId  SkuTagGroupId `json:"tagGroupId,omitempty"`  // 交易规则标签组 必填 https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/server/trade-system/general/tag/tag_group_query#2b56d127
 	EntrySchema *Schema       `json:"entrySchema,omitempty"` // 商品详情页 非必填
+	SkuAttr     string        `json:"skuAttr,omitempty"`     // 商品信息：需要将不同商品类型定义的具体结构，转换成json string​ ​号卡类商品必填，即当前商品类型 type in [101、102、103、104、105、106、107]的商品必填，内部结构请详见下文 ”skuAttr“ 小节说明。​ https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/server/trade-system/general/order/request-order-data-sign
 }
 
 type SkuType int32

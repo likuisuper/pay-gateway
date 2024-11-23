@@ -5,6 +5,8 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"strconv"
+
 	"gitee.com/yan-yixin0612/alipay/v3"
 	"gitee.com/zhuyunkj/pay-gateway/common/client"
 	douyin "gitee.com/zhuyunkj/pay-gateway/common/client/douyinGeneralTrade"
@@ -17,7 +19,6 @@ import (
 	"gitee.com/zhuyunkj/zhuyun-core/util"
 	"github.com/skip2/go-qrcode"
 	"github.com/zeromicro/go-zero/core/logx"
-	"strconv"
 )
 
 var (
@@ -377,11 +378,6 @@ func (l *OrderPayLogic) checkDouyinGeneralTradeParam(in *pb.OrderPayReq) error {
 		return errors.New("invalid sku type")
 	}
 
-	//if in.Os == code.OsIos {
-	//	if _, ok := pb.DouyinGeneralTradeReq_IosPayType_name[int32(req.IosPayType)]; !ok || req.IosPayType == pb.DouyinGeneralTradeReq_IosPayTypeUnknown {
-	//		return fmt.Errorf("invalid iosPayType:%v", req.IosPayType)
-	//	}
-	//}
 	return nil
 }
 
@@ -395,9 +391,10 @@ func (l *OrderPayLogic) createDouyinGeneralTradeOrder(in *pb.OrderPayReq, payCon
 		Quantity:    douyinReq.Quantity,
 		Title:       douyinReq.Title,
 		ImageList:   douyinReq.ImageList,
-		Type:        0,
-		TagGroupId:  "",
+		Type:        douyin.SkuType(douyinReq.Type),
+		TagGroupId:  douyin.SkuTagGroupId(douyinReq.TagGroupId),
 		EntrySchema: nil,
+		SkuAttr:     douyinReq.SkuAttr,
 	}
 	if douyinReq.GetEntrySchema() != nil {
 		sku.EntrySchema = &douyin.Schema{
@@ -415,7 +412,7 @@ func (l *OrderPayLogic) createDouyinGeneralTradeOrder(in *pb.OrderPayReq, payCon
 		},
 		OutOrderNo:       in.OrderSn,
 		TotalAmount:      int32(in.Amount),
-		PayExpireSeconds: code.DouyinPayExpireSeconds,
+		PayExpireSeconds: code.DouyinPayExpireSeconds, // 默认是半个小时
 		PayNotifyUrl:     payConf.NotifyUrl,
 		MerchantUid:      payConf.MerchantUid,
 		OrderEntrySchema: &douyin.Schema{
