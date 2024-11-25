@@ -93,6 +93,9 @@ func (c *PayClient) RequestOrder(data *RequestOrderData) (string, string, error)
 	if err != nil {
 		return "", "", err
 	}
+
+	logx.Sloww("RequestOrder", logx.Field("dataStr", dataStr))
+
 	byteAuthorization, err := c.GetByteAuthorization("/requestOrder", "POST", dataStr, c.randStr(10), strconv.FormatInt(time.Now().Unix(), 10))
 	return dataStr, byteAuthorization, err
 }
