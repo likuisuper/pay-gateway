@@ -99,7 +99,7 @@ func (o *PmPayOrderModel) GetOneByCode(orderSn string) (info *PmPayOrderTable, e
 // GetOneByOrderSnAndAppId 根据订单号和包名获取订单信息
 func (o *PmPayOrderModel) GetOneByOrderSnAndAppId(orderSn, appId string) (info *PmPayOrderTable, err error) {
 	var orderInfo PmPayOrderTable
-	err = o.DB.Where("`order_sn` = ? and pay_app_id = ?", orderSn, appId).First(&orderInfo).Error
+	err = o.DB.Where("`order_sn` = ? and `pay_app_id` = ?", orderSn, appId).First(&orderInfo).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}

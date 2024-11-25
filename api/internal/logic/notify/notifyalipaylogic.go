@@ -58,7 +58,7 @@ func (l *NotifyAlipayLogic) NotifyAlipay(r *http.Request, w http.ResponseWriter)
 	logx.Slowf("NotifyAlipay form %s", bodyData)
 
 	appId := r.Form.Get("app_id")
-	logx.Slowf(appId)
+	logx.Slowf("appId:%v", appId)
 	payCfg, err := l.payConfigAlipayModel.GetOneByAppID(appId)
 	if err != nil {
 		err = fmt.Errorf("pkgName= %s, 读取支付配置失败，err:=%v", "all", err)
@@ -93,8 +93,8 @@ func (l *NotifyAlipayLogic) NotifyAlipay(r *http.Request, w http.ResponseWriter)
 
 	//升级为根据订单号和appid查询
 	orderInfo, err := l.payOrderModel.GetOneByOrderSnAndAppId(outTradeNo, appId)
-	if err != nil {
-		err = fmt.Errorf("获取订单失败！err=%v,order_code = %s", err, outTradeNo)
+	if err != nil || orderInfo == nil || orderInfo.ID < 1 {
+		err = fmt.Errorf("获取订单失败 err:%v, order_code:%s, appId:%v", err, outTradeNo, appId)
 		util.CheckError(err.Error())
 		return
 	}
@@ -104,6 +104,7 @@ func (l *NotifyAlipayLogic) NotifyAlipay(r *http.Request, w http.ResponseWriter)
 		err = fmt.Errorf("订单已处理")
 		return
 	}
+
 	//修改数据库
 	amount := util.String2Float64(res.Content.TotalAmount) * 100
 	orderInfo.NotifyAmount = int(amount)
