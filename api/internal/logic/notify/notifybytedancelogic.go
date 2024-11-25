@@ -5,6 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
+	"time"
+
 	"gitee.com/zhuyunkj/pay-gateway/api/internal/svc"
 	"gitee.com/zhuyunkj/pay-gateway/api/internal/types"
 	"gitee.com/zhuyunkj/pay-gateway/common/client"
@@ -13,8 +16,6 @@ import (
 	"gitee.com/zhuyunkj/pay-gateway/db/mysql/model"
 	"gitee.com/zhuyunkj/zhuyun-core/util"
 	jsoniter "github.com/json-iterator/go"
-	"strconv"
-	"time"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -49,6 +50,7 @@ func (l *NotifyBytedanceLogic) NotifyBytedance(req *types.ByteDanceReq) (resp *t
 		resp, err = l.NotifyPayment(req)
 		return
 	}
+
 	if req.Type == "refund" {
 		resp, err = l.NotifyRefund(req)
 	}
@@ -87,7 +89,7 @@ func (l *NotifyBytedanceLogic) NotifyPayment(req *types.ByteDanceReq) (resp *typ
 	order, err := payServer.Notify(cliReq)
 	if err != nil {
 		logx.Errorf("验签未通过，或者解密失败！err=%v", err)
-		err = errors.New(`{"code": "FAIL","message": "验签未通过，或者解密失败"}`)
+		// err = errors.New(`{"code": "FAIL","message": "验签未通过，或者解密失败"}`)
 		resp = &types.ByteDanceResp{
 			ErrNo:   400,
 			ErrTips: "验签未通过，或者解密失败",
@@ -110,11 +112,13 @@ func (l *NotifyBytedanceLogic) NotifyPayment(req *types.ByteDanceReq) (resp *typ
 		util.CheckError(err.Error())
 		return
 	}
+
 	if orderInfo.PayStatus != model.PmPayOrderTablePayStatusNo {
 		notifyOrderHasDispose.CounterInc()
 		err = fmt.Errorf("订单已处理")
 		return
 	}
+
 	//修改数据库
 	orderInfo.NotifyAmount = order.TotalAmount
 	orderInfo.PayStatus = model.PmPayOrderTablePayStatusPaid
@@ -130,9 +134,9 @@ func (l *NotifyBytedanceLogic) NotifyPayment(req *types.ByteDanceReq) (resp *typ
 	//回调业务方接口
 	go func() {
 		defer exception.Recover()
-		headerMap := make(map[string]string,1)
+		headerMap := make(map[string]string, 1)
 		headerMap["App-Origin"] = orderInfo.AppPkgName
-		respData, requestErr := util.HttpPostWithHeader(orderInfo.NotifyUrl, req, headerMap,5*time.Second)
+		respData, requestErr := util.HttpPostWithHeader(orderInfo.NotifyUrl, req, headerMap, 5*time.Second)
 		if requestErr != nil {
 			util.CheckError("NotifyPayment-post, req:%+v, err:%v", req, requestErr)
 			return

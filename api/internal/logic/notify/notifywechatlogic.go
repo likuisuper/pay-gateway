@@ -3,6 +3,9 @@ package notify
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"time"
+
 	"gitee.com/zhuyunkj/pay-gateway/common/client"
 	"gitee.com/zhuyunkj/pay-gateway/common/define"
 	"gitee.com/zhuyunkj/pay-gateway/common/exception"
@@ -11,8 +14,6 @@ import (
 	"gitee.com/zhuyunkj/zhuyun-core/util"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/wechatpay-apiv3/wechatpay-go/services/payments"
-	"net/http"
-	"time"
 
 	"gitee.com/zhuyunkj/pay-gateway/api/internal/svc"
 	"gitee.com/zhuyunkj/pay-gateway/api/internal/types"
@@ -75,15 +76,17 @@ func (l *NotifyWechatLogic) NotifyWechat(request *http.Request) (resp *types.WeC
 	//升级为根据订单号和appid查询
 	orderInfo, err := l.payOrderModel.GetOneByOrderSnAndAppId(*transaction.OutTradeNo, appId)
 	if err != nil {
-		err = fmt.Errorf("获取订单失败！err=%v,order_code = %s", err, transaction.OutTradeNo)
+		err = fmt.Errorf("获取订单失败！err=%v,order_code = %v", err, transaction.OutTradeNo)
 		util.CheckError(err.Error())
 		return
 	}
+
 	if orderInfo.PayStatus != model.PmPayOrderTablePayStatusNo {
 		notifyOrderHasDispose.CounterInc()
 		err = fmt.Errorf("订单已处理")
 		return
 	}
+
 	//修改数据库
 	orderInfo.NotifyAmount = int(*transaction.Amount.PayerTotal)
 	orderInfo.PayStatus = model.PmPayOrderTablePayStatusPaid
