@@ -87,7 +87,7 @@ func (l *NotifyAlipayNewLogic) NotifyAlipayNew(r *http.Request, w http.ResponseW
 		if signErr != nil {
 			desc += signErr.Error()
 		}
-		logx.Errorf(desc)
+		logx.Error(desc)
 		notifyAlipayErrNum.CounterInc()
 		return
 	}
@@ -144,6 +144,7 @@ func (l *NotifyAlipayNewLogic) NotifyAlipayNew(r *http.Request, w http.ResponseW
 			//修改数据库
 			orderInfo.Status = model.PmPayOrderTablePayStatusPaid
 			orderInfo.PayType = model.PmPayOrderTablePayTypeAlipay
+			orderInfo.PayTime = time.Now()
 			orderInfo.PlatformTradeNo = tradeNo
 			err = l.orderModel.UpdateNotify(orderInfo)
 			if err != nil {
