@@ -126,7 +126,7 @@ type AlipayPageSignReq struct {
 	TransAmount string `json:"trans_amount"` //订单总金额 [0.1,100]
 	PayAccount  string `json:"pay_account"`  //收款方账户
 	PayName     string `json:"pay_name"`     //收款方真实姓名
-	PeriodType  string `json:"period_type"`  //
+	PeriodType  string `json:"period_type"`  //周期类型
 }
 
 type RefundReq struct {
@@ -136,16 +136,8 @@ type RefundReq struct {
 	ReviewerComment  string `json:"reviewer_comment"` // 操作者备注
 }
 
-type SupplementaryOrdersReq struct {
-	Type        string `form:"type"`
-	StartMinute string `form:"startMinute,omitempty""`
-	EndMinute   string `form:"endMinute,omitempty"`
-	IsNotice     string `form:"isNotice,omitempty"`
+type ComplainReq struct {
+	AppId     string `json:"app_id"`
+	StartTime string `json:"start_time"`
+	EndTime   string `json:"end_time"`
 }
-
-type SupplementaryOrdersResp struct {
-	ErrNo   int    `json:"err_no"`
-	ErrTips string `json:"err_tips"`
-}
-
-

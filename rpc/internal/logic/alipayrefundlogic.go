@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	alipay2 "gitee.com/yan-yixin0612/alipay/v3"
+	alipay2 "gitee.com/zhuyunkj/alipay/v3"
 	"gitee.com/zhuyunkj/pay-gateway/common/clientMgr"
 	"gitee.com/zhuyunkj/pay-gateway/common/code"
 	"gitee.com/zhuyunkj/pay-gateway/common/define"
@@ -40,17 +40,28 @@ func NewAlipayRefundLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Alip
 
 // 支付宝：退款
 func (l *AlipayRefundLogic) AlipayRefund(in *pb.AlipayRefundReq) (*pb.AliRefundResp, error) {
-	payClient, _, _, err := clientMgr.GetAlipayClientByAppPkgWithCache(in.AppPkgName)
-	if err != nil {
-		return nil, err
-	}
-
 	order, err := l.orderModel.GetOneByOutTradeNo(in.OutTradeNo)
 	if err != nil {
 		errInfo := fmt.Sprintf("创建退款订单：获取订单失败!!! %s", in.OutTradeNo)
-		logx.Errorf(errInfo)
+		logx.Error(errInfo)
 		createRefundErr.CounterInc()
 		return nil, errors.New(errInfo)
+	}
+
+	var payClient *alipay2.Client
+	if order.PayAppID != "" {
+		// 优先根据app id获取
+		payClient, _, _, err = clientMgr.GetAlipayClientByAppIdWithCache(order.PayAppID)
+		if err != nil {
+			logx.Errorw("AlipayRefund", logx.Field("err", err.Error()), logx.Field("OutTradeNo", in.OutTradeNo))
+			return nil, err
+		}
+	} else {
+		payClient, _, _, err = clientMgr.GetAlipayClientByAppPkgWithCache(in.AppPkgName)
+		if err != nil {
+			logx.Errorw("AlipayRefund", logx.Field("err", err.Error()), logx.Field("OutTradeNo", in.OutTradeNo))
+			return nil, err
+		}
 	}
 
 	refund := model.RefundTable{
@@ -75,7 +86,7 @@ func (l *AlipayRefundLogic) AlipayRefund(in *pb.AlipayRefundReq) (*pb.AliRefundR
 
 	result, err := payClient.TradeRefund(tradeRefund)
 	if err != nil {
-		logx.Errorf(err.Error())
+		logx.Error(err.Error())
 	}
 
 	if result.Content.Code == alipay2.CodeSuccess && result.Content.FundChange == "Y" {
@@ -88,7 +99,7 @@ func (l *AlipayRefundLogic) AlipayRefund(in *pb.AlipayRefundReq) (*pb.AliRefundR
 		err = l.refundModel.Create(&refund)
 		if err != nil {
 			errInfo := fmt.Sprintf("创建退款订单失败!!! %s", in.OutTradeNo)
-			logx.Errorf(errInfo)
+			logx.Error(errInfo)
 			createRefundErr.CounterInc()
 			return nil, errors.New(errInfo)
 		}

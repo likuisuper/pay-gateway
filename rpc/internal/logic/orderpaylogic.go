@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"gitee.com/yan-yixin0612/alipay/v3"
+	"gitee.com/zhuyunkj/alipay/v3"
 	"gitee.com/zhuyunkj/pay-gateway/common/client"
 	douyin "gitee.com/zhuyunkj/pay-gateway/common/client/douyinGeneralTrade"
 	"gitee.com/zhuyunkj/pay-gateway/common/code"

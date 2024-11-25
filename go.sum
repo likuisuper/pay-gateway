@@ -360,8 +360,8 @@ cloud.google.com/go/workflows v1.7.0/go.mod h1:JhSrZuVZWuiDfKEFxU0/F1PQjmpnpcoIS
 cloud.google.com/go/workflows v1.8.0/go.mod h1:ysGhmEajwZxGn1OhGOGKsTXc5PyxOc0vfKf5Af+to4M=
 cloud.google.com/go/workflows v1.9.0/go.mod h1:ZGkj1aFIOd9c8Gerkjjq7OW7I5+l6cSvT3ujaO/WwSA=
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=
-gitee.com/yan-yixin0612/alipay/v3 v3.2.20 h1:OKHt07iYygmjdGU9K/V9sbrFOd5P6sqteAgxVLFnc1g=
-gitee.com/yan-yixin0612/alipay/v3 v3.2.20/go.mod h1:CtL46pDWUvUj9nc6SMwMXHYRrxIRckdU9TtLXkLa6M8=
+gitee.com/zhuyunkj/alipay/v3 v3.3.10 h1:uA3y8Vv7W847HZm+Q+k3L1XO8j3EbPQ/JrmTHHYlEDI=
+gitee.com/zhuyunkj/alipay/v3 v3.3.10/go.mod h1:LARPE8rzgrL9pOOG8yp/38SSKEGNn5USkH8BXHTygr8=
 gitee.com/zhuyunkj/zero-contrib v1.3.2 h1:sqmmkjTnLRcPzFBxmE8oVYvlFLJ2NkvEr2SfrcPGAkk=
 gitee.com/zhuyunkj/zero-contrib v1.3.2/go.mod h1:2rhHRchgvQ+5Ur+XFfCybjmJ89L54UjWlgbUh5vzCE4=
 gitee.com/zhuyunkj/zhuyun-core v1.9.60 h1:0aqfRpDttX2mAoid7jSlR/E0BFxU+ahuIB6dkPJ1gZU=

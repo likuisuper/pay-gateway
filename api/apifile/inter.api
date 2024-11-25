@@ -32,7 +32,7 @@ type (
         TransAmount string `json:"trans_amount"` //订单总金额 [0.1,100]
         PayAccount string `json:"pay_account"`   //收款方账户
         PayName string `json:"pay_name"`         //收款方真实姓名
-        PeriodType string `json:"period_type"`   //
+        PeriodType string `json:"period_type"`   //周期类型
     }
 
     RefundReq {
@@ -40,6 +40,12 @@ type (
         Status int `json:"status"` // 操作，1通过，2拒绝
         Reviewer string `json:"reviewer"` // 操作者
         ReviewerComment string `json:"reviewer_comment"` // 操作者备注
+    }
+
+    ComplainReq{
+       AppId string `json:"app_id"`
+       StartTime string `json:"start_time"`
+       EndTime string `json:"end_time"`
     }
 )
 
@@ -71,4 +77,15 @@ service payment {
     )
     @handler handleRefund
     post /internal/handleRefund(RefundReq) returns (ResultResp)
+}
+
+@server(
+    group: inter
+)
+service payment {
+       @doc(
+           summary: "内部接口-获取投诉条数"
+       )
+       @handler handleComplain
+       post /internal/complain(ComplainReq) returns (ResultResp)
 }

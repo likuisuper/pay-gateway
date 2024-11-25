@@ -17,11 +17,10 @@ import (
 	"gitee.com/zhuyunkj/pay-gateway/db/mysql/model"
 	"gitee.com/zhuyunkj/pay-gateway/rpc/internal/svc"
 	"gitee.com/zhuyunkj/pay-gateway/rpc/pb/pb"
-	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
 	"github.com/zeromicro/go-zero/core/logx"
 )
 
-type AlipayPagePayAndSignLogic struct {
+type AlipayPagePayAndSignChoiceAccountLogic struct {
 	ctx    context.Context
 	svcCtx *svc.ServiceContext
 	logx.Logger
@@ -31,13 +30,8 @@ type AlipayPagePayAndSignLogic struct {
 	orderModel           *model.OrderModel
 }
 
-var (
-	parseProductDescErr      = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "parseProductDescErr", nil, "解析商品详情失败", nil})}
-	payAndSignCreateOrderErr = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "payAndSignCreateOrderErr", nil, "创建订单失败", nil})}
-)
-
-func NewAlipayPagePayAndSignLogic(ctx context.Context, svcCtx *svc.ServiceContext) *AlipayPagePayAndSignLogic {
-	return &AlipayPagePayAndSignLogic{
+func NewAlipayPagePayAndSignChoiceAccountLogic(ctx context.Context, svcCtx *svc.ServiceContext) *AlipayPagePayAndSignChoiceAccountLogic {
+	return &AlipayPagePayAndSignChoiceAccountLogic{
 		ctx:    ctx,
 		svcCtx: svcCtx,
 		Logger: logx.WithContext(ctx),
@@ -48,11 +42,16 @@ func NewAlipayPagePayAndSignLogic(ctx context.Context, svcCtx *svc.ServiceContex
 	}
 }
 
-// 支付宝：支付并签约
-func (l *AlipayPagePayAndSignLogic) AlipayPagePayAndSign(in *pb.AlipayPageSignReq) (*pb.AlipayPageSignResp, error) {
-	payClient, payAppId, notifyUrl, err := clientMgr.GetAlipayClientByAppPkgWithCache(in.AppPkgName)
+// 支付宝新的充值订阅 可以选择不同的支付宝账号：支付并签约
+func (l *AlipayPagePayAndSignChoiceAccountLogic) AlipayPagePayAndSignChoiceAccount(in *pb.AlipayPageSignReq) (*pb.AlipayPageSignResp, error) {
+	// 选择不同的支付宝号
+	payClient, payAppId, notifyUrl, merchantNo, merchantName, err := clientMgr.GetAlipayClienMerchantInfo(in.AppPkgName)
 	if err != nil {
 		return nil, err
+	}
+
+	if merchantNo == "" {
+		return nil, errors.New("获取商户号信息失败")
 	}
 
 	var amount, prepaidAmount string
@@ -60,7 +59,8 @@ func (l *AlipayPagePayAndSignLogic) AlipayPagePayAndSign(in *pb.AlipayPageSignRe
 
 	productType = int(in.ProductType)
 
-	if in.ProductId == 0 { // 目前没有商品的配置，通过解析商品详情来获取商品的内容
+	if in.ProductId == 0 {
+		// 目前没有商品的配置，通过解析商品详情来获取商品的内容
 		product := types.Product{}
 		err = json.Unmarshal([]byte(in.ProductDesc), &product)
 		if err != nil {
@@ -68,6 +68,7 @@ func (l *AlipayPagePayAndSignLogic) AlipayPagePayAndSign(in *pb.AlipayPageSignRe
 			logx.Errorf("创建订单异常：商品信息错误 err = %s product = %s", err.Error(), in.ProductDesc)
 			return nil, errors.New("商品信息错误")
 		}
+
 		productType = product.ProductType
 		if productType == code.PRODUCT_TYPE_SUBSCRIBE {
 			intAmount = int(product.PrepaidAmount * 100)
@@ -97,6 +98,7 @@ func (l *AlipayPagePayAndSignLogic) AlipayPagePayAndSign(in *pb.AlipayPageSignRe
 		ProductDesc:  in.ProductDesc,
 		ProductType:  productType,
 		ProductID:    int(in.ProductId),
+		DeviceId:     in.DeviceId, // 在回调的时候 需要带到app_alipay_order表
 	}
 
 	trade := alipay2.Trade{
@@ -111,7 +113,7 @@ func (l *AlipayPagePayAndSignLogic) AlipayPagePayAndSign(in *pb.AlipayPageSignRe
 	externalAgreementNo := ""
 
 	if productType == code.PRODUCT_TYPE_SUBSCRIBE {
-
+		// 订阅商品
 		accessParam := &alipay2.AccessParams{
 			Channel: "ALIPAYAPP",
 		}
@@ -136,6 +138,13 @@ func (l *AlipayPagePayAndSignLogic) AlipayPagePayAndSign(in *pb.AlipayPageSignRe
 		externalAgreementNo = signParams.ExternalAgreementNo
 		orderInfo.ExternalAgreementNo = externalAgreementNo
 
+		// 指定商户信息
+		signParams.SubMerchant = &alipay2.SubMerchantParams{
+			SubMerchantId:          merchantNo,
+			SubMerchantName:        merchantName,
+			SubMerchantServiceName: "【客服电话：18150156227】如您需办理退款，请拨打VIP售后电话，将极速为您办理，感谢您的订阅！",
+		}
+
 		trade.AgreementSignParams = signParams
 	}
 
@@ -148,7 +157,7 @@ func (l *AlipayPagePayAndSignLogic) AlipayPagePayAndSign(in *pb.AlipayPageSignRe
 
 	result, err := payClient.TradeAppPay(appPay)
 	if err != nil {
-		logx.Errorf("创建订单异常：生成支付宝加签串失败， err = %s", err.Error())
+		logx.Errorf("创建订单异常,生成支付宝加签串失败,err=%s", err.Error())
 		return nil, errors.New("创建订单异常")
 	}
 
@@ -158,6 +167,7 @@ func (l *AlipayPagePayAndSignLogic) AlipayPagePayAndSign(in *pb.AlipayPageSignRe
 			logx.Errorf("创建续费订单异常：获取所属的签约订单失败， err = %s", err.Error())
 			return nil, errors.New("创建订单异常")
 		}
+
 		orderInfo.AgreementNo = tb.AgreementNo
 		orderInfo.ExternalAgreementNo = tb.ExternalAgreementNo
 		orderInfo.ProductType = int(in.ProductType)
@@ -168,7 +178,7 @@ func (l *AlipayPagePayAndSignLogic) AlipayPagePayAndSign(in *pb.AlipayPageSignRe
 	err = l.orderModel.Create(&orderInfo)
 	if err != nil {
 		payAndSignCreateOrderErr.CounterInc()
-		logx.Errorf("创建订单异常：创建订单表失败， err = %s", err.Error())
+		logx.Errorf("创建订单异常,创建订单表失败 err:%s, orderInfo: %+v", err.Error(), orderInfo)
 		return nil, errors.New("创建订单异常")
 	}
 

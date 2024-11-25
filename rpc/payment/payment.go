@@ -67,6 +67,8 @@ type (
 		AlipayTrade(ctx context.Context, in *AlipayTradeReq, opts ...grpc.CallOption) (*AlipayPageSignResp, error)
 		// 支付宝：支付并签约
 		AlipayPagePayAndSign(ctx context.Context, in *AlipayPageSignReq, opts ...grpc.CallOption) (*AlipayPageSignResp, error)
+		// 支付宝新的充值订阅 可以选择不同的支付宝账号：支付并签约
+		AlipayPagePayAndSignChoiceAccount(ctx context.Context, in *AlipayPageSignReq, opts ...grpc.CallOption) (*AlipayPageSignResp, error)
 		// 支付宝：解约
 		AlipayPageUnSign(ctx context.Context, in *AlipayPageUnSignReq, opts ...grpc.CallOption) (*AlipayCommonResp, error)
 		// 支付宝：创建退款订单
@@ -148,6 +150,12 @@ func (m *defaultPayment) AlipayTrade(ctx context.Context, in *AlipayTradeReq, op
 func (m *defaultPayment) AlipayPagePayAndSign(ctx context.Context, in *AlipayPageSignReq, opts ...grpc.CallOption) (*AlipayPageSignResp, error) {
 	client := pb.NewPaymentClient(m.cli.Conn())
 	return client.AlipayPagePayAndSign(ctx, in, opts...)
+}
+
+// 支付宝新的充值订阅 可以选择不同的支付宝账号：支付并签约
+func (m *defaultPayment) AlipayPagePayAndSignChoiceAccount(ctx context.Context, in *AlipayPageSignReq, opts ...grpc.CallOption) (*AlipayPageSignResp, error) {
+	client := pb.NewPaymentClient(m.cli.Conn())
+	return client.AlipayPagePayAndSignChoiceAccount(ctx, in, opts...)
 }
 
 // 支付宝：解约

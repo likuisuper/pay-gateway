@@ -1,13 +1,13 @@
 package utils
 
 import (
-	"errors"
 	"fmt"
-	"gitee.com/zhuyunkj/zhuyun-core/util"
-	"github.com/google/uuid"
 	"net"
 	"net/url"
 	"time"
+
+	"gitee.com/zhuyunkj/zhuyun-core/util"
+	"github.com/google/uuid"
 )
 
 func ToString(v interface{}) string {
@@ -42,7 +42,7 @@ func GetInterfaceIpv4Addr(interfaceName string) (ip net.IP, err error) {
 		}
 	}
 	if ipv4Addr == nil {
-		return nil, errors.New(fmt.Sprintf("interface %s dosen't have an ipv4 address\n", interfaceName))
+		return nil, fmt.Errorf("interface %s dosen't have an ipv4 address", interfaceName)
 	}
 	return ipv4Addr, nil
 }
@@ -61,6 +61,7 @@ func GenerateOrderCode(machineNo, workerNo int64) (orderCode string) {
 			orderCode = uuid.NewString()
 		}
 	}
+
 	return
 }
 
@@ -72,9 +73,9 @@ func EncodeUrlParams(domain string, params map[string]string) string {
 	return domain + "?" + values.Encode()
 }
 
-func CallbackWithRetry(notifyUrl string,headerMap map[string]string, dataMap map[string]interface{}, timeout time.Duration) (err error) {
+func CallbackWithRetry(notifyUrl string, headerMap map[string]string, dataMap map[string]interface{}, timeout time.Duration) (err error) {
 	for i := 0; i < 3; i++ {
-		_, err = util.HttpPostWithHeader(notifyUrl, dataMap,headerMap, timeout)
+		_, err = util.HttpPostWithHeader(notifyUrl, dataMap, headerMap, timeout)
 		if err == nil {
 			return nil
 		}

@@ -26,6 +26,8 @@ type PmPayConfigAlipayTable struct {
 	IsProduction     int       `gorm:"column:is_production;default:0;NOT NULL" json:"is_production"`   // 是否生产 0否 1是
 	Remark           string    `gorm:"column:remark;NOT NULL" json:"remark"`                           // 备注信息
 	NotifyUrl        string    `gorm:"column:notify_url;NOT NULL" json:"notify_url"`                   // 回调地址
+	MerchantNo       string    `gorm:"column:merchant_no;NOT NULL" json:"merchant_no"`                 // 商户号
+	MerchantName     string    `gorm:"column:merchant_name;NOT NULL" json:"merchant_name"`             // 商户名称
 	CreatedAt        time.Time `gorm:"column:created_at" json:"created_at"`
 	UpdatedAt        time.Time `gorm:"column:updated_at" json:"updated_at"`
 }

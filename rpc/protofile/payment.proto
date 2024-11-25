@@ -180,6 +180,7 @@ message AlipayPageSignReq {
   string BelongSignOrder = 8; //对应的签约订单单号（订阅续费时需要）
   string Ip = 9;            //客户端ip地址
   string RedirectUrl = 10;  // 支付成功后重定向地址
+  string DeviceId = 11;  // 用户设备号
 }
 
 message AlipayTradeReq {
@@ -339,6 +340,9 @@ service Payment {
 
   //支付宝：支付并签约
   rpc AlipayPagePayAndSign(AlipayPageSignReq) returns (AlipayPageSignResp);
+
+  //支付宝新的充值订阅 可以选择不同的支付宝账号：支付并签约
+  rpc AlipayPagePayAndSignChoiceAccount(AlipayPageSignReq) returns (AlipayPageSignResp);
 
   //支付宝：解约
   rpc AlipayPageUnSign(AlipayPageUnSignReq) returns (AlipayCommonResp);

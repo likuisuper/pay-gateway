@@ -3,12 +3,13 @@ package model
 import (
 	"errors"
 	"fmt"
+	"time"
+
 	"gitee.com/zhuyunkj/pay-gateway/db"
 	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
 	"gitee.com/zhuyunkj/zhuyun-core/util"
 	"github.com/zeromicro/go-zero/core/logx"
 	"gorm.io/gorm"
-	"time"
 )
 
 var (
@@ -25,15 +26,16 @@ const (
 	PmPayOrderTablePayStatusPaid   = 1 // 支付成功
 	PmPayOrderTablePayStatusFailed = 2 // 支付失败
 	PmPayOrderTablePayStatusCancel = 3 // 支付取消
+
 	// 支付方式
 	PmPayOrderTablePayTypeWechatPayUni       = 1 // 微信JSAPI支付
-	PmPayOrderTablePayTypeTiktokPayEc        = 2
-	PmPayOrderTablePayTypeAlipay             = 3
-	PmPayOrderTablePayTypeKs                 = 4 //已废弃，pb入参，4为 PayType_WxWeb
+	PmPayOrderTablePayTypeTiktokPayEc        = 2 // 抖音
+	PmPayOrderTablePayTypeAlipay             = 3 // 支付宝
+	PmPayOrderTablePayTypeKs                 = 4 // 已废弃，pb入参，4为 PayType_WxWeb
 	PmPayOrderTablePayTypeWechatPayH5        = 5 // 暂时没用，微信H5支付，pb入参 5为 PayType_KsUniApp
-	PmPayOrderTablePayWxUnified              = 6 //微信统一下单接口 ,暂未用到回调接口被误用为8
+	PmPayOrderTablePayWxUnified              = 6 // 微信统一下单接口 ,暂未用到回调接口被误用为8
 	PmPayOrderTablePayWxV3H5                 = 7 // 微信h5支付
-	PmPayOrderTablePayTypeDouyinGeneralTrade = 8 //抖音小程序支付-通用交易系统,由6调整为8和Pb入参一致
+	PmPayOrderTablePayTypeDouyinGeneralTrade = 8 // 抖音小程序支付-通用交易系统,由6调整为8和Pb入参一致
 
 )
 
@@ -194,7 +196,6 @@ func (o *PmPayOrderModel) GetListByCreateTimeRange(startTime, endTime time.Time)
 	return pmPayList, nil
 }
 
-//
 func (o *PmPayOrderModel) GetOneByThirdOrderNoAndAppId(orderSn, appId string) (info *PmPayOrderTable, err error) {
 	var orderInfo PmPayOrderTable
 	err = o.DB.Where("`third_order_no` = ? and pay_app_id = ?", orderSn, appId).First(&orderInfo).Error
