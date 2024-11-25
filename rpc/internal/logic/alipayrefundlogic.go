@@ -53,11 +53,13 @@ func (l *AlipayRefundLogic) AlipayRefund(in *pb.AlipayRefundReq) (*pb.AliRefundR
 		// 优先根据app id获取
 		payClient, _, _, err = clientMgr.GetAlipayClientByAppIdWithCache(order.PayAppID)
 		if err != nil {
+			logx.Errorw("AlipayRefund", logx.Field("err", err.Error()), logx.Field("OutTradeNo", in.OutTradeNo))
 			return nil, err
 		}
 	} else {
 		payClient, _, _, err = clientMgr.GetAlipayClientByAppPkgWithCache(in.AppPkgName)
 		if err != nil {
+			logx.Errorw("AlipayRefund", logx.Field("err", err.Error()), logx.Field("OutTradeNo", in.OutTradeNo))
 			return nil, err
 		}
 	}
