@@ -102,8 +102,9 @@ func (l *AlipayPagePayAndSignChoiceAccountLogic) AlipayPagePayAndSignChoiceAccou
 	}
 
 	trade := alipay2.Trade{
-		ProductCode:    "QUICK_MSECURITY_PAY", // 固定参数
-		Subject:        in.Subject,
+		ProductCode: "QUICK_MSECURITY_PAY", // 固定参数
+		// Subject:        in.Subject,
+		Subject:        "【客服电话：18150156227】如您需办理退款，请拨打VIP售后电话，将极速为您办理，感谢您的订阅！",
 		OutTradeNo:     orderInfo.OutTradeNo,
 		TotalAmount:    amount,
 		TimeoutExpress: "30m",
