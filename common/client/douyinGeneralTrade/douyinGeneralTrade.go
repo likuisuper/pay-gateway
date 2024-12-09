@@ -126,15 +126,20 @@ func (c *PayClient) GetByteAuthorization(url, method, data, nonceStr, timestamp 
 	//if err != nil {
 	//	return "", err
 	//}
+
 	privateKey, err := ParsePKCS1PrivateKey([]byte(c.config.PrivateKey))
 	if err != nil {
+		logx.Errorw("GetByteAuthorization ParsePKCS1PrivateKey", logx.Field("url", url), logx.Field("method", method), logx.Field("err", err))
 		return "", err
 	}
+
 	// 生成签名
 	signature, err := c.getSignature(method, url, timestamp, nonceStr, data, privateKey)
 	if err != nil {
+		logx.Errorw("GetByteAuthorization getSignature", logx.Field("url", url), logx.Field("method", method), logx.Field("err", err))
 		return "", err
 	}
+
 	// 构造byteAuthorization
 	byteAuthorization = fmt.Sprintf("SHA256-RSA2048 appid=%s,nonce_str=%s,timestamp=%s,key_version=%s,signature=%s", c.config.AppId, nonceStr, timestamp, c.config.KeyVersion, signature)
 	return byteAuthorization, nil
