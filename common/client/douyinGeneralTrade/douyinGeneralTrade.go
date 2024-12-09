@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"gitee.com/zhuyunkj/zhuyun-core/util"
@@ -105,6 +106,20 @@ func ParsePKCS1PrivateKey(data []byte) (key *rsa.PrivateKey, err error) {
 	block, _ = pem.Decode(data)
 	if block == nil {
 		return nil, errors.New("ErrPrivateKeyFailedToLoad")
+	}
+
+	if strings.Contains(string(data), "-----BEGIN PRIVATE KEY-----") {
+		tmpkey, err := x509.ParsePKCS8PrivateKey(block.Bytes)
+		if err != nil {
+			return nil, err
+		}
+
+		if key, ok := tmpkey.(*rsa.PrivateKey); ok {
+			return key, nil
+		}
+
+		err = errors.New("can not parse ParsePKCS8PrivateKey -----BEGIN PRIVATE KEY----- data")
+		return nil, err
 	}
 
 	key, err = x509.ParsePKCS1PrivateKey(block.Bytes)
