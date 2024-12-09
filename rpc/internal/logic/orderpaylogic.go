@@ -438,7 +438,8 @@ func (l *OrderPayLogic) createDouyinGeneralTradeOrder(in *pb.OrderPayReq, payCon
 	dataStr, byteAuthorization, err := payClient.RequestOrder(data)
 	if err != nil {
 		tiktokEcPayFailNum.CounterInc()
-		l.Errorf("pkgName= %s, douyinGeneralTradePay，err:=%v", in.AppPkgName, err)
+		msg := fmt.Sprintf("douyinGeneralTradePay pkgName=%s, err:=%v", in.AppPkgName, err)
+		l.Errorw(msg, logx.Field("OrderPayReq", in), logx.Field("payConf", payConf))
 		return
 	}
 
