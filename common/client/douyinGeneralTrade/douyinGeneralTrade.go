@@ -12,7 +12,6 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 
 	"gitee.com/zhuyunkj/zhuyun-core/util"
@@ -101,14 +100,14 @@ func (c *PayClient) RequestOrder(data *RequestOrderData) (string, string, error)
 	return dataStr, byteAuthorization, err
 }
 
-func ParsePKCS1PrivateKey(data []byte) (key *rsa.PrivateKey, err error) {
+func ParsePKCS1And8PrivateKey(data []byte) (key *rsa.PrivateKey, err error) {
 	var block *pem.Block
 	block, _ = pem.Decode(data)
 	if block == nil {
 		return nil, errors.New("ErrPrivateKeyFailedToLoad")
 	}
 
-	if strings.Contains(string(data), "-----BEGIN PRIVATE KEY-----") {
+	if block.Type == "PRIVATE KEY" {
 		tmpkey, err := x509.ParsePKCS8PrivateKey(block.Bytes)
 		if err != nil {
 			return nil, err
@@ -132,19 +131,9 @@ func ParsePKCS1PrivateKey(data []byte) (key *rsa.PrivateKey, err error) {
 
 func (c *PayClient) GetByteAuthorization(url, method, data, nonceStr, timestamp string) (string, error) {
 	var byteAuthorization string
-	// 读取私钥
-	//key, err := base64.StdEncoding.DecodeString(strings.ReplaceAll(c.config.PrivateKey, "\n", ""))
-	//if err != nil {
-	//	return "", err
-	//}
-	//privateKey, err := x509.ParsePKCS1PrivateKey(key)
-	//if err != nil {
-	//	return "", err
-	//}
-
-	privateKey, err := ParsePKCS1PrivateKey([]byte(c.config.PrivateKey))
+	privateKey, err := ParsePKCS1And8PrivateKey([]byte(c.config.PrivateKey))
 	if err != nil {
-		logx.Errorw("GetByteAuthorization ParsePKCS1PrivateKey", logx.Field("url", url), logx.Field("method", method), logx.Field("err", err))
+		logx.Errorw("GetByteAuthorization ParsePKCS1And8PrivateKey", logx.Field("url", url), logx.Field("method", method), logx.Field("err", err))
 		return "", err
 	}
 
