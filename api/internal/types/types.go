@@ -102,6 +102,53 @@ type DouyinResp struct {
 	ErrTips string `json:"err_tips"`
 }
 
+type HuaweiReq struct {
+	Version           string            `json:"version"`
+	NotifyTime        int64             `json:"notifyTime"`
+	EventType         string            `json:"eventType"`
+	ApplicationId     string            `json:"applicationId"`
+	OrderNotification OrderNotification `json:"orderNotification"`
+	SubNotification   SubNotification   `json:"subNotification"`
+}
+
+type OrderNotification struct {
+	Version          string `json:"version"`
+	NotificationType int32  `json:"notificationType"`
+	PurchaseToken    string `json:"purchaseToken"`
+	ProductId        string `json:"productId"`
+}
+
+type SubNotification struct {
+	Version                  string                   `json:"version"`
+	StatusUpdateNotification StatusUpdateNotification `json:"statusUpdateNotification"`
+	NotificationSignature    string                   `json:"notificationSignature"`
+	SignatureAlgorithm       string                   `json:"signatureAlgorithm"`
+}
+
+type StatusUpdateNotification struct {
+	Environment                       string `json:"environment"`
+	NotificationType                  int32  `json:"notificationType"`
+	SubscriptionId                    string `json:"subscriptionId"`
+	PurchaseToken                     string `json:"purchaseToken"`
+	CancellationDate                  int64  `json:"cancellationDate"`
+	OrderId                           string `json:"orderId"`
+	LatestReceipt                     string `json:"latestReceipt"`
+	LatestReceiptInfo                 string `json:"latestReceiptInfo"`
+	LatestReceiptInfoSignature        string `json:"latestReceiptInfoSignature"`
+	LatestExpiredReceipt              string `json:"latestExpiredReceipt"`
+	LatestExpiredReceiptInfo          string `json:"atestExpiredReceiptInfo"`
+	LatestExpiredReceiptInfoSignature string `json:"latestExpiredReceiptInfoSignature"`
+	SignatureAlgorithm                string `json:"signatureAlgorithm"`
+	AutoRenewStatus                   int32  `json:"autoRenewStatus"`
+	RefundPayOrderId                  string `json:"refundPayOrderId"`
+	ProductId                         string `json:"productId"`
+	ApplicationId                     string `json:"applicationId"`
+	ExpirationIntent                  int32  `json:"expirationIntent"`
+}
+
+type HuaweiResp struct {
+}
+
 type CrtUploadReq struct {
 	AlipayAppCertPublicKeyPath string `form:"alipayAppCertPublicKeyPath,optional"`
 	AlipayPublicKeyPath        string `form:"alipayPublicKeyPath,optional"`

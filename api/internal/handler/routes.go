@@ -75,6 +75,11 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 				Path:    "/notify/douyin",
 				Handler: notify.NotifyDouyinHandler(serverCtx),
 			},
+			{
+				Method:  http.MethodPost,
+				Path:    "/notify/huawei",
+				Handler: notify.NotifyHuaweiHandler(serverCtx),
+			},
 		},
 	)
 

@@ -80,6 +80,54 @@ type (
     }
 )
 
+type (
+    HuaweiReq{
+       Version string `json:"version"`
+       NotifyTime int64 `json:"notifyTime"`
+       EventType string `json:"eventType"`
+       ApplicationId string `json:"applicationId"`
+       OrderNotification OrderNotification `json:"orderNotification"`
+       SubNotification SubNotification `json:"subNotification"`
+
+
+    }
+    OrderNotification{
+        Version string `json:"version"`
+        NotificationType int32 `json:"notificationType"`
+        PurchaseToken string `json:"purchaseToken"`
+        ProductId string `json:"productId"`
+    }
+    SubNotification{
+        Version string `json:"version"`
+        StatusUpdateNotification StatusUpdateNotification `json:"statusUpdateNotification"`
+        NotificationSignature string `json:"notificationSignature"`
+        SignatureAlgorithm string `json:"signatureAlgorithm"`
+    }
+
+    StatusUpdateNotification {
+          Environment  string `json:"environment"`
+          NotificationType int32 `json:"notificationType"`
+          SubscriptionId string `json:"subscriptionId"`
+          PurchaseToken string `json:"purchaseToken"`
+          CancellationDate int64 `json:"cancellationDate"`
+          OrderId  string `json:"orderId"`
+          LatestReceipt string `json:"latestReceipt"`
+          LatestReceiptInfo string `json:"latestReceiptInfo"`
+          LatestReceiptInfoSignature string `json:"latestReceiptInfoSignature"`
+          LatestExpiredReceipt string `json:"latestExpiredReceipt"`
+          LatestExpiredReceiptInfo string `json:"atestExpiredReceiptInfo"`
+          LatestExpiredReceiptInfoSignature string `json:"latestExpiredReceiptInfoSignature"`
+          SignatureAlgorithm string `json:"signatureAlgorithm"`
+          AutoRenewStatus int32 `json:"autoRenewStatus"`
+          RefundPayOrderId string `json:"refundPayOrderId"`
+          ProductId string `json:"productId"`
+          ApplicationId string `json:"applicationId"`
+          ExpirationIntent int32 `json:"expirationIntent"`
+    }
+    HuaweiResp {
+
+    }
+)
 @server(
     group: notify
 )
@@ -143,4 +191,11 @@ service payment {
     )
     @handler notifyDouyin // 对接文档：https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/server/trade-system/general/order/notify-payment-result
     post /notify/douyin (DouyinReq) returns (DouyinResp)
+
+
+    @doc(
+        summary: "华为支付回调"
+    )
+    @handler notifyHuawei // 对接文档：https://developer.huawei.com/consumer/cn/doc/HMSCore-References/api-notifications-about-subscription-events-v2-0000001385268541
+    post /notify/huawei (HuaweiReq) returns (HuaweiResp)
 }
