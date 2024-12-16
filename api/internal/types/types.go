@@ -103,26 +103,26 @@ type DouyinResp struct {
 }
 
 type HuaweiReq struct {
-	Version           string            `json:"version"`
-	NotifyTime        int64             `json:"notifyTime"`
-	EventType         string            `json:"eventType"`
-	ApplicationId     string            `json:"applicationId"`
+	Version           string            `json:"version,optional"`
+	NotifyTime        int64             `json:"notifyTime,optional"`
+	EventType         string            `json:"eventType,optional"`
+	ApplicationId     string            `json:"applicationId,optional"`
 	OrderNotification OrderNotification `json:"orderNotification"`
 	SubNotification   SubNotification   `json:"subNotification"`
 }
 
 type OrderNotification struct {
-	Version          string `json:"version"`
-	NotificationType int32  `json:"notificationType"`
-	PurchaseToken    string `json:"purchaseToken"`
-	ProductId        string `json:"productId"`
+	Version          string `json:"version,optional"`
+	NotificationType int32  `json:"notificationType,optional"`
+	PurchaseToken    string `json:"purchaseToken,optional"`
+	ProductId        string `json:"productId,optional"`
 }
 
 type SubNotification struct {
-	Version                  string                   `json:"version"`
-	StatusUpdateNotification StatusUpdateNotification `json:"statusUpdateNotification"`
-	NotificationSignature    string                   `json:"notificationSignature"`
-	SignatureAlgorithm       string                   `json:"signatureAlgorithm"`
+	Version                  string                   `json:"version,optional"`
+	StatusUpdateNotification StatusUpdateNotification `json:"statusUpdateNotification,optional"`
+	NotificationSignature    string                   `json:"notificationSignature,optional"`
+	SignatureAlgorithm       string                   `json:"signatureAlgorithm,optional"`
 }
 
 type StatusUpdateNotification struct {
