@@ -2,9 +2,10 @@ package notify
 
 import (
 	"context"
+	"encoding/json"
+
 	"gitee.com/zhuyunkj/pay-gateway/api/internal/svc"
 	"gitee.com/zhuyunkj/pay-gateway/api/internal/types"
-	jsoniter "github.com/json-iterator/go"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -23,9 +24,8 @@ func NewNotifyHuaweiLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Noti
 	}
 }
 
-func (l *NotifyHuaweiLogic) NotifyHuawei(req *types.HuaweiReq) (resp *types.HuaweiResp, err error) {
-
-	val, _ := jsoniter.Marshal(req)
+// https://developer.huawei.com/consumer/cn/doc/HMSCore-References/api-notifications-about-subscription-events-v2-0000001385268541
+func (l *NotifyHuaweiLogic) NotifyHuawei(req *types.HuaweiReq) {
+	val, _ := json.Marshal(req)
 	logx.Sloww("华为回调记录", logx.Field("data", req), logx.Field("json", string(val)))
-	return
 }

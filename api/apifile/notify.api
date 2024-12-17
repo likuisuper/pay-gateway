@@ -81,53 +81,62 @@ type (
 )
 
 type (
+    // https://developer.huawei.com/consumer/cn/doc/HMSCore-References/api-notifications-about-subscription-events-v2-0000001385268541
     HuaweiReq{
-       Version string `json:"version,optional"`
-       NotifyTime int64 `json:"notifyTime,optional"`
-       EventType string `json:"eventType,optional"`
-       ApplicationId string `json:"applicationId,optional"`
-       OrderNotification OrderNotification `json:"orderNotification"`
-       SubNotification SubNotification `json:"subNotification"`
+       Version string `json:"version,optional"` // 通知版本。
+       NotifyTime int64 `json:"notifyTime,optional"` // 通知时间，UTC时间戳，即自1970年1月1日0时起到商户通知的毫秒数。
+       EventType string `json:"eventType,optional"` // 通知类型，取值如下：ORDER：订单 SUBSCRIPTION：订阅
+       ApplicationId string `json:"applicationId,optional"` // 应用ID
+       OrderNotification OrderNotification `json:"orderNotification"` // 订单通知内容，eventType为ORDER时返回
+       SubNotification SubNotification `json:"subNotification"` // 订阅通知内容，eventType为SUBSCRIPTION时返回。
     }
 
     OrderNotification{
-        Version string `json:"version,optional"`
-        NotificationType int32 `json:"notificationType,optional"`
-        PurchaseToken string `json:"purchaseToken,optional"`
-        ProductId string `json:"productId,optional"`
+        Version string `json:"version,optional"` // 通知版本
+        NotificationType int `json:"notificationType,optional"` // 通知事件的类型，取值如下：1：支付成功 2：退款成功
+        PurchaseToken string `json:"purchaseToken,optional"` // 待下发商品的购买Token, 支付后拿到的最新的purchaseToken，表示该商品和该用户的对应关系
+        ProductId string `json:"productId,optional"` // 商品ID
     }
 
     SubNotification{
-        Version string `json:"version,optional"`
-        StatusUpdateNotification StatusUpdateNotification `json:"statusUpdateNotification,optional"`
-        NotificationSignature string `json:"notificationSignature,optional"`
-        SignatureAlgorithm string `json:"signatureAlgorithm,optional"`
+        Version string `json:"version,optional"` // 通知版本
+        StatusUpdateNotification string `json:"statusUpdateNotification,optional"` // 通知消息，格式为JSON字符串，请参见statusUpdateNotification。
+        NotificationSignature string `json:"notificationSignature,optional"` // 对statusUpdateNotification字段的签名字符串，签名算法为signatureAlgorithm表示的签名算法。您的服务器在收到签名字符串后，需要参见对返回结果验签使用IAP公钥对statusUpdateNotification的JSON字符串进行验签。公钥获取请参见查询支付服务信息。
+        SignatureAlgorithm string `json:"signatureAlgorithm,optional"` // 签名算法
     }
 
+    // 支付后拿到的最新的purchaseToken，表示该商品和该用户的对应关系。
+    //
+    // latestReceipt表示当前成功收费收据的token；latestExpiredReceipt表示上个周期收据的token。
+    //
+    // 如果是续期订阅，purchaseToken与latestReceipt相同；如果是切换订阅，purchaseToken与latestReceipt不同。
+    //
+    // 当收到类型为NEW_RENEWAL_PREF(4)的通知时，purchaseToken与latestReceipt不同，subscriptionId为下周期订阅ID，此时这个订阅还未发生扣费，还没有生成扣费的收据，latestReceipt是切换前订阅对应的最后一笔收据的token。
     StatusUpdateNotification {
-          Environment  string `json:"environment"`
-          NotificationType int32 `json:"notificationType"`
-          SubscriptionId string `json:"subscriptionId"`
-          PurchaseToken string `json:"purchaseToken"`
-          CancellationDate int64 `json:"cancellationDate"`
-          OrderId  string `json:"orderId"`
-          LatestReceipt string `json:"latestReceipt"`
-          LatestReceiptInfo string `json:"latestReceiptInfo"`
-          LatestReceiptInfoSignature string `json:"latestReceiptInfoSignature"`
-          LatestExpiredReceipt string `json:"latestExpiredReceipt"`
-          LatestExpiredReceiptInfo string `json:"atestExpiredReceiptInfo"`
-          LatestExpiredReceiptInfoSignature string `json:"latestExpiredReceiptInfoSignature"`
-          SignatureAlgorithm string `json:"signatureAlgorithm"`
-          AutoRenewStatus int32 `json:"autoRenewStatus"`
-          RefundPayOrderId string `json:"refundPayOrderId"`
-          ProductId string `json:"productId"`
-          ApplicationId string `json:"applicationId"`
-          ExpirationIntent int32 `json:"expirationIntent"`
+          Environment  string `json:"environment"` // 发送通知的环境。PROD：正式环境 Sandbox：沙盒测试
+          NotificationType int `json:"notificationType"` // 通知事件的类型
+          SubscriptionId string `json:"subscriptionId"` // 订阅ID
+          PurchaseToken string `json:"purchaseToken"` // 订阅token，与上述订阅ID字段subscriptionId对应
+          CancellationDate int64 `json:"cancellationDate"` // 撤销订阅时间或退款时间，UTC时间戳，以毫秒为单位，仅在notificationType取值为CANCEL的场景下会传入。
+          OrderId  string `json:"orderId"` // 订单ID，唯一标识一笔需要收费的收据，由华为应用内支付服务器在创建订单以及订阅型商品续费时生成。每一笔新的收据都会使用不同的orderId。通知类型为NEW_RENEWAL_PREF时不存在。
+          LatestReceipt string `json:"latestReceipt"` // 最近的一笔收据的token，仅在notificationType取值为INITIAL_BUY 、RENEWAL或INTERACTIVE_RENEWAL并且续期成功情况下传入
+          LatestReceiptInfo string `json:"latestReceiptInfo"` // 最近的一笔收据，JSON字符串格式，包含的参数请参见InappPurchaseDetails，在notificationType取值为CANCEL时无值
+          LatestReceiptInfoSignature string `json:"latestReceiptInfoSignature"` // 对latestReceiptInfo的签名字符串，签名算法为statusUpdateNotification中的signatureAlgorithm。您的服务器在收到签名字符串后，需要参见对返回结果验签使用IAP公钥对latestReceiptInfo的JSON字符串进行验签。公钥获取请参见查询支付服务信息。
+          LatestExpiredReceipt string `json:"latestExpiredReceipt"` // 最近的一笔过期收据的token
+          LatestExpiredReceiptInfo string `json:"atestExpiredReceiptInfo"` // 最近的一笔过期收据，JSON字符串格式，在notificationType取值为RENEWAL或INTERACTIVE_RENEWAL时有值
+          LatestExpiredReceiptInfoSignature string `json:"latestExpiredReceiptInfoSignature"` // 对latestExpiredReceiptInfo的签名字符串，签名算法为statusUpdateNotification中的signatureAlgorithm。您的服务器在收到签名字符串后，需要参见对返回结果验签使用IAP公钥对latestExpiredReceiptInfo的JSON字符串进行验签。
+          SignatureAlgorithm string `json:"signatureAlgorithm"` // 签名算法
+          AutoRenewStatus int `json:"autoRenewStatus"` // 续期状态。取值说明：1：当前周期到期后正常续期 0：用户已终止续期
+          RefundPayOrderId string `json:"refundPayOrderId"` // 退款交易号，在notificationType取值为CANCEL时有值
+          ProductId string `json:"productId"` // 订阅型商品ID
+          ApplicationId string `json:"applicationId"` // 应用ID
+          ExpirationIntent int `json:"expirationIntent"` // 超期原因，仅在notificationType为RENEWAL或INTERACTIVE_RENEWAL时并且续期失败情况下有值
     }
-    HuaweiResp {
 
+    HuaweiResp {
     }
 )
+
 @server(
     group: notify
 )

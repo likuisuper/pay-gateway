@@ -18,11 +18,10 @@ func NotifyHuaweiHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 		}
 
 		l := notify.NewNotifyHuaweiLogic(r.Context(), svcCtx)
-		resp, err := l.NotifyHuawei(&req)
-		if err != nil {
-			httpx.Error(w, err)
-		} else {
-			httpx.OkJson(w, resp)
-		}
+		l.NotifyHuawei(&req)
+		// 通过HTTP状态码来标识华为应用内支付服务器通知您的应用服务器是否发送成功：
+		// 如果通知发送成功，则发送HTTP 200，不需要返回响应体。
+		// 如果通知发送失败，则通过发送HTTP 40X或者HTTP 50X，告知华为应用内支付服务器进行重试，华为应用内支付服务器会在一段时间内重试多次。
+		httpx.OkJson(w, nil)
 	}
 }
