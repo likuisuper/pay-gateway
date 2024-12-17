@@ -19,6 +19,7 @@ type HuaweiAppTable struct {
 	ClientId          string `gorm:"column:client_id;NOT NULL" json:"client_id"`                   // 应用client_id 华为后台:我的项目-常规-应用-Client ID
 	ClientSecret      string `gorm:"column:client_secret;NOT NULL" json:"client_secret"`           // 应用client_secret 华为后台:我的项目-常规-应用-Client Secret
 	Sha256Fingerprint string `gorm:"column:sha256_fingerprint;NOT NULL" json:"sha256_fingerprint"` // sha256证书指纹 华为后台:我的项目-常规-应用-SHA256证书指纹
+	IapPublicKey      string `gorm:"column:iap_public_key;NOT NULL" json:"iap_public_key"`         // 应用内支付公钥 在“应用内支付服务”页面记录当前快应用的支付公钥，此公钥将用于IAP SDK接口返回数据的验签，以保证数据没有被篡改
 }
 
 func (m *HuaweiAppTable) TableName() string {
@@ -55,7 +56,7 @@ func (o *HuaweiAppModel) GetInfo(appId string) (*HuaweiAppTable, error) {
 	err = o.DB.Where("`app_id` = ? ", appId).First(&info).Error
 	if err == nil {
 		// 缓存一下
-		o.RDB.Set(context.TODO(), rkey, info, 300)
+		o.RDB.Set(context.TODO(), rkey, info, 600)
 	} else {
 		logx.Errorf("GetInfo error: %v", err)
 	}

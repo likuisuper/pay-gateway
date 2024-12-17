@@ -1,8 +1,11 @@
 package huawei
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
-	"log"
+
+	"github.com/zeromicro/go-zero/core/logx"
 )
 
 // https://developer.huawei.com/consumer/cn/doc/HMSCore-References/api-common-statement-0000001050986127
@@ -18,79 +21,88 @@ type SubscriptionClient struct {
 var SubscriptionDemo = &SubscriptionClient{}
 
 // 获取订阅url
-func getSubUrl(accountFlag int) string {
-	return "https://subscr-drcn.iap.cloud.huawei.com.cn"
+const sub_req_url = "https://subscr-drcn.iap.cloud.huawei.com.cn"
+
+type HwCommonResponse struct {
+	ResponseCode       string `json:"responseCode"`       // 返回码。0：成功。 其他：失败，具体请参见错误码。
+	ResponseMessage    string `json:"responseMessage"`    // 响应描述
+	InappPurchaseData  string `json:"inappPurchaseData"`  // 包含购买详情的字符串（JSONString格式），格式请参见InappPurchaseDetails。
+	DataSignature      string `json:"dataSignature"`      // inappPurchaseData基于应用RSA IAP私钥的签名信息，签名算法为signatureAlgorithm。应用请参见对返回结果验签使用IAP公钥对inappPurchaseData的JSON字符串进行验签。
+	SignatureAlgorithm string `json:"signatureAlgorithm"` // 签名算法。默认为：SHA256WithRSA/PSS
 }
 
-func (subscriptionDemo *SubscriptionClient) GetSubscription(authHeaderString, subscriptionId, purchaseToken string, accountFlag int) {
+// https://developer.huawei.com/consumer/cn/doc/HMSCore-References/json-inapppurchasedata-0000001050986125
+type InAppPurchaseData struct {
+}
+
+// https://developer.huawei.com/consumer/cn/doc/HMSCore-References/api-subscription-verify-purchase-token-0000001050706080
+//
+// 本接口只针对订阅型商品
+//
+// subscriptionId 订阅ID
+//
+// purchaseToken 商品的购买Token，发起购买和查询订阅信息均会返回
+func (subscriptionDemo *SubscriptionClient) GetSubscription(authHeaderString, subscriptionId, purchaseToken string) (*HwCommonResponse, error) {
 	bodyMap := map[string]string{
 		"subscriptionId": subscriptionId,
 		"purchaseToken":  purchaseToken,
 	}
-	url := getSubUrl(accountFlag) + "/sub/applications/v2/purchases/get"
-	bodyBytes, err := SendRequest(authHeaderString, url, bodyMap)
+	url := sub_req_url + "/sub/applications/v2/purchases/get"
+	respStr, err := SendRequest(authHeaderString, url, bodyMap)
 	if err != nil {
-		log.Printf("err is %s", err)
+		return nil, err
 	}
-	// TODO: display the response as string in console, you can replace it with your business logic.
-	log.Printf("%s", bodyBytes)
+
+	var hwResp HwCommonResponse
+	err = json.Unmarshal([]byte(respStr), &hwResp)
+	if err != nil {
+		logx.Errorf("json.Unmarshal error: %v, raw data:%s", err, respStr)
+		return nil, err
+	}
+
+	if hwResp.ResponseCode != "0" {
+		// 异常
+		return nil, errors.New(hwResp.ResponseMessage)
+	}
+
+	return &hwResp, nil
 }
 
-func (subscriptionDemo *SubscriptionClient) StopSubscription(authHeaderString, subscriptionId, purchaseToken string, accountFlag int) {
+func (subscriptionDemo *SubscriptionClient) StopSubscription(authHeaderString, subscriptionId, purchaseToken string) (string, error) {
 	bodyMap := map[string]string{
 		"subscriptionId": subscriptionId,
 		"purchaseToken":  purchaseToken,
 	}
-	url := getSubUrl(accountFlag) + "/sub/applications/v2/purchases/stop"
-	bodyBytes, err := SendRequest(authHeaderString, url, bodyMap)
-	if err != nil {
-		log.Printf("err is %s", err)
-	}
-	// TODO: display the response as string in console, you can replace it with your business logic.
-	log.Printf("%s", bodyBytes)
+	url := sub_req_url + "/sub/applications/v2/purchases/stop"
+	return SendRequest(authHeaderString, url, bodyMap)
 }
 
-func (subscriptionDemo *SubscriptionClient) DelaySubscription(authHeaderString, subscriptionId, purchaseToken string, currentExpirationTime, desiredExpirationTime int64, accountFlag int) {
+func (subscriptionDemo *SubscriptionClient) DelaySubscription(authHeaderString, subscriptionId, purchaseToken string, currentExpirationTime, desiredExpirationTime int64) (string, error) {
 	bodyMap := map[string]string{
 		"subscriptionId":        subscriptionId,
 		"purchaseToken":         purchaseToken,
 		"currentExpirationTime": fmt.Sprintf("%v", currentExpirationTime),
 		"desiredExpirationTime": fmt.Sprintf("%v", desiredExpirationTime),
 	}
-	url := getSubUrl(accountFlag) + "/sub/applications/v2/purchases/delay"
-	bodyBytes, err := SendRequest(authHeaderString, url, bodyMap)
-	if err != nil {
-		log.Printf("err is %s", err)
-	}
-	// TODO: display the response as string in console, you can replace it with your business logic.
-	log.Printf("%s", bodyBytes)
+	url := sub_req_url + "/sub/applications/v2/purchases/delay"
+	return SendRequest(authHeaderString, url, bodyMap)
 }
 
-func (subscriptionDemo *SubscriptionClient) ReturnFeeSubscription(authHeaderString, subscriptionId, purchaseToken string, accountFlag int) {
+func (subscriptionDemo *SubscriptionClient) ReturnFeeSubscription(authHeaderString, subscriptionId, purchaseToken string) (string, error) {
 	bodyMap := map[string]string{
 		"subscriptionId": subscriptionId,
 		"purchaseToken":  purchaseToken,
 	}
 
-	url := getSubUrl(accountFlag) + "/sub/applications/v2/purchases/returnFee"
-	bodyBytes, err := SendRequest(authHeaderString, url, bodyMap)
-	if err != nil {
-		log.Printf("err is %s", err)
-	}
-	// TODO: display the response as string in console, you can replace it with your business logic.
-	log.Printf("%s", bodyBytes)
+	url := sub_req_url + "/sub/applications/v2/purchases/returnFee"
+	return SendRequest(authHeaderString, url, bodyMap)
 }
 
-func (subscriptionDemo *SubscriptionClient) WithdrawalSubscription(authHeaderString, subscriptionId, purchaseToken string, accountFlag int) {
+func (subscriptionDemo *SubscriptionClient) WithdrawalSubscription(authHeaderString, subscriptionId, purchaseToken string) (string, error) {
 	bodyMap := map[string]string{
 		"subscriptionId": subscriptionId,
 		"purchaseToken":  purchaseToken,
 	}
-	url := getSubUrl(accountFlag) + "/sub/applications/v2/purchases/withdrawal"
-	bodyBytes, err := SendRequest(authHeaderString, url, bodyMap)
-	if err != nil {
-		log.Printf("err is %s", err)
-	}
-	// TODO: display the response as string in console, you can replace it with your business logic.
-	log.Printf("%s", bodyBytes)
+	url := sub_req_url + "/sub/applications/v2/purchases/withdrawal"
+	return SendRequest(authHeaderString, url, bodyMap)
 }

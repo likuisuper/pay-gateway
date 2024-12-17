@@ -25,13 +25,13 @@ var OrderDemo = &OrderClient{}
 // 俄罗斯站点：https://orders-drru.iap.cloud.huawei.ru
 
 // https://developer.huawei.com/consumer/cn/doc/HMSCore-References/api-common-statement-0000001050986127
-func getOrderUrl(accountFlag int) string {
-	return "https://orders-drcn.iap.cloud.huawei.com.cn"
-}
+//
+// 获取订单查询url
+const order_req_url = "https://orders-drcn.iap.cloud.huawei.com.cn"
 
-func (orderDemo *OrderClient) VerifyToken(authHeaderString, purchaseToken, productId string, accountFlag int) {
+func (orderDemo *OrderClient) VerifyToken(authHeaderString, purchaseToken, productId string) {
 	bodyMap := map[string]string{"purchaseToken": purchaseToken, "productId": productId}
-	url := getOrderUrl(accountFlag) + "/applications/purchases/tokens/verify"
+	url := order_req_url + "/applications/purchases/tokens/verify"
 	bodyBytes, err := SendRequest(authHeaderString, url, bodyMap)
 	if err != nil {
 		log.Printf("err is %s", err)
@@ -42,7 +42,7 @@ func (orderDemo *OrderClient) VerifyToken(authHeaderString, purchaseToken, produ
 	log.Printf("%s", bodyBytes)
 }
 
-func (orderDemo *OrderClient) CancelledListPurchase(authHeaderString string, endAt int64, startAt int64, maxRows int, productType int, continuationToken string, accountFlag int) {
+func (orderDemo *OrderClient) CancelledListPurchase(authHeaderString string, endAt int64, startAt int64, maxRows int, productType int, continuationToken string) {
 	bodyMap := map[string]string{
 		"endAt":             fmt.Sprintf("%v", endAt),
 		"startAt":           fmt.Sprintf("%v", startAt),
@@ -50,7 +50,7 @@ func (orderDemo *OrderClient) CancelledListPurchase(authHeaderString string, end
 		"type":              fmt.Sprintf("%v", productType),
 		"continuationToken": continuationToken,
 	}
-	url := getOrderUrl(accountFlag) + "/applications/v2/purchases/cancelledList"
+	url := order_req_url + "/applications/v2/purchases/cancelledList"
 	bodyBytes, err := SendRequest(authHeaderString, url, bodyMap)
 	if err != nil {
 		log.Printf("err is %s", err)
@@ -59,12 +59,12 @@ func (orderDemo *OrderClient) CancelledListPurchase(authHeaderString string, end
 	log.Printf("%s", bodyBytes)
 }
 
-func (orderDemo *OrderClient) ConfirmPurchase(authHeaderString, purchaseToken, productId string, accountFlag int) {
+func (orderDemo *OrderClient) ConfirmPurchase(authHeaderString, purchaseToken, productId string) {
 	bodyMap := map[string]string{
 		"purchaseToken": purchaseToken,
 		"productId":     productId,
 	}
-	url := getOrderUrl(accountFlag) + "/applications/v2/purchases/confirm"
+	url := order_req_url + "/applications/v2/purchases/confirm"
 	bodyBytes, err := SendRequest(authHeaderString, url, bodyMap)
 	if err != nil {
 		log.Printf("err is %s", err)

@@ -3,6 +3,7 @@ package notify
 import (
 	"context"
 	"encoding/json"
+	"errors"
 
 	"gitee.com/zhuyunkj/pay-gateway/api/internal/svc"
 	"gitee.com/zhuyunkj/pay-gateway/api/internal/types"
@@ -20,6 +21,7 @@ type NotifyHuaweiLogic struct {
 	notifyHuaweiLogModel *model.NotifyHuaweiLogModel
 	huaweiOrderModel     *model.HuaweiOrderModel
 	huaweiAppModel       *model.HuaweiAppModel
+	authHeaderString     string // 华为请求头需要使用Access Token进行鉴权
 }
 
 func NewNotifyHuaweiLogic(ctx context.Context, svcCtx *svc.ServiceContext) *NotifyHuaweiLogic {
@@ -30,12 +32,11 @@ func NewNotifyHuaweiLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Noti
 		notifyHuaweiLogModel: model.NewNotifyHuaweiLogModel(define.DbPayGateway),
 		huaweiOrderModel:     model.NewHuaweiOrderModel(define.DbPayGateway),
 		huaweiAppModel:       model.NewHuaweiAppModel(define.DbPayGateway),
+		authHeaderString:     "",
 	}
 }
 
-// 华为参考文档
-//
-// https://developer.huawei.com/consumer/cn/doc/HMSCore-References/api-notifications-about-subscription-events-v2-0000001385268541
+// 华为参考文档: https://developer.huawei.com/consumer/cn/doc/HMSCore-Guides/notifications-about-subscription-events-0000001050035037
 //
 // 测试环境回调地址: https://test.api.pay-gateway.yunxiacn.com/notify/huawei
 //
@@ -62,10 +63,16 @@ func (l *NotifyHuaweiLogic) NotifyHuawei(req *types.HuaweiReq) {
 		return
 	}
 
-	// 获取一下华为token
+	// 获取一下华为token请求头信息
 	huaweiAtClient := huawei.NewClient(l.ctx, define.DbPayGateway, hwApp.ClientId, hwApp.ClientSecret, hwApp.AppSecret)
-	token, err := huaweiAtClient.GetAppAccessToken()
-	logx.Infow("xxx", logx.Field("token", token), logx.Field("error", err))
+	tmpHeaderStr, err := huaweiAtClient.BuildAuthorization()
+	if err != nil {
+		l.Errorf("huaweiAtClient.BuildAuthorization err:%v", err)
+		return
+	}
+	l.authHeaderString = tmpHeaderStr
+
+	logx.Infow("NotifyHuawei", logx.Field("authHeaderString", tmpHeaderStr))
 
 	// 记录日志
 	logModel := &model.NotifyHuaweiLogTable{
@@ -77,43 +84,60 @@ func (l *NotifyHuaweiLogic) NotifyHuawei(req *types.HuaweiReq) {
 
 	if req.EventType == huawei.HUAWEI_EVENT_TYPE_SUBSCRIPTION {
 		// 处理订阅
-		l.handleHuaweiSub(req, logModel.Id)
+		l.handleHuaweiSub(req, logModel.Id, hwApp.AppSecret)
 		return
 	}
 
 	if req.EventType == huawei.HUAWEI_EVENT_TYPE_ORDER {
 		// 处理订单
-		l.handleHuaweiOrder(req, logModel.Id)
+		l.handleHuaweiOrder(req, logModel.Id, hwApp.AppSecret)
 		return
 	}
 }
 
 // 处理订阅流程: https://developer.huawei.com/consumer/cn/doc/HMSCore-Guides/notifications-about-subscription-events-0000001050035037
 //
+// 验证InAppPurchaseData: https://developer.huawei.com/consumer/cn/doc/HMSCore-Guides/verifying-inapppurchasedata-0000001494212281
+//
 // 3.调用华为IAP服务器提供的Subscription服务验证购买Token接口，查询购买数据及其签名数据。
 //
 // 4.IAP服务器返回购买数据及其签名数据。为避免资金损失，您在验签成功后，必须校验InAppPurchaseData中的productId、price、currency等信息的一致性。验证方法和公钥获取方式可参见验证InAppPurchaseData。
 //
 // 5.校验订阅状态提供商品服务。请根据Subscription服务验证购买Token接口响应中InAppPurchaseData的subIsvalid字段决定是否发货。若subIsvalid为true，则执行发货操作。
-func (l *NotifyHuaweiLogic) handleHuaweiSub(req *types.HuaweiReq, logId uint64) {
-
-}
-
-func (l *NotifyHuaweiLogic) DealNotification(information string, applicationPublicKey string) (*huawei.NotificationResponse, error) {
-	var request huawei.NotificationRequest
-	err := json.Unmarshal([]byte(information), &request)
-	if err != nil {
-		return nil, err
-	}
-
-	err = huawei.VerifyRsaSign(request.StatusUpdateNotification, request.NotificationSignature, applicationPublicKey)
-	if err != nil {
-		return nil, err
-	}
-
+func (l *NotifyHuaweiLogic) handleHuaweiSub(req *types.HuaweiReq, logId uint64, appPublicKey string) (*huawei.NotificationResponse, error) {
 	var info huawei.StatusUpdateNotification
-	json.Unmarshal([]byte(request.StatusUpdateNotification), &info)
-	switch notificationType := info.NotificationType; notificationType {
+	err := json.Unmarshal([]byte(req.SubNotification.StatusUpdateNotification), &info)
+	if err != nil {
+		l.Errorf("json.Unmarshal error: %v, raw string: %s", err, req.SubNotification.StatusUpdateNotification)
+		return nil, err
+	}
+
+	if info.SubscriptionId == "" || info.PurchaseToken == "" {
+		l.Errorf("SubscriptionId or PurchaseToken is empty raw data:%v", req.SubNotification.StatusUpdateNotification)
+		return nil, errors.New("SubscriptionId or PurchaseToken is empty")
+	}
+
+	// 3.调用华为IAP服务器提供的Subscription服务验证购买Token接口，查询购买数据及其签名数据。
+	hwCommonResp, err := huawei.SubscriptionDemo.GetSubscription(l.authHeaderString, info.SubscriptionId, info.PurchaseToken)
+	if err != nil {
+		return nil, err
+	}
+
+	// 验证签名数据
+	err = huawei.VerifyRsaSign(hwCommonResp.InappPurchaseData, hwCommonResp.DataSignature, appPublicKey)
+	if err != nil {
+		l.Errorf("handleHuaweiSub huawei.VerifyRsaSign error: %v", err)
+		return nil, err
+	}
+
+	// https://developer.huawei.com/consumer/cn/doc/HMSCore-Guides/verifying-inapppurchasedata-0000001494212281
+	// 4.IAP服务器返回购买数据及其签名数据。为避免资金损失，您在验签成功后，必须校验InAppPurchaseData中的productId、price、currency等信息与下单的一致性。验证方法和公钥获取方式可参见验证InAppPurchaseData。
+	// 第4步暂时跳过了
+	// todo
+
+	// 通知事件的类型
+	notificationType := info.NotificationType
+	switch notificationType {
 	case huawei.NOTIFICATION_TYPE_INITIAL_BUY:
 	case huawei.NOTIFICATION_TYPE_CANCEL:
 	case huawei.NOTIFICATION_TYPE_RENEWAL:
@@ -145,5 +169,5 @@ func (l *NotifyHuaweiLogic) DealNotification(information string, applicationPubl
 // 6.调用华为IAP服务器提供的Order服务确认购买接口确认购买（即消耗）。
 //
 // 7.IAP服务器返回确认购买结果。
-func (l *NotifyHuaweiLogic) handleHuaweiOrder(req *types.HuaweiReq, logId uint64) {
+func (l *NotifyHuaweiLogic) handleHuaweiOrder(req *types.HuaweiReq, logId uint64, appPublicKey string) {
 }

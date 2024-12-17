@@ -56,6 +56,7 @@ func (c *HuaweiAccessTokenClient) GetAppAccessToken() (string, error) {
 	urlValue := url.Values{"grant_type": {"client_credentials"}, "client_secret": {c.ClientSecret}, "client_id": {c.ClientId}}
 	resp, err := RequestHttpClient.PostForm(get_token_url, urlValue)
 	if err != nil {
+		logx.WithContext(c.ctx).Errorf("RequestHttpClient.PostForm error: %v", err)
 		return "", err
 	}
 
