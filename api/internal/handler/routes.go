@@ -4,6 +4,7 @@ package handler
 import (
 	"net/http"
 
+	crontab "gitee.com/zhuyunkj/pay-gateway/api/internal/handler/crontab"
 	health "gitee.com/zhuyunkj/pay-gateway/api/internal/handler/health"
 	inter "gitee.com/zhuyunkj/pay-gateway/api/internal/handler/inter"
 	notify "gitee.com/zhuyunkj/pay-gateway/api/internal/handler/notify"
@@ -19,6 +20,54 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 				Method:  http.MethodPost,
 				Path:    "/ver/health/check",
 				Handler: health.HealthCheckHandler(serverCtx),
+			},
+		},
+	)
+
+	server.AddRoutes(
+		[]rest.Route{
+			{
+				Method:  http.MethodPost,
+				Path:    "/crontab/supplementaryOrders",
+				Handler: crontab.SupplementaryOrdersHandler(serverCtx),
+			},
+		},
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.Inter},
+			[]rest.Route{
+				{
+					Method:  http.MethodPost,
+					Path:    "/internal/crt/upload",
+					Handler: inter.CrtUploadHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPost,
+					Path:    "/internal/getPayNodeList",
+					Handler: inter.GetPayNodeListHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPost,
+					Path:    "/internal/alipayFundTransUniTransfer",
+					Handler: inter.AlipayFundTransUniTransferHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPost,
+					Path:    "/internal/handleRefund",
+					Handler: inter.HandleRefundHandler(serverCtx),
+				},
+			}...,
+		),
+	)
+
+	server.AddRoutes(
+		[]rest.Route{
+			{
+				Method:  http.MethodPost,
+				Path:    "/internal/complain",
+				Handler: inter.HandleComplainHandler(serverCtx),
 			},
 		},
 	)
@@ -79,44 +128,6 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 				Method:  http.MethodPost,
 				Path:    "/notify/huawei",
 				Handler: notify.NotifyHuaweiHandler(serverCtx),
-			},
-		},
-	)
-
-	server.AddRoutes(
-		rest.WithMiddlewares(
-			[]rest.Middleware{serverCtx.Inter},
-			[]rest.Route{
-				{
-					Method:  http.MethodPost,
-					Path:    "/internal/crt/upload",
-					Handler: inter.CrtUploadHandler(serverCtx),
-				},
-				{
-					Method:  http.MethodPost,
-					Path:    "/internal/getPayNodeList",
-					Handler: inter.GetPayNodeListHandler(serverCtx),
-				},
-				{
-					Method:  http.MethodPost,
-					Path:    "/internal/alipayFundTransUniTransfer",
-					Handler: inter.AlipayFundTransUniTransferHandler(serverCtx),
-				},
-				{
-					Method:  http.MethodPost,
-					Path:    "/internal/handleRefund",
-					Handler: inter.HandleRefundHandler(serverCtx),
-				},
-			}...,
-		),
-	)
-
-	server.AddRoutes(
-		[]rest.Route{
-			{
-				Method:  http.MethodPost,
-				Path:    "/internal/complain",
-				Handler: inter.HandleComplainHandler(serverCtx),
 			},
 		},
 	)

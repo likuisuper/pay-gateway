@@ -32,6 +32,13 @@ const (
 	ORDER_REFUNDING = 4
 )
 
+const (
+	// 通知类型 ORDER：订单
+	HUAWEI_EVENT_TYPE_ORDER = "ORDER"
+	// 通知类型 SUBSCRIPTION：订阅
+	HUAWEI_EVENT_TYPE_SUBSCRIPTION = "SUBSCRIPTION"
+)
+
 // 华为通知类型
 //
 // https://developer.huawei.com/consumer/cn/doc/HMSCore-References/api-notifications-about-subscription-events-v2-0000001385268541#ZH-CN_TOPIC_0000001050706084__table2818954
