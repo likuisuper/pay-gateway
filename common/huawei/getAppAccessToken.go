@@ -7,9 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"net/http"
 	"net/url"
-	"time"
 
 	"gitee.com/zhuyunkj/pay-gateway/db"
 	"gitee.com/zhuyunkj/zhuyun-core/cache"
@@ -43,9 +41,6 @@ func NewClient(ctx context.Context, dbName, ClientId, ClientSecret, AppSecret st
 		RDB:          db.WithRedisDBContext(dbName),
 	}
 }
-
-// default http client with 5 seconds timeout
-var RequestHttpClient = http.Client{Timeout: time.Second * 5}
 
 // access token 缓存key
 const huawei_access_token_key = "hw:app:access:token:%s" // %s是client id(app id)

@@ -6,7 +6,6 @@ import (
 
 	"gitee.com/zhuyunkj/pay-gateway/api/internal/svc"
 	"gitee.com/zhuyunkj/pay-gateway/api/internal/types"
-	"gitee.com/zhuyunkj/pay-gateway/common/code"
 	"gitee.com/zhuyunkj/pay-gateway/common/define"
 	"gitee.com/zhuyunkj/pay-gateway/common/huawei"
 	"gitee.com/zhuyunkj/pay-gateway/db/mysql/model"
@@ -50,7 +49,7 @@ func (l *NotifyHuaweiLogic) NotifyHuawei(req *types.HuaweiReq) {
 		return
 	}
 
-	if req.EventType != code.HUAWEI_EVENT_TYPE_SUBSCRIPTION && req.EventType != code.HUAWEI_EVENT_TYPE_ORDER {
+	if req.EventType != huawei.HUAWEI_EVENT_TYPE_SUBSCRIPTION && req.EventType != huawei.HUAWEI_EVENT_TYPE_ORDER {
 		// 参数异常
 		l.Errorf("NotifyHuawei param error, unexpected event type:%v", req.EventType)
 		return
@@ -76,13 +75,13 @@ func (l *NotifyHuaweiLogic) NotifyHuawei(req *types.HuaweiReq) {
 	}
 	l.notifyHuaweiLogModel.Create(logModel)
 
-	if req.EventType == code.HUAWEI_EVENT_TYPE_SUBSCRIPTION {
+	if req.EventType == huawei.HUAWEI_EVENT_TYPE_SUBSCRIPTION {
 		// 处理订阅
 		l.handleHuaweiSub(req, logModel.Id)
 		return
 	}
 
-	if req.EventType == code.HUAWEI_EVENT_TYPE_ORDER {
+	if req.EventType == huawei.HUAWEI_EVENT_TYPE_ORDER {
 		// 处理订单
 		l.handleHuaweiOrder(req, logModel.Id)
 		return
@@ -97,6 +96,42 @@ func (l *NotifyHuaweiLogic) NotifyHuawei(req *types.HuaweiReq) {
 //
 // 5.校验订阅状态提供商品服务。请根据Subscription服务验证购买Token接口响应中InAppPurchaseData的subIsvalid字段决定是否发货。若subIsvalid为true，则执行发货操作。
 func (l *NotifyHuaweiLogic) handleHuaweiSub(req *types.HuaweiReq, logId uint64) {
+
+}
+
+func (l *NotifyHuaweiLogic) DealNotification(information string, applicationPublicKey string) (*huawei.NotificationResponse, error) {
+	var request huawei.NotificationRequest
+	err := json.Unmarshal([]byte(information), &request)
+	if err != nil {
+		return nil, err
+	}
+
+	err = huawei.VerifyRsaSign(request.StatusUpdateNotification, request.NotificationSignature, applicationPublicKey)
+	if err != nil {
+		return nil, err
+	}
+
+	var info huawei.StatusUpdateNotification
+	json.Unmarshal([]byte(request.StatusUpdateNotification), &info)
+	switch notificationType := info.NotificationType; notificationType {
+	case huawei.NOTIFICATION_TYPE_INITIAL_BUY:
+	case huawei.NOTIFICATION_TYPE_CANCEL:
+	case huawei.NOTIFICATION_TYPE_RENEWAL:
+	case huawei.NOTIFICATION_TYPE_INTERACTIVE_RENEWAL:
+	case huawei.NOTIFICATION_TYPE_NEW_RENEWAL_PREF:
+	case huawei.NOTIFICATION_TYPE_RENEWAL_STOPPED:
+	case huawei.NOTIFICATION_TYPE_RENEWAL_RESTORED:
+	case huawei.NOTIFICATION_TYPE_RENEWAL_RECURRING:
+	case huawei.NOTIFICATION_TYPE_ON_HOLD:
+	case huawei.NOTIFICATION_TYPE_PAUSED:
+	case huawei.NOTIFICATION_TYPE_PAUSE_PLAN_CHANGED:
+	case huawei.NOTIFICATION_TYPE_PRICE_CHANGE_CONFIRMED:
+	case huawei.NOTIFICATION_TYPE_DEFERRED:
+	default:
+	}
+
+	response := huawei.NotificationResponse{ErrorCode: "0"}
+	return &response, nil
 }
 
 // 处理订单流程: https://developer.huawei.com/consumer/cn/doc/HMSCore-Guides/notifications-about-subscription-events-0000001050035037
