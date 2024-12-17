@@ -8,6 +8,7 @@ import (
 	"gitee.com/zhuyunkj/pay-gateway/api/internal/types"
 	"gitee.com/zhuyunkj/pay-gateway/common/code"
 	"gitee.com/zhuyunkj/pay-gateway/common/define"
+	"gitee.com/zhuyunkj/pay-gateway/common/huawei"
 	"gitee.com/zhuyunkj/pay-gateway/db/mysql/model"
 
 	"github.com/zeromicro/go-zero/core/logx"
@@ -52,13 +53,20 @@ func (l *NotifyHuaweiLogic) NotifyHuawei(req *types.HuaweiReq) {
 	if req.EventType != code.HUAWEI_EVENT_TYPE_SUBSCRIPTION && req.EventType != code.HUAWEI_EVENT_TYPE_ORDER {
 		// 参数异常
 		l.Errorf("NotifyHuawei param error, unexpected event type:%v", req.EventType)
+		return
 	}
 
 	// 查询包应用信息
 	hwApp, _ := l.huaweiAppModel.GetInfo(req.ApplicationId)
-	if hwApp.Id < 1 {
+	if hwApp.ID < 1 {
 		l.Errorw("huaweiAppModel not found", logx.Field("appId", req.ApplicationId))
+		return
 	}
+
+	// 获取一下华为token
+	huaweiAtClient := huawei.NewClient(l.ctx, define.DbPayGateway, hwApp.ClientId, hwApp.ClientSecret, hwApp.AppSecret)
+	token, err := huaweiAtClient.GetAppAccessToken()
+	logx.Infow("xxx", logx.Field("token", token), logx.Field("error", err))
 
 	// 记录日志
 	logModel := &model.NotifyHuaweiLogTable{
