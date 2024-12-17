@@ -22,7 +22,8 @@ import (
 const get_token_url = "https://oauth-login.cloud.huawei.com/oauth2/v3/token"
 
 type AtResponse struct {
-	AccessToken string `json:"access_token"`
+	AccessToken string `json:"access_token"` // token
+	ExpiresIn   int    `json:"expires_in"`   // 过期时间秒
 }
 
 type HuaweiAccessTokenClient struct {
@@ -70,12 +71,15 @@ func (c *HuaweiAccessTokenClient) GetAppAccessToken() (string, error) {
 		return "", err
 	}
 
+	// 正常时返回
+	// {"access_token":"DQEBAP+CjENXLOUNVZP5R9uzLXTD/PWw7xXrYUJOAfnnrGjHE3NPJqGNpgjN9eVJLrVHJoM/9ehRVruNpBb3MTbSldM+ZqRYoWQj1Q==","token_type":"Bearer","expires_in":3600}
 	logx.WithContext(c.ctx).Slowf("GetAppAccessToken raw response: %v", string(bodyBytes))
 
 	var atResponse AtResponse
 	json.Unmarshal(bodyBytes, &atResponse)
 	if atResponse.AccessToken != "" {
-		c.RDB.Set(context.TODO(), rkey, atResponse.AccessToken, 1800)
+		// 设置缓存
+		c.RDB.Set(context.TODO(), rkey, atResponse.AccessToken, atResponse.ExpiresIn-300)
 		return atResponse.AccessToken, nil
 	}
 
