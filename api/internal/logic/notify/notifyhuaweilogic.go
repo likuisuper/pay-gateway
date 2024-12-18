@@ -84,13 +84,13 @@ func (l *NotifyHuaweiLogic) NotifyHuawei(req *types.HuaweiReq) {
 
 	if req.EventType == huawei.HUAWEI_EVENT_TYPE_SUBSCRIPTION {
 		// 处理订阅
-		l.handleHuaweiSub(req, logModel.Id, hwApp.AppSecret)
+		l.handleHuaweiSub(req, logModel.Id, hwApp.IapPublicKey)
 		return
 	}
 
 	if req.EventType == huawei.HUAWEI_EVENT_TYPE_ORDER {
 		// 处理订单
-		l.handleHuaweiOrder(req, logModel.Id, hwApp.AppSecret)
+		l.handleHuaweiOrder(req, logModel.Id, hwApp.IapPublicKey)
 		return
 	}
 }
@@ -134,6 +134,14 @@ func (l *NotifyHuaweiLogic) handleHuaweiSub(req *types.HuaweiReq, logId uint64, 
 	// 4.IAP服务器返回购买数据及其签名数据。为避免资金损失，您在验签成功后，必须校验InAppPurchaseData中的productId、price、currency等信息与下单的一致性。验证方法和公钥获取方式可参见验证InAppPurchaseData。
 	// 第4步暂时跳过了
 	// todo
+
+	// 5.校验订阅状态提供商品服务。请根据Subscription服务验证购买Token接口响应中InAppPurchaseData的subIsvalid字段决定是否发货。若subIsvalid为true，则执行发货操作。
+	var tmpInappPurData huawei.InAppPurchaseData
+	err = json.Unmarshal([]byte(hwCommonResp.InappPurchaseData), &tmpInappPurData)
+	if err != nil {
+		l.Errorf("json.Unmarshal error: %v, raw InappPurchaseData string: %s", err, hwCommonResp.InappPurchaseData)
+		return nil, err
+	}
 
 	// 通知事件的类型
 	notificationType := info.NotificationType

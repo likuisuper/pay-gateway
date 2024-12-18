@@ -51,6 +51,7 @@ func SendRequest(authHeaderString string, url string, bodyMap map[string]string)
 }
 
 // 验证签名
+//
 // content结果字符串
 //
 // sign 签名字符串
