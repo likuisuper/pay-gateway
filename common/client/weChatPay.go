@@ -8,6 +8,14 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"math/rand"
+	"net/http"
+	"net/url"
+	"sort"
+	"strings"
+	"time"
+
 	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
 	"github.com/wechatpay-apiv3/wechatpay-go/core"
 	"github.com/wechatpay-apiv3/wechatpay-go/core/auth/verifiers"
@@ -21,13 +29,6 @@ import (
 	"github.com/wechatpay-apiv3/wechatpay-go/services/refunddomestic"
 	"github.com/wechatpay-apiv3/wechatpay-go/utils"
 	"github.com/zeromicro/go-zero/core/logx"
-	"io/ioutil"
-	"math/rand"
-	"net/http"
-	"net/url"
-	"sort"
-	"strings"
-	"time"
 )
 
 var (
@@ -211,19 +212,28 @@ func (l *WeChatCommPay) getClient() (uniAppResp *core.Client, err error) {
 	mchPrivateKey, err := utils.LoadPrivateKeyWithPath(l.Config.PrivateKeyPath)
 	if err != nil {
 		weChatHttpRequestErr.CounterInc()
-		logx.Errorf("请求微信支付发生错误,err =%v", err)
+		logx.Errorf("utils.LoadPrivateKeyWithPath 请求微信支付发生错误 err=%v, PrivateKeyPath:%v", err, l.Config.PrivateKeyPath)
 		return nil, err
 	}
+
 	opts := []core.ClientOption{
 		option.WithWechatPayAutoAuthCipher(l.Config.MchId, l.Config.SerialNumber, mchPrivateKey, l.Config.ApiKey),
 	}
-	client, err := core.NewClient(ctx, opts...)
-	if err != nil {
-		weChatHttpRequestErr.CounterInc()
-		logx.Errorf("请求微信支付发生错误,err =%v", err)
-		return nil, err
+
+	for i := 0; i < 3; i++ {
+		client, err := core.NewClient(ctx, opts...)
+		if err != nil {
+			// sleep 10毫秒
+			time.Sleep(time.Millisecond * 10)
+			logx.Errorw("core.NewClient 请求微信支付发生错误", logx.Field("err", err), logx.Field("config", l.Config), logx.Field("mchPrivateKey", mchPrivateKey))
+			continue
+		}
+
+		return client, nil
 	}
-	return client, nil
+
+	weChatHttpRequestErr.CounterInc()
+	return nil, err
 }
 
 // 支付请求v3  web
