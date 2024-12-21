@@ -140,11 +140,11 @@ func (l *AlipayPagePayAndSignChoiceAccountLogic) AlipayPagePayAndSignChoiceAccou
 		orderInfo.ExternalAgreementNo = externalAgreementNo
 
 		// 指定商户信息
-		signParams.SubMerchant = &alipay2.SubMerchantParams{
-			SubMerchantId:          merchantNo,
-			SubMerchantName:        merchantName,
-			SubMerchantServiceName: "【客服电话：18150156227】如您需办理退款，请拨打VIP售后电话，将极速为您办理，感谢您的订阅！",
-		}
+		//signParams.SubMerchant = &alipay2.SubMerchantParams{
+		//	SubMerchantId:          merchantNo,
+		//	SubMerchantName:        merchantName,
+		//	SubMerchantServiceName: "【客服电话：18150156227】如您需办理退款，请拨打VIP售后电话，将极速为您办理，感谢您的订阅！",
+		//}
 
 		trade.AgreementSignParams = signParams
 	}
