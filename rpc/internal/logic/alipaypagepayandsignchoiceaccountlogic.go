@@ -45,7 +45,7 @@ func NewAlipayPagePayAndSignChoiceAccountLogic(ctx context.Context, svcCtx *svc.
 // 支付宝新的充值订阅 可以选择不同的支付宝账号：支付并签约
 func (l *AlipayPagePayAndSignChoiceAccountLogic) AlipayPagePayAndSignChoiceAccount(in *pb.AlipayPageSignReq) (*pb.AlipayPageSignResp, error) {
 	// 选择不同的支付宝号
-	payClient, payAppId, notifyUrl, merchantNo, merchantName, err := clientMgr.GetAlipayClienMerchantInfo(in.AppPkgName)
+	payClient, payAppId, notifyUrl, merchantNo, _, err := clientMgr.GetAlipayClienMerchantInfo(in.AppPkgName)
 	if err != nil {
 		return nil, err
 	}
