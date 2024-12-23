@@ -12,6 +12,8 @@ import (
 	"math/rand"
 	"net/http"
 	"net/url"
+	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 	"time"
@@ -216,24 +218,104 @@ func (l *WeChatCommPay) getClient() (uniAppResp *core.Client, err error) {
 		return nil, err
 	}
 
+	// 公钥文件跟私钥文件同目录 且 文件名固定为 pub_key.pem
+	// pub_key.pem 是api v3公钥 从商户后台下载后上传到nacos那几台机器上
+	tmpDir, _ := filepath.Split(l.Config.PrivateKeyPath)
+	tmpPublicKeyPemFile := tmpDir + "pub_key.pem"
+
+	// 新版本 按比例对新增商户灰度, 需要用公钥证书
+	// 如果公钥文件存在
+	// 修改问题: [StatusCode: 404 Code: \"RESOURCE_NOT_EXISTS\"\nMessage: 无可用的平台证书，请在商户平台-API安全申请使用微信支付公钥。可查看指引https://pay.weixin.qq.com/docs/merchant/products/platform-certificate/wxp-pub-key-guide.html]
+	// https://developers.weixin.qq.com/community/develop/doc/00066c92930a58b026922d3ff61c00
+	if l.fileExists(tmpPublicKeyPemFile) {
+		logx.Slowf("tmpPublicKeyPemFile: %s file exist", tmpPublicKeyPemFile)
+		wechatpayPublicKey, err := utils.LoadPublicKeyWithPath(tmpPublicKeyPemFile)
+		if err != nil {
+			logx.Errorf("load wechatpay public key tmpPublicKeyPemFile:%s err:%s", tmpPublicKeyPemFile, err.Error())
+			return nil, err
+		}
+
+		// 初始化 Client
+		opts2 := []core.ClientOption{
+			option.WithWechatPayPublicKeyAuthCipher(l.Config.MchId, l.Config.SerialNumber, mchPrivateKey, l.Config.ApiKey, wechatpayPublicKey),
+		}
+		client, err := core.NewClient(ctx, opts2...)
+		if err != nil {
+			logx.Errorw("core.NewClient opts2 请求微信支付发生错误", logx.Field("err", err), logx.Field("config", l.Config), logx.Field("tmpPublicKeyPemFile", tmpPublicKeyPemFile))
+		}
+
+		return client, err
+	} else {
+		logx.Slowf("tmpPublicKeyPemFile: %s file not exist", tmpPublicKeyPemFile)
+	}
+
 	opts := []core.ClientOption{
 		option.WithWechatPayAutoAuthCipher(l.Config.MchId, l.Config.SerialNumber, mchPrivateKey, l.Config.ApiKey),
 	}
+	client, err := core.NewClient(ctx, opts...)
+	if err != nil {
+		logx.Errorw("core.NewClient opts 请求微信支付发生错误", logx.Field("err", err), logx.Field("config", l.Config), logx.Field("mchPrivateKey", mchPrivateKey))
+		weChatHttpRequestErr.CounterInc()
+	}
+	return client, err
+}
 
-	for i := 0; i < 3; i++ {
-		client, err := core.NewClient(ctx, opts...)
-		if err != nil {
-			// sleep 10毫秒
-			time.Sleep(time.Millisecond * 10)
-			logx.Errorw("core.NewClient 请求微信支付发生错误", logx.Field("err", err), logx.Field("config", l.Config), logx.Field("mchPrivateKey", mchPrivateKey))
-			continue
-		}
+func (l *WeChatCommPay) fileExists(filename string) bool {
+	_, err := os.Stat(filename)
+	return !os.IsNotExist(err)
+}
 
-		return client, nil
+// 本地测试新加的方法
+func (l *WeChatCommPay) GetClientTest() (uniAppResp *core.Client, err error) {
+	ctx := context.Background()
+	// 使用商户私钥等初始化 client，并使它具有自动定时获取微信支付平台证书的能力
+	mchPrivateKey, err := utils.LoadPrivateKeyWithPath(l.Config.PrivateKeyPath)
+	if err != nil {
+		weChatHttpRequestErr.CounterInc()
+		logx.Errorf("utils.LoadPrivateKeyWithPath 请求微信支付发生错误 err=%v, PrivateKeyPath:%v", err, l.Config.PrivateKeyPath)
+		return nil, err
 	}
 
-	weChatHttpRequestErr.CounterInc()
-	return nil, err
+	// 公钥文件跟私钥文件同目录 且 文件名固定为 pub_key.pem
+	// pub_key.pem 是api v3公钥 从商户后台下载后上传到nacos那几台机器上
+	tmpDir, _ := filepath.Split(l.Config.PrivateKeyPath)
+	tmpPublicKeyPemFile := tmpDir + "pub_key.pem"
+
+	// 新版本 按比例对新增商户灰度, 需要用公钥证书
+	// 如果公钥文件存在
+	// 修改问题: [StatusCode: 404 Code: \"RESOURCE_NOT_EXISTS\"\nMessage: 无可用的平台证书，请在商户平台-API安全申请使用微信支付公钥。可查看指引https://pay.weixin.qq.com/docs/merchant/products/platform-certificate/wxp-pub-key-guide.html]
+	// https://developers.weixin.qq.com/community/develop/doc/00066c92930a58b026922d3ff61c00
+	if l.fileExists(tmpPublicKeyPemFile) {
+		logx.Slowf("tmpPublicKeyPemFile: %s file exist", tmpPublicKeyPemFile)
+		wechatpayPublicKey, err := utils.LoadPublicKeyWithPath(tmpPublicKeyPemFile)
+		if err != nil {
+			logx.Errorf("load wechatpay public key tmpPublicKeyPemFile:%s err:%s", tmpPublicKeyPemFile, err.Error())
+			return nil, err
+		}
+
+		// 初始化 Client
+		opts2 := []core.ClientOption{
+			option.WithWechatPayPublicKeyAuthCipher(l.Config.MchId, l.Config.SerialNumber, mchPrivateKey, l.Config.ApiKey, wechatpayPublicKey),
+		}
+		client, err := core.NewClient(ctx, opts2...)
+		if err != nil {
+			logx.Errorw("core.NewClient opts2 请求微信支付发生错误", logx.Field("err", err), logx.Field("config", l.Config), logx.Field("tmpPublicKeyPemFile", tmpPublicKeyPemFile))
+		}
+
+		return client, err
+	} else {
+		logx.Slowf("tmpPublicKeyPemFile: %s file not exist", tmpPublicKeyPemFile)
+	}
+
+	opts := []core.ClientOption{
+		option.WithWechatPayAutoAuthCipher(l.Config.MchId, l.Config.SerialNumber, mchPrivateKey, l.Config.ApiKey),
+	}
+	client, err := core.NewClient(ctx, opts...)
+	if err != nil {
+		logx.Errorw("core.NewClient opts 请求微信支付发生错误", logx.Field("err", err), logx.Field("config", l.Config), logx.Field("mchPrivateKey", mchPrivateKey))
+		weChatHttpRequestErr.CounterInc()
+	}
+	return client, err
 }
 
 // 支付请求v3  web
