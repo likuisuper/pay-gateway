@@ -53,7 +53,7 @@ type WechatPayConfig struct {
 	AppId          string //应用ID
 	MchId          string //直连商户号
 	ApiKey         string //apiV3密钥
-	PrivateKeyPath string //apiV3密钥
+	PrivateKeyPath string //apiV3密钥地址
 	SerialNumber   string //商户证书序列号
 	NotifyUrl      string //通知地址
 	ApiKeyV2       string //apiKeyV2密钥
@@ -265,7 +265,24 @@ func (l *WeChatCommPay) fileExists(filename string) bool {
 	return !os.IsNotExist(err)
 }
 
+func (l *WeChatCommPay) getPublickKeyPemFile(privateKeyFile string) string {
+	// 公钥文件跟私钥文件同目录 且 文件名固定为 pub_key.pem
+	// pub_key.pem 是api v3公钥 从商户后台下载后上传到nacos那几台机器上
+	tmpDir, _ := filepath.Split(privateKeyFile)
+	tmpPublicKeyPemFile := tmpDir + "pub_key.pem"
+	if l.fileExists(tmpPublicKeyPemFile) {
+		logx.Slowf("tmpPublicKeyPemFile: %s file exist", tmpPublicKeyPemFile)
+		return tmpPublicKeyPemFile
+	}
+
+	logx.Slowf("tmpPublicKeyPemFile: %s file not exist", tmpPublicKeyPemFile)
+	return ""
+}
+
 // 本地测试新加的方法
+// https://github.com/wechatpay-apiv3/wechatpay-go#%E6%95%8F%E6%84%9F%E4%BF%A1%E6%81%AF%E5%8A%A0%E8%A7%A3%E5%AF%86
+// https://developers.weixin.qq.com/community/develop/doc/00066c92930a58b026922d3ff61c00
+// apiv1 v2 v3 key都需要一样
 func (l *WeChatCommPay) GetClientTest() (uniAppResp *core.Client, err error) {
 	ctx := context.Background()
 	// 使用商户私钥等初始化 client，并使它具有自动定时获取微信支付平台证书的能力
@@ -276,17 +293,12 @@ func (l *WeChatCommPay) GetClientTest() (uniAppResp *core.Client, err error) {
 		return nil, err
 	}
 
-	// 公钥文件跟私钥文件同目录 且 文件名固定为 pub_key.pem
-	// pub_key.pem 是api v3公钥 从商户后台下载后上传到nacos那几台机器上
-	tmpDir, _ := filepath.Split(l.Config.PrivateKeyPath)
-	tmpPublicKeyPemFile := tmpDir + "pub_key.pem"
-
 	// 新版本 按比例对新增商户灰度, 需要用公钥证书
 	// 如果公钥文件存在
 	// 修改问题: [StatusCode: 404 Code: \"RESOURCE_NOT_EXISTS\"\nMessage: 无可用的平台证书，请在商户平台-API安全申请使用微信支付公钥。可查看指引https://pay.weixin.qq.com/docs/merchant/products/platform-certificate/wxp-pub-key-guide.html]
 	// https://developers.weixin.qq.com/community/develop/doc/00066c92930a58b026922d3ff61c00
-	if l.fileExists(tmpPublicKeyPemFile) {
-		logx.Slowf("tmpPublicKeyPemFile: %s file exist", tmpPublicKeyPemFile)
+	tmpPublicKeyPemFile := l.getPublickKeyPemFile(l.Config.PrivateKeyPath)
+	if tmpPublicKeyPemFile != "" {
 		wechatpayPublicKey, err := utils.LoadPublicKeyWithPath(tmpPublicKeyPemFile)
 		if err != nil {
 			logx.Errorf("load wechatpay public key tmpPublicKeyPemFile:%s err:%s", tmpPublicKeyPemFile, err.Error())
@@ -303,8 +315,6 @@ func (l *WeChatCommPay) GetClientTest() (uniAppResp *core.Client, err error) {
 		}
 
 		return client, err
-	} else {
-		logx.Slowf("tmpPublicKeyPemFile: %s file not exist", tmpPublicKeyPemFile)
 	}
 
 	opts := []core.ClientOption{
@@ -388,8 +398,8 @@ func (l *WeChatCommPay) WechatPayUnified(info *PayOrder, appConfig *WechatPayCon
 		SceneInfo:      sceneInfo,
 		Attach:         attach,
 	}
-	var m map[string]interface{}
-	m = make(map[string]interface{}, 12)
+
+	m := make(map[string]interface{}, 12)
 	m["appid"] = params.APPID
 	m["mch_id"] = params.MchID
 	m["nonce_str"] = params.NonceStr
@@ -576,6 +586,8 @@ func (l *WeChatCommPay) GetOrderStatus(codeCode string) (orderInfo *payments.Tra
 }
 
 // 通知权限验证。及解析内容
+// https://github.com/wechatpay-apiv3/wechatpay-go#%E6%95%8F%E6%84%9F%E4%BF%A1%E6%81%AF%E5%8A%A0%E8%A7%A3%E5%AF%86
+// https://developers.weixin.qq.com/community/develop/doc/00066c92930a58b026922d3ff61c00
 func (l *WeChatCommPay) Notify(r *http.Request) (orderInfo *payments.Transaction, data map[string]interface{}, err error) {
 	//获取私钥
 	mchPrivateKey, err := utils.LoadPrivateKeyWithPath(l.Config.PrivateKeyPath)
@@ -585,6 +597,7 @@ func (l *WeChatCommPay) Notify(r *http.Request) (orderInfo *payments.Transaction
 		err = errors.New(`{"code": "FAIL","message": "获取入私钥发生错误"}`)
 		return nil, nil, err
 	}
+
 	// 1. 使用 `RegisterDownloaderWithPrivateKey` 注册下载器
 	err = downloader.MgrInstance().RegisterDownloaderWithPrivateKey(l.Ctx, mchPrivateKey, l.Config.SerialNumber, l.Config.MchId, l.Config.ApiKey)
 	if err != nil {
@@ -593,13 +606,29 @@ func (l *WeChatCommPay) Notify(r *http.Request) (orderInfo *payments.Transaction
 		err = errors.New(`{"code": "FAIL","message": "下载解密器失败"}`)
 		return nil, nil, err
 	}
-	// 2. 获取商户号对应的微信支付平台证书访问器
-	certificateVisitor := downloader.MgrInstance().GetCertificateVisitor(l.Config.MchId)
+
 	// 3. 使用证书访问器初始化 `notify.Handler`
-	handler := notify.NewNotifyHandler(l.Config.ApiKey, verifiers.NewSHA256WithRSAVerifier(certificateVisitor))
+	tmpPublicKeyPemFile := l.getPublickKeyPemFile(l.Config.PrivateKeyPath)
+	var handler *notify.Handler
+	if tmpPublicKeyPemFile != "" {
+		wechatpayPublicKey, err := utils.LoadPublicKeyWithPath(tmpPublicKeyPemFile)
+		if err != nil {
+			logx.Errorf("load wechatpay public key tmpPublicKeyPemFile:%s err:%s", tmpPublicKeyPemFile, err.Error())
+			return nil, nil, err
+		}
+
+		// 32位字符串apikey v1 v2 v3都要设置成一样
+		handler = notify.NewNotifyHandler(l.Config.ApiKey, verifiers.NewSHA256WithRSAPubkeyVerifier(l.Config.ApiKey, *wechatpayPublicKey))
+	} else {
+		// 2. 获取商户号对应的微信支付平台证书访问器
+		certificateVisitor := downloader.MgrInstance().GetCertificateVisitor(l.Config.MchId)
+		handler = notify.NewNotifyHandler(l.Config.ApiKey, verifiers.NewSHA256WithRSAVerifier(certificateVisitor))
+	}
+
 	//支付回调
 	transaction := new(payments.Transaction)
 	notifyReq, err := handler.ParseNotifyRequest(l.Ctx, r, transaction)
+
 	// 如果验签未通过，或者解密失败
 	if err != nil {
 		weChatNotifyErr.CounterInc()
@@ -608,6 +637,7 @@ func (l *WeChatCommPay) Notify(r *http.Request) (orderInfo *payments.Transaction
 		//err = errors.New(`{"code": "FAIL","message": "验签未通过，或者解密失败"}`)
 		return nil, nil, err
 	}
+
 	// 处理通知内容
 	logx.Slowf("Wechat notifyReq=%v", notifyReq.Summary)
 	logx.Slowf("Wechat content=%v", transaction)
@@ -621,11 +651,11 @@ type RefundOrderReply struct {
 
 // 退款支付回调
 func (l *WeChatCommPay) RefundNotify(r *http.Request) (orderInfo map[string]interface{}, err error) {
-
 	mchPrivateKey, err := utils.LoadPrivateKeyWithPath(l.Config.PrivateKeyPath)
 	if err != nil {
 		logx.Errorf("mchPrivateKey！err=%v", err)
 	}
+
 	// 1. 使用 `RegisterDownloaderWithPrivateKey` 注册下载器
 	err = downloader.MgrInstance().RegisterDownloaderWithPrivateKey(l.Ctx, mchPrivateKey, l.Config.SerialNumber, l.Config.MchId, l.Config.ApiKey)
 	if err != nil {
@@ -634,13 +664,29 @@ func (l *WeChatCommPay) RefundNotify(r *http.Request) (orderInfo map[string]inte
 		err = errors.New(`{"code": "FAIL","message": "注册下载器"}`)
 		return nil, err
 	}
-	// 2. 获取商户号对应的微信支付平台证书访问器
-	certificateVisitor := downloader.MgrInstance().GetCertificateVisitor(l.Config.MchId)
+
 	// 3. 使用证书访问器初始化 `notify.Handler`
-	handler := notify.NewNotifyHandler(l.Config.ApiKey, verifiers.NewSHA256WithRSAVerifier(certificateVisitor))
+	tmpPublicKeyPemFile := l.getPublickKeyPemFile(l.Config.PrivateKeyPath)
+	var handler *notify.Handler
+	if tmpPublicKeyPemFile != "" {
+		wechatpayPublicKey, err := utils.LoadPublicKeyWithPath(tmpPublicKeyPemFile)
+		if err != nil {
+			logx.Errorf("load wechatpay public key tmpPublicKeyPemFile:%s err:%s", tmpPublicKeyPemFile, err.Error())
+			return nil, err
+		}
+
+		// 32位字符串apikey v1 v2 v3都要设置成一样
+		handler = notify.NewNotifyHandler(l.Config.ApiKey, verifiers.NewSHA256WithRSAPubkeyVerifier(l.Config.ApiKey, *wechatpayPublicKey))
+	} else {
+		// 2. 获取商户号对应的微信支付平台证书访问器
+		certificateVisitor := downloader.MgrInstance().GetCertificateVisitor(l.Config.MchId)
+		handler = notify.NewNotifyHandler(l.Config.ApiKey, verifiers.NewSHA256WithRSAVerifier(certificateVisitor))
+	}
+
 	//支付回调
 	content := make(map[string]interface{})
 	notifyReq, err := handler.ParseNotifyRequest(l.Ctx, r, &content)
+
 	// 如果验签未通过，或者解密失败
 	if err != nil {
 		weChatNotifyErr.CounterInc()
@@ -649,6 +695,7 @@ func (l *WeChatCommPay) RefundNotify(r *http.Request) (orderInfo map[string]inte
 		//err = errors.New(`{"code": "FAIL","message": "验签未通过，或者解密失败"}`)
 		return nil, err
 	}
+
 	jsonData, _ := json.Marshal(content)
 	logx.Slowf("Wechat 解密后内容=%s", string(jsonData))
 	// 处理通知内容
