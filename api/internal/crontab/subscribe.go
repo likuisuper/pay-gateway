@@ -127,8 +127,9 @@ func (c *CrontabOrder) PayOrder() {
 			if err != nil {
 				logx.Errorf("扣款失败%v", err)
 				PaySubscribeFeeErrNum.CounterInc()
+			} else {
+				logx.Errorf("扣款成功：%s", tmpOrderModel.OutTradeNo)
 			}
-			logx.Errorf("扣款成功：%s", tmpOrderModel.OutTradeNo)
 			time.Sleep(50 * time.Millisecond)
 		}
 	}
