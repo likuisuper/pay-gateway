@@ -70,6 +70,11 @@ func InitCrontabOrder(namingClient *nacos.Instance, svcName string, c *config.Co
 
 var orderModel *dbmodel.OrderModel
 
+func GetCrontabOrder() *CrontabOrder {
+
+	return crontabOrder
+}
+
 func (c *CrontabOrder) PayOrder() {
 	instances, err := c.Nacos.SelectAllInstances(&c.SvcName)
 	if err != nil {

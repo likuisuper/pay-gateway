@@ -48,7 +48,6 @@ type (
        EndTime string `json:"end_time"`
     }
 )
-
 @server(
     group: inter
     middleware: Inter //内部接口中间件
@@ -88,4 +87,10 @@ service payment {
        )
        @handler handleComplain
        post /internal/complain(ComplainReq) returns (ResultResp)
+
+       @doc(
+           summary: "内部接口-执行扣款"
+       )
+       @handler handlePaySubscribeMoney
+       get /internal/paySubscribeMoney(EmptyReq) returns (ResultResp)
 }

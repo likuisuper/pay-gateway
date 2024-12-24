@@ -113,6 +113,11 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 				Path:    "/internal/complain",
 				Handler: inter.HandleComplainHandler(serverCtx),
 			},
+			{
+				Method:  http.MethodGet,
+				Path:    "/internal/paySubscribeMoney",
+				Handler: inter.HandlePaySubscribeMoneyHandler(serverCtx),
+			},
 		},
 	)
 }
