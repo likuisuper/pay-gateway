@@ -24,6 +24,9 @@ var (
 	ksHttpRequestErr = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "ksHttpRequestErr", nil, "快手请求错误", nil})}
 )
 
+// 快手开发接口文档
+// https://open.kuaishou.com/docs/develop/server/epay/open-api-new/prePay-new.html
+
 // 请求地址
 const (
 	ksAccessToken            = "https://open.kuaishou.com/oauth2/access_token"                                 //获取accessToken
@@ -207,7 +210,7 @@ func (p *KsPay) CreateOrder(info *PayOrder, openId string) (respData *KsCreateOr
 		Subject:     info.Subject,
 		Detail:      info.Subject,
 		Type:        info.KsTypeId,
-		ExpireTime:  3600,
+		ExpireTime:  3600, // 订单过期时间，单位秒，300s - 172800s
 		NotifyUrl:   p.Config.NotifyUrl,
 	}
 	param.Sign = p.Sign(param)
@@ -305,6 +308,8 @@ func (p *KsPay) QueryOrder(orderSn string) (paymentInfo *KsQueryOrderResp, err e
 
 //==========================  util  ========================================================================
 
+// 快手支付核心签名
+// https://open.kuaishou.com/docs/develop/server/epay/appendix.html
 func (p *KsPay) Sign(param interface{}) (sign string) {
 	dataMap := make(map[string]interface{}, 0)
 	jsonBytes, _ := json.Marshal(param)
