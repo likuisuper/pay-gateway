@@ -1,6 +1,7 @@
 package model
 
 import (
+	"errors"
 	"time"
 
 	"gitee.com/zhuyunkj/pay-gateway/common/client"
@@ -50,6 +51,10 @@ func NewPmPayConfigKsModel(dbName string) *PmPayConfigKsModel {
 
 // 获取应用配置信息
 func (o *PmPayConfigKsModel) GetOneByAppID(appID string) (appConfig *PmPayConfigKsTable, err error) {
+	if appID == "" {
+		return nil, errors.New("appID cannot be empty")
+	}
+
 	var cfg PmPayConfigKsTable
 	err = o.DB.Where(" `app_id` = ?", appID).First(&cfg).Error
 	if err != nil {

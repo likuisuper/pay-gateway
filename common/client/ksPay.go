@@ -276,6 +276,7 @@ func (p *KsPay) QueryOrder(orderSn string) (paymentInfo *KsQueryOrderResp, err e
 		util.CheckError("QueryOrder Err:%v", err)
 		return
 	}
+
 	uri := fmt.Sprintf("%s?app_id=%s&access_token=%s", KsQueryOrder, p.Config.AppId, accessToken)
 	params := map[string]interface{}{
 		"out_order_no": orderSn,
@@ -287,6 +288,7 @@ func (p *KsPay) QueryOrder(orderSn string) (paymentInfo *KsQueryOrderResp, err e
 		ksHttpRequestErr.CounterInc()
 		return
 	}
+
 	resultCode := jsoniter.Get([]byte(dataStr), "result").ToInt()
 	if resultCode != 1 {
 		errorMsg := jsoniter.Get([]byte(dataStr), "error_msg").ToString()
@@ -295,6 +297,7 @@ func (p *KsPay) QueryOrder(orderSn string) (paymentInfo *KsQueryOrderResp, err e
 		ksHttpRequestErr.CounterInc()
 		return
 	}
+
 	paymentInfo = new(KsQueryOrderResp)
 	jsoniter.Get([]byte(dataStr), "payment_info").ToVal(paymentInfo)
 	return

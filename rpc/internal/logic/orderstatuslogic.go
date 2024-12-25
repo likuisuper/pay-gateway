@@ -3,6 +3,7 @@ package logic
 import (
 	"context"
 	"fmt"
+
 	"gitee.com/zhuyunkj/pay-gateway/common/client"
 	douyin "gitee.com/zhuyunkj/pay-gateway/common/client/douyinGeneralTrade"
 	"gitee.com/zhuyunkj/pay-gateway/common/define"
@@ -96,12 +97,14 @@ func (l *OrderStatusLogic) OrderStatus(in *pb.OrderStatusReq) (resp *pb.OrderSta
 			resp.PayAmount = int64(orderInfo.TotalFee)
 		}
 	case pb.PayType_KsUniApp:
+		// 快手
 		payCfg, cfgErr := l.payConfigKsModel.GetOneByAppID(pkgCfg.KsPayAppID)
 		if cfgErr != nil {
-			err = fmt.Errorf("pkgName= %s, 读取快手支付配置失败，err:=%v", in.AppPkgName, cfgErr)
+			err = fmt.Errorf("pkgName=%s, 读取快手支付配置失败 err=%v", in.AppPkgName, cfgErr)
 			util.CheckError(err.Error())
 			return
 		}
+
 		payClient := client.NewKsPay(*payCfg.TransClientConfig())
 		orderInfo, err := payClient.QueryOrder(in.OrderSn)
 		if err != nil {
@@ -109,6 +112,7 @@ func (l *OrderStatusLogic) OrderStatus(in *pb.OrderStatusReq) (resp *pb.OrderSta
 			util.CheckError(err.Error())
 			return nil, err
 		}
+
 		if orderInfo.PayStatus == "SUCCESS" {
 			resp.Status = 1
 			resp.PayAmount = int64(orderInfo.TotalAmount)
