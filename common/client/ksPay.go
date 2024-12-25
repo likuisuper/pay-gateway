@@ -6,24 +6,25 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+	"sort"
+	"strings"
+	"time"
+
 	"gitee.com/zhuyunkj/pay-gateway/common/global"
 	"gitee.com/zhuyunkj/pay-gateway/common/utils"
 	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
 	"gitee.com/zhuyunkj/zhuyun-core/util"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/zeromicro/go-zero/core/logx"
-	"io/ioutil"
-	"net/http"
-	"sort"
-	"strings"
-	"time"
 )
 
 var (
 	ksHttpRequestErr = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "ksHttpRequestErr", nil, "快手请求错误", nil})}
 )
 
-//请求地址
+// 请求地址
 const (
 	ksAccessToken            = "https://open.kuaishou.com/oauth2/access_token"                                 //获取accessToken
 	KsCreateOrderWithChannel = "https://open.kuaishou.com/openapi/mp/developer/epay/create_order_with_channel" //预下单接口（无收银台版）
@@ -84,7 +85,7 @@ type KsQueryOrderResp struct {
 	PromotionAmount int    `json:"promotion_amount"` //预计分销金额，单位：分
 }
 
-//快手支付
+// 快手支付
 type KsPay struct {
 	Config KsPayConfig
 }
@@ -100,7 +101,7 @@ func NewKsPay(config KsPayConfig) *KsPay {
 	return ksPay
 }
 
-//获取accessToken
+// 获取accessToken
 func (p *KsPay) HttpGetAccessToken() (accessToken string, err error) {
 	dataMap := map[string]string{
 		"app_id":     p.Config.AppId,
@@ -122,7 +123,7 @@ func (p *KsPay) HttpGetAccessToken() (accessToken string, err error) {
 	return
 }
 
-//获取accessToken 有缓存
+// 获取accessToken 有缓存
 func (p *KsPay) GetAccessTokenWithCache() (accessToken string, err error) {
 	cacheKey := "ks:access:token:" + p.Config.AppId
 	source := func() interface{} {
@@ -140,7 +141,7 @@ func (p *KsPay) GetAccessTokenWithCache() (accessToken string, err error) {
 	return
 }
 
-//预下单接口(无收银台版)
+// 预下单接口(无收银台版)
 func (p *KsPay) CreateOrderWithChannel(info *PayOrder, openId string) (respData *KsCreateOrderWithChannelResp, err error) {
 	accessToken, err := p.GetAccessTokenWithCache()
 	if err != nil {
@@ -189,13 +190,14 @@ func (p *KsPay) CreateOrderWithChannel(info *PayOrder, openId string) (respData 
 	return
 }
 
-//预下单接口(有收银台版)
+// 预下单接口(有收银台版)
 func (p *KsPay) CreateOrder(info *PayOrder, openId string) (respData *KsCreateOrderWithChannelResp, err error) {
 	accessToken, err := p.GetAccessTokenWithCache()
 	if err != nil {
-		util.CheckError("CreateOrder Err:%v", err)
+		util.CheckError("CreateOrder GetAccessTokenWithCache Err:%v", err)
 		return
 	}
+
 	uri := fmt.Sprintf("%s?app_id=%s&access_token=%s", KsCreateOrder, p.Config.AppId, accessToken)
 
 	param := &KsCreateOrderReq{
@@ -217,6 +219,7 @@ func (p *KsPay) CreateOrder(info *PayOrder, openId string) (respData *KsCreateOr
 		ksHttpRequestErr.CounterInc()
 		return
 	}
+
 	resultCode := jsoniter.Get([]byte(dataStr), "result").ToInt()
 	if resultCode != 1 {
 		errorMsg := jsoniter.Get([]byte(dataStr), "error_msg").ToString()
@@ -231,11 +234,10 @@ func (p *KsPay) CreateOrder(info *PayOrder, openId string) (respData *KsCreateOr
 	jsoniter.Get([]byte(dataStr), "order_info").ToVal(respData)
 
 	logx.Slowf("KsPay-CreateOrder, param:%+v, dataStr:%s", param, dataStr)
-
 	return
 }
 
-//取消支付方式接口
+// 取消支付方式接口
 func (p *KsPay) CancelChannel(orderSn string) (err error) {
 	accessToken, err := p.GetAccessTokenWithCache()
 	if err != nil {
@@ -267,7 +269,7 @@ func (p *KsPay) CancelChannel(orderSn string) (err error) {
 
 }
 
-//查询订单
+// 查询订单
 func (p *KsPay) QueryOrder(orderSn string) (paymentInfo *KsQueryOrderResp, err error) {
 	accessToken, err := p.GetAccessTokenWithCache()
 	if err != nil {
@@ -320,7 +322,7 @@ func (p *KsPay) Sign(param interface{}) (sign string) {
 	return
 }
 
-//参数生成签名
+// 参数生成签名
 func (p *KsPay) makeSign(data map[string]string) string {
 	str := ""
 
@@ -347,7 +349,7 @@ func (p *KsPay) makeSign(data map[string]string) string {
 	return sign
 }
 
-//请求快手post  x-www-form-urlencoded方式传参
+// 请求快手post  x-www-form-urlencoded方式传参
 func (p *KsPay) post(url string, postData map[string]string) (body []byte, err error) {
 	dataStr := ""
 	for k, v := range postData {
@@ -378,7 +380,7 @@ func (p *KsPay) post(url string, postData map[string]string) (body []byte, err e
 	return
 }
 
-//回调签名
+// 回调签名
 func (p *KsPay) NotifySign(bodyStr string) (sign string) {
 	str := bodyStr + p.Config.AppSecret
 	h := md5.New()

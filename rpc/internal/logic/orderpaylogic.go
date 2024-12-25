@@ -173,7 +173,8 @@ func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (out *pb.OrderPayResp, err 
 			return
 		}
 		out.TikTokEc, err = l.createTikTokEcOrder(in, payOrder, payCfg.TransClientConfig())
-	case pb.PayType_KsUniApp: //未用到
+	case pb.PayType_KsUniApp:
+		// 快手小程序
 		payCfg, cfgErr := l.payConfigKsModel.GetOneByAppID(pkgCfg.KsPayAppID)
 		if cfgErr != nil {
 			err = fmt.Errorf("pkgName= %s, 读取快手支付配置失败，err:=%v", in.AppPkgName, cfgErr)
@@ -356,12 +357,14 @@ func (l *OrderPayLogic) createTikTokEcOrder(in *pb.OrderPayReq, info *client.Pay
 // 快手小程序支付
 func (l *OrderPayLogic) createKsOrder(in *pb.OrderPayReq, info *client.PayOrder, payConf *client.KsPayConfig) (reply *pb.KsUniAppReply, err error) {
 	payClient := client.NewKsPay(*payConf)
+	// in.WxOpenID 实际上是快手open id, 名称相同而已
 	res, err := payClient.CreateOrder(info, in.WxOpenID)
 	if err != nil {
 		ksPayFailNum.CounterInc()
-		util.Error(l.ctx, "pkgName= %s, ksPay，err:=%v", in.AppPkgName, err)
+		util.Error(l.ctx, "pkgName= %s, ksPay, err:=%v", in.AppPkgName, err)
 		return
 	}
+
 	reply = &pb.KsUniAppReply{
 		OrderNo:        res.OrderNo,
 		OrderInfoToken: res.OrderInfoToken,
