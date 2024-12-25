@@ -3,6 +3,11 @@ package notify
 import (
 	"context"
 	"fmt"
+	"io"
+	"io/ioutil"
+	"net/http"
+	"time"
+
 	"gitee.com/zhuyunkj/pay-gateway/common/client"
 	"gitee.com/zhuyunkj/pay-gateway/common/define"
 	"gitee.com/zhuyunkj/pay-gateway/common/exception"
@@ -11,10 +16,6 @@ import (
 	"gitee.com/zhuyunkj/zhuyun-core/util"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/zeromicro/go-zero/rest/httpx"
-	"io"
-	"io/ioutil"
-	"net/http"
-	"time"
 
 	"gitee.com/zhuyunkj/pay-gateway/api/internal/svc"
 	"gitee.com/zhuyunkj/pay-gateway/api/internal/types"
@@ -80,6 +81,7 @@ func (l *NotifyKspayLogic) NotifyKspay(r *http.Request, w http.ResponseWriter) (
 		notifyKspayErrNum.CounterInc()
 		return
 	}
+
 	bodyData := string(bodyBytes)
 	logx.Slowf("NotifyKspay form %s", bodyData)
 	logx.Slowf("NotifyKspay header %+v", r.Header)
@@ -99,6 +101,7 @@ func (l *NotifyKspayLogic) NotifyKspay(r *http.Request, w http.ResponseWriter) (
 		notifyKspayErrNum.CounterInc()
 		return
 	}
+
 	cliConfig := config.TransClientConfig()
 	ksPayCli := client.NewKsPay(*cliConfig)
 	calSign := ksPayCli.NotifySign(bodyData)
@@ -122,18 +125,20 @@ func (l *NotifyKspayLogic) NotifyKspay(r *http.Request, w http.ResponseWriter) (
 		util.CheckError(err.Error())
 		return
 	}
+
 	if orderInfo.PayStatus != model.PmPayOrderTablePayStatusNo {
 		notifyOrderHasDispose.CounterInc()
 		err = fmt.Errorf("订单已处理")
 		return
 	}
+
 	//修改数据库
 	orderInfo.NotifyAmount = notifyData.Data.OrderAmount
 	orderInfo.PayStatus = model.PmPayOrderTablePayStatusPaid
 	//orderInfo.PayType = model.PmPayOrderTablePayTypeKs //改为创建订单时指定支付类型，用于补偿机制建设
 	err = l.payOrderModel.UpdateNotify(orderInfo)
 	if err != nil {
-		err = fmt.Errorf("orderSn = %s, UpdateNotify，err:=%v", orderInfo.OrderSn, err)
+		err = fmt.Errorf("orderSn=%s, UpdateNotify err:=%v", orderInfo.OrderSn, err)
 		util.CheckError(err.Error())
 		return
 	}

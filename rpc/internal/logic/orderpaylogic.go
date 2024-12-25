@@ -181,7 +181,12 @@ func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (out *pb.OrderPayResp, err 
 			util.Error(l.ctx, err.Error())
 			return
 		}
-		payOrder.KsTypeId = 1273
+
+		// 经营类目 虚拟/服务 虚拟卡/会员/游戏 在线影视/音乐/阅读/社交软件会员
+		// 经营类目编号 1273
+		// 状态 已通过
+		// 快手的微信和支付宝账号 已经在快手开发平台绑定好了, 路径: 交易管理-支付管理
+		payOrder.KsTypeId = 1273 // 固定值
 		out.KsUniApp, err = l.createKsOrder(in, payOrder, payCfg.TransClientConfig())
 	case pb.PayType_WxUnified: //未用到
 		payCfg, cfgErr := l.payConfigWechatModel.GetOneByAppID(pkgCfg.WechatPayAppID)

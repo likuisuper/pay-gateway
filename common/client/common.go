@@ -1,15 +1,15 @@
 package client
 
-//支付订单信息
+// 支付订单信息
 type PayOrder struct {
 	OrderSn  string
 	Amount   int
 	Subject  string
-	KsTypeId int
+	KsTypeId int // 经营类目编号
 	IP       string
 }
 
-//退款订单信息
+// 退款订单信息
 type RefundOrder struct {
 	OutTradeNo    string `json:"out_trade_no"`  //内部订单号
 	OutRefundNo   string `json:"out_refund_no"` //商户系统内部的退款单号
