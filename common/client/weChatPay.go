@@ -620,7 +620,7 @@ func (l *WeChatCommPay) Notify(r *http.Request) (orderInfo *payments.Transaction
 		}
 
 		// 32位字符串apikey v1 v2 v3都要设置成一样
-		handler = notify.NewNotifyHandler(l.Config.ApiKey, verifiers.NewSHA256WithRSAPubkeyVerifier(l.Config.ApiKey, *wechatpayPublicKey))
+		handler = notify.NewNotifyHandler(l.Config.ApiKey, verifiers.NewSHA256WithRSAPubkeyVerifier(l.Config.PublicKeyId, *wechatpayPublicKey))
 	} else {
 		// 2. 获取商户号对应的微信支付平台证书访问器
 		certificateVisitor := downloader.MgrInstance().GetCertificateVisitor(l.Config.MchId)
@@ -678,7 +678,7 @@ func (l *WeChatCommPay) RefundNotify(r *http.Request) (orderInfo map[string]inte
 		}
 
 		// 32位字符串apikey v1 v2 v3都要设置成一样
-		handler = notify.NewNotifyHandler(l.Config.ApiKey, verifiers.NewSHA256WithRSAPubkeyVerifier(l.Config.ApiKey, *wechatpayPublicKey))
+		handler = notify.NewNotifyHandler(l.Config.ApiKey, verifiers.NewSHA256WithRSAPubkeyVerifier(l.Config.PublicKeyId, *wechatpayPublicKey))
 	} else {
 		// 2. 获取商户号对应的微信支付平台证书访问器
 		certificateVisitor := downloader.MgrInstance().GetCertificateVisitor(l.Config.MchId)
