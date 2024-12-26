@@ -150,7 +150,7 @@ func (l *NotifyKspayLogic) NotifyKspay(r *http.Request, w http.ResponseWriter) (
 		headerMap["App-Origin"] = orderInfo.AppPkgName
 		headerMap["From-App"] = orderInfo.AppPkgName
 		result, err := util.HttpPostWithHeader(orderInfo.NotifyUrl, notifyData, headerMap, 5*time.Second)
-		l.Slowf("ks notify callback", logx.Field("NotifyUrl", orderInfo.NotifyUrl), logx.Field("result", result), logx.Field("err", err), logx.Field("notifyData", notifyData), logx.Field("AppPkgName", orderInfo.AppPkgName))
+		l.Sloww("ks notify callback", logx.Field("NotifyUrl", orderInfo.NotifyUrl), logx.Field("result", result), logx.Field("err", err), logx.Field("notifyData", notifyData), logx.Field("AppPkgName", orderInfo.AppPkgName))
 	}()
 
 	resData := &ksOrderNotifyResp{
