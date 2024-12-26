@@ -372,6 +372,7 @@ func (l *OrderPayLogic) createTikTokEcOrder(in *pb.OrderPayReq, info *client.Pay
 func (l *OrderPayLogic) createKsOrder(in *pb.OrderPayReq, info *client.PayOrder, payConf *client.KsPayConfig) (reply *pb.KsUniAppReply, err error) {
 	ksAccessToken, err := l.svcCtx.BaseAppConfigServerApi.GetKsAppidToken(l.ctx, payConf.AppId)
 	if err != nil {
+		util.Error(l.ctx, "快手获取access token失败 pkgName:%s, appId:%v, err:%v", in.AppPkgName, payConf.AppId, err)
 		return
 	}
 

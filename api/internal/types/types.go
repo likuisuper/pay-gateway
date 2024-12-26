@@ -141,3 +141,15 @@ type ComplainReq struct {
 	StartTime string `json:"start_time"`
 	EndTime   string `json:"end_time"`
 }
+
+type SupplementaryOrdersReq struct {
+	Type        string `form:"type"`
+	StartMinute string `form:"startMinute""`
+	EndMinute   string `form:"endMinute"`
+	IsNotice    string `form:"isNotice"`
+}
+
+type SupplementaryOrdersResp struct {
+	ErrNo   int    `json:"err_no"`
+	ErrTips string `json:"err_tips"`
+}

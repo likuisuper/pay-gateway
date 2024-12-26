@@ -72,7 +72,7 @@ func (l *ClosePayOrderLogic) ClosePayOrder(in *pb.ClosePayOrderReq) (resp *pb.Em
 	case pb.PayType_KsUniApp:
 		// pkgCfg.KsPayAppID 就是快手的app id
 		ksAccessToken, err2 := l.svcCtx.BaseAppConfigServerApi.GetKsAppidToken(l.ctx, pkgCfg.KsPayAppID)
-		if ksAccessToken == "" || err != nil {
+		if err2 != nil {
 			err = fmt.Errorf("获取快手access token失败 pkgName:%s, appId:%v, err:%v", in.AppPkgName, pkgCfg.KsPayAppID, err)
 			util.CheckError(err.Error())
 			return resp, err2

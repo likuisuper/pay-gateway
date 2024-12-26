@@ -60,7 +60,6 @@ var (
 
 // 请求地址
 const (
-	ksAccessToken            = "https://open.kuaishou.com/oauth2/access_token"                                 // 获取accessToken
 	KsCreateOrderWithChannel = "https://open.kuaishou.com/openapi/mp/developer/epay/create_order_with_channel" // 预下单接口安卓（无收银台版）
 	KsCreateOrder            = "https://open.kuaishou.com/openapi/mp/developer/epay/create_order"              // 预下单接口安卓（有收银台版）
 	KsCreateOrderIos         = "https://open.kuaishou.com/openapi/mp/developer/epay/iap/create_order"          // 预下单接口苹果（有收银台版） 注：IAP支付接入，仅因对iOS系统内，安卓系统无需关注，使用老的担保支付即可

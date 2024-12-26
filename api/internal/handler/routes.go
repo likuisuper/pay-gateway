@@ -4,6 +4,7 @@ package handler
 import (
 	"net/http"
 
+	crontab "gitee.com/zhuyunkj/pay-gateway/api/internal/handler/crontab"
 	health "gitee.com/zhuyunkj/pay-gateway/api/internal/handler/health"
 	inter "gitee.com/zhuyunkj/pay-gateway/api/internal/handler/inter"
 	notify "gitee.com/zhuyunkj/pay-gateway/api/internal/handler/notify"
@@ -117,6 +118,16 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 				Method:  http.MethodGet,
 				Path:    "/internal/paySubscribeMoney",
 				Handler: inter.HandlePaySubscribeMoneyHandler(serverCtx),
+			},
+		},
+	)
+
+	server.AddRoutes(
+		[]rest.Route{
+			{
+				Method:  http.MethodPost,
+				Path:    "/crontab/supplementaryOrders",
+				Handler: crontab.SupplementaryOrdersHandler(serverCtx),
 			},
 		},
 	)
