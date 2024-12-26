@@ -157,7 +157,8 @@ func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (out *pb.OrderPayResp, err 
 			return
 		}
 
-		logx.Sloww("payCfg", logx.Field("payCfg", payCfg))
+		l.Sloww("payCfg", logx.Field("payCfg", payCfg))
+
 		if pkgCfg.WechatPayAppID == "wxd556462fcad66ebd" {
 			// 临时修改
 			payCfg.PublicKeyId = "PUB_KEY_ID_0116991134412024111200648800000208"
@@ -282,10 +283,11 @@ func (l *OrderPayLogic) createWeChatUniOrder(in *pb.OrderPayReq, info *client.Pa
 	payClient := client.NewWeChatCommPay(*payConf)
 	res, err := payClient.WechatPayV3(info, in.WxOpenID)
 	if err != nil {
-		wechatUniPayFailNum.CounterInc()
+		// wechatUniPayFailNum.CounterInc()
 		util.Error(l.ctx, "pkgName= %s, wechatUniPay，err:=%v", in.AppPkgName, err)
 		return
 	}
+
 	reply = &pb.WxUniAppPayReply{
 		OrderInfo: res.OrderInfo,
 		TimeStamp: res.TimeStamp,

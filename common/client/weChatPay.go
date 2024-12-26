@@ -239,7 +239,7 @@ func (l *WeChatCommPay) getClient() (uniAppResp *core.Client, err error) {
 
 		// 初始化 Client
 		opts2 := []core.ClientOption{
-			option.WithWechatPayPublicKeyAuthCipher(l.Config.MchId, l.Config.SerialNumber, mchPrivateKey, l.Config.ApiKey, wechatpayPublicKey),
+			option.WithWechatPayPublicKeyAuthCipher(l.Config.MchId, l.Config.SerialNumber, mchPrivateKey, l.Config.PublicKeyId, wechatpayPublicKey),
 		}
 		client, err := core.NewClient(ctx, opts2...)
 		if err != nil {
@@ -309,7 +309,7 @@ func (l *WeChatCommPay) GetClientTest() (uniAppResp *core.Client, err error) {
 
 		// 初始化 Client
 		opts2 := []core.ClientOption{
-			option.WithWechatPayPublicKeyAuthCipher(l.Config.MchId, l.Config.SerialNumber, mchPrivateKey, l.Config.ApiKey, wechatpayPublicKey),
+			option.WithWechatPayPublicKeyAuthCipher(l.Config.MchId, l.Config.SerialNumber, mchPrivateKey, l.Config.PublicKeyId, wechatpayPublicKey),
 		}
 		client, err := core.NewClient(ctx, opts2...)
 		if err != nil {
