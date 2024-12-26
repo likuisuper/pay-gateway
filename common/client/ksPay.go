@@ -12,7 +12,6 @@ import (
 	"strings"
 	"time"
 
-	"gitee.com/zhuyunkj/pay-gateway/common/global"
 	"gitee.com/zhuyunkj/pay-gateway/common/utils"
 	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
 	"gitee.com/zhuyunkj/zhuyun-core/util"
@@ -139,64 +138,14 @@ type KsPay struct {
 	Config KsPayConfig
 }
 
-var ksPay *KsPay
-
 func NewKsPay(config KsPayConfig) *KsPay {
-	if ksPay == nil {
-		ksPay = &KsPay{
-			Config: config,
-		}
+	return &KsPay{
+		Config: config,
 	}
-	return ksPay
-}
-
-// 获取accessToken
-func (p *KsPay) HttpGetAccessToken() (accessToken string, err error) {
-	dataMap := map[string]string{
-		"app_id":     p.Config.AppId,
-		"app_secret": p.Config.AppSecret,
-		"grant_type": "client_credentials",
-	}
-	body, err := p.post(ksAccessToken, dataMap)
-	if err != nil {
-		util.CheckError("HttpGetAccessToken :%v", err)
-		ksHttpRequestErr.CounterInc()
-		return
-	}
-	resultCode := jsoniter.Get(body, "result").ToInt()
-	if resultCode != 1 {
-		err = errors.New("获取失败")
-		return
-	}
-	accessToken = jsoniter.Get(body, "access_token").ToString()
-	return
-}
-
-// 获取accessToken 有缓存
-func (p *KsPay) GetAccessTokenWithCache() (accessToken string, err error) {
-	cacheKey := "ks:access:token:" + p.Config.AppId
-	source := func() interface{} {
-		at, atErr := p.HttpGetAccessToken()
-		if atErr != nil {
-			return atErr
-		}
-		return at
-	}
-	expire := 86400
-	err = global.MemoryCacheInstance.GetDataWithCache(cacheKey, expire, &accessToken, source)
-	if err != nil {
-		return
-	}
-	return
 }
 
 // 预下单接口(无收银台版)
-func (p *KsPay) CreateOrderWithChannel(info *PayOrder, openId string) (respData *KsCreateOrderWithChannelResp, err error) {
-	accessToken, err := p.GetAccessTokenWithCache()
-	if err != nil {
-		util.CheckError("CreateOrderWithChannel Err:%v", err)
-		return
-	}
+func (p *KsPay) CreateOrderWithChannel(info *PayOrder, openId string, accessToken string) (respData *KsCreateOrderWithChannelResp, err error) {
 	uri := fmt.Sprintf("%s?app_id=%s&access_token=%s", KsCreateOrderWithChannel, p.Config.AppId, accessToken)
 	provider := KsProvider{
 		Provider:            "WECHAT",
@@ -240,13 +189,7 @@ func (p *KsPay) CreateOrderWithChannel(info *PayOrder, openId string) (respData 
 }
 
 // 预下单接口安卓(有收银台版)
-func (p *KsPay) CreateOrder(info *PayOrder, openId string) (respData *KsCreateOrderWithChannelResp, err error) {
-	accessToken, err := p.GetAccessTokenWithCache()
-	if err != nil {
-		util.CheckError("CreateOrder GetAccessTokenWithCache Err:%v", err)
-		return
-	}
-
+func (p *KsPay) CreateOrder(info *PayOrder, openId string, accessToken string) (respData *KsCreateOrderWithChannelResp, err error) {
 	uri := fmt.Sprintf("%s?app_id=%s&access_token=%s", KsCreateOrder, p.Config.AppId, accessToken)
 
 	param := &KsCreateOrderReq{
@@ -291,13 +234,7 @@ func (p *KsPay) CreateOrder(info *PayOrder, openId string) (respData *KsCreateOr
 //
 // 苹果价格档位
 // https://open.kuaishou.com/docs/develop/server/iosEpayAbility/feeStandards.html
-func (p *KsPay) CreateOrderIos(info *PayOrder, openId string) (respData *KsCreateOrderWithChannelResp, err error) {
-	accessToken, err := p.GetAccessTokenWithCache()
-	if err != nil {
-		util.CheckError("CreateOrderIos GetAccessTokenWithCache Err:%v", err)
-		return
-	}
-
+func (p *KsPay) CreateOrderIos(info *PayOrder, openId string, accessToken string) (respData *KsCreateOrderWithChannelResp, err error) {
 	uri := fmt.Sprintf("%s?app_id=%s&access_token=%s", KsCreateOrderIos, p.Config.AppId, accessToken)
 
 	param := &KsCreateOrderReqIos{
@@ -339,12 +276,7 @@ func (p *KsPay) CreateOrderIos(info *PayOrder, openId string) (respData *KsCreat
 }
 
 // 取消支付方式接口
-func (p *KsPay) CancelChannel(orderSn string) (err error) {
-	accessToken, err := p.GetAccessTokenWithCache()
-	if err != nil {
-		util.CheckError("CreateOrderWithChannel Err:%v", err)
-		return
-	}
+func (p *KsPay) CancelChannel(orderSn string, accessToken string) (err error) {
 	uri := fmt.Sprintf("%s?app_id=%s&access_token=%s", KsCancelChannel, p.Config.AppId, accessToken)
 	params := map[string]interface{}{
 		"out_order_no": orderSn,
@@ -371,13 +303,7 @@ func (p *KsPay) CancelChannel(orderSn string) (err error) {
 }
 
 // 查询订单
-func (p *KsPay) QueryOrder(orderSn string) (paymentInfo *KsQueryOrderResp, err error) {
-	accessToken, err := p.GetAccessTokenWithCache()
-	if err != nil {
-		util.CheckError("QueryOrder Err:%v", err)
-		return
-	}
-
+func (p *KsPay) QueryOrder(orderSn string, accessToken string) (paymentInfo *KsQueryOrderResp, err error) {
 	uri := fmt.Sprintf("%s?app_id=%s&access_token=%s", KsQueryOrder, p.Config.AppId, accessToken)
 	params := map[string]interface{}{
 		"out_order_no": orderSn,
@@ -434,7 +360,7 @@ func (p *KsPay) makeSign(data map[string]string) string {
 
 	//map根据key排序
 	var keys = make([]string, 0)
-	for k, _ := range data {
+	for k := range data {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)

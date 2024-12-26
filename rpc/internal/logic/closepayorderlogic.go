@@ -3,6 +3,7 @@ package logic
 import (
 	"context"
 	"fmt"
+
 	"gitee.com/zhuyunkj/pay-gateway/common/client"
 	"gitee.com/zhuyunkj/pay-gateway/common/define"
 	"gitee.com/zhuyunkj/pay-gateway/db/mysql/model"
@@ -59,8 +60,9 @@ func (l *ClosePayOrderLogic) ClosePayOrder(in *pb.ClosePayOrderReq) (resp *pb.Em
 		if cfgErr != nil {
 			err = fmt.Errorf("读取微信支付配置失败 pkgName= %s, err:=%v", in.AppPkgName, cfgErr)
 			util.CheckError(err.Error())
-			return
+			return resp, cfgErr
 		}
+
 		err = l.wxClosePayOrder(in, payCfg.TransClientConfig())
 		if err != nil {
 			err = fmt.Errorf("关闭微信订单失败, orderSn=%s, err=%v", in.OrderSn, err)
@@ -68,14 +70,23 @@ func (l *ClosePayOrderLogic) ClosePayOrder(in *pb.ClosePayOrderReq) (resp *pb.Em
 			return
 		}
 	case pb.PayType_KsUniApp:
+		// pkgCfg.KsPayAppID 就是快手的app id
+		ksAccessToken, err2 := l.svcCtx.BaseAppConfigServerApi.GetKsAppidToken(l.ctx, pkgCfg.KsPayAppID)
+		if ksAccessToken == "" || err != nil {
+			err = fmt.Errorf("获取快手access token失败 pkgName:%s, appId:%v, err:%v", in.AppPkgName, pkgCfg.KsPayAppID, err)
+			util.CheckError(err.Error())
+			return resp, err2
+		}
+
 		payCfg, cfgErr := l.payConfigKsModel.GetOneByAppID(pkgCfg.KsPayAppID)
 		if cfgErr != nil {
 			err = fmt.Errorf("读取快手支付配置失败 pkgName= %s, err:=%v", in.AppPkgName, cfgErr)
 			util.CheckError(err.Error())
-			return
+			return resp, cfgErr
 		}
+
 		payClient := client.NewKsPay(*payCfg.TransClientConfig())
-		err = payClient.CancelChannel(in.OrderSn)
+		err = payClient.CancelChannel(in.OrderSn, ksAccessToken)
 		if err != nil {
 			err = fmt.Errorf("关闭微信订单失败, orderSn=%s, err=%v", in.OrderSn, err)
 			util.CheckError(err.Error())

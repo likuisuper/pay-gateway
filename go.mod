@@ -5,7 +5,7 @@ go 1.16
 require (
 	gitee.com/zhuyunkj/alipay/v3 v3.3.10
 	gitee.com/zhuyunkj/zero-contrib v1.3.2
-	gitee.com/zhuyunkj/zhuyun-core v1.9.60
+	gitee.com/zhuyunkj/zhuyun-core v1.9.81
 	github.com/bytedance/sonic v1.11.6
 	github.com/coocood/freecache v1.2.2
 	github.com/google/uuid v1.3.1

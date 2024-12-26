@@ -370,9 +370,14 @@ func (l *OrderPayLogic) createTikTokEcOrder(in *pb.OrderPayReq, info *client.Pay
 
 // 快手小程序支付
 func (l *OrderPayLogic) createKsOrder(in *pb.OrderPayReq, info *client.PayOrder, payConf *client.KsPayConfig) (reply *pb.KsUniAppReply, err error) {
+	ksAccessToken, err := l.svcCtx.BaseAppConfigServerApi.GetKsAppidToken(l.ctx, payConf.AppId)
+	if err != nil {
+		return
+	}
+
 	payClient := client.NewKsPay(*payConf)
 	// in.WxOpenID 实际上是快手open id, 名称相同而已
-	res, err := payClient.CreateOrder(info, in.WxOpenID)
+	res, err := payClient.CreateOrder(info, in.WxOpenID, ksAccessToken)
 	if err != nil {
 		ksPayFailNum.CounterInc()
 		util.Error(l.ctx, "pkgName= %s, ksPay, err:=%v", in.AppPkgName, err)
