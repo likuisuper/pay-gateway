@@ -23,6 +23,8 @@ type PmPayConfigWechatTable struct {
 	ApiKeyV2       string `gorm:"column:api_key_v2;NOT NULL" json:"api_key_v2"`             // apiV2密钥
 	NotifyUrl      string `gorm:"column:notify_url" json:"notify_url"`                      // 回调地址
 	PrivateKeyPath string `gorm:"column:private_key_path;NOT NULL" json:"private_key_path"` // apiV3密钥
+	PublicKeyId    string `gorm:"column:public_key_id;NOT NULL" json:"public_key_id"`       // 公钥id
+	PublicKeyPath  string `gorm:"column:public_key_path;NOT NULL" json:"public_key_path"`   // 公钥文件路径
 	SerialNumber   string `gorm:"column:serial_number;NOT NULL" json:"serial_number"`       // 商户证书序列号
 	Remark         string `gorm:"column:remark;NOT NULL" json:"remark"`                     // 备注信息
 
@@ -43,6 +45,8 @@ func (m *PmPayConfigWechatTable) TransClientConfig() (clientCfg *client.WechatPa
 		MchId:          m.MchID,
 		ApiKey:         m.ApiKey,
 		PrivateKeyPath: m.PrivateKeyPath,
+		PublicKeyId:    m.PublicKeyId,
+		PublicKeyPath:  m.PublicKeyPath,
 		SerialNumber:   m.SerialNumber,
 		NotifyUrl:      m.NotifyUrl,
 		ApiKeyV2:       m.ApiKeyV2,

@@ -54,6 +54,8 @@ type WechatPayConfig struct {
 	MchId          string //直连商户号
 	ApiKey         string //apiV3密钥
 	PrivateKeyPath string //apiV3密钥地址
+	PublicKeyId    string //公钥id
+	PublicKeyPath  string //公钥文件路径
 	SerialNumber   string //商户证书序列号
 	NotifyUrl      string //通知地址
 	ApiKeyV2       string //apiKeyV2密钥
