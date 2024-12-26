@@ -594,7 +594,7 @@ func (l *WeChatCommPay) Notify(r *http.Request) (orderInfo *payments.Transaction
 	//获取私钥
 	mchPrivateKey, err := utils.LoadPrivateKeyWithPath(l.Config.PrivateKeyPath)
 	if err != nil {
-		// weChatNotifyErr.CounterInc()
+		weChatNotifyErr.CounterInc()
 		logx.Errorf("获取私钥发生错误！err=%v", err)
 		err = errors.New(`{"code": "FAIL","message": "获取入私钥发生错误"}`)
 		return nil, nil, err
@@ -616,7 +616,7 @@ func (l *WeChatCommPay) Notify(r *http.Request) (orderInfo *payments.Transaction
 		// 1. 使用 `RegisterDownloaderWithPrivateKey` 注册下载器
 		err = downloader.MgrInstance().RegisterDownloaderWithPrivateKey(l.Ctx, mchPrivateKey, l.Config.SerialNumber, l.Config.MchId, l.Config.ApiKey)
 		if err != nil {
-			// weChatNotifyErr.CounterInc()
+			weChatNotifyErr.CounterInc()
 			logx.Errorf("下载解密器失败！err=%v", err)
 			err = errors.New(`{"code": "FAIL","message": "下载解密器失败"}`)
 			return nil, nil, err
@@ -634,7 +634,7 @@ func (l *WeChatCommPay) Notify(r *http.Request) (orderInfo *payments.Transaction
 
 	// 如果验签未通过，或者解密失败
 	if err != nil {
-		// weChatNotifyErr.CounterInc()
+		weChatNotifyErr.CounterInc()
 		err = fmt.Errorf("验签未通过，或者解密失败！err=%v, r:%+v, config:%+v", err, r, l.Config)
 		logx.Error(err.Error())
 		//err = errors.New(`{"code": "FAIL","message": "验签未通过，或者解密失败"}`)
@@ -675,7 +675,7 @@ func (l *WeChatCommPay) RefundNotify(r *http.Request) (orderInfo map[string]inte
 		// 1. 使用 `RegisterDownloaderWithPrivateKey` 注册下载器
 		err = downloader.MgrInstance().RegisterDownloaderWithPrivateKey(l.Ctx, mchPrivateKey, l.Config.SerialNumber, l.Config.MchId, l.Config.ApiKey)
 		if err != nil {
-			// weChatNotifyErr.CounterInc()
+			weChatNotifyErr.CounterInc()
 			logx.Errorf("注册下载器失败！err=%v", err)
 			err = errors.New(`{"code": "FAIL","message": "注册下载器"}`)
 			return nil, err
@@ -693,7 +693,7 @@ func (l *WeChatCommPay) RefundNotify(r *http.Request) (orderInfo map[string]inte
 
 	// 如果验签未通过，或者解密失败
 	if err != nil {
-		// weChatNotifyErr.CounterInc()
+		weChatNotifyErr.CounterInc()
 		err = fmt.Errorf("验签未通过，或者解密失败！err=%w", err)
 		logx.Error(err.Error())
 		//err = errors.New(`{"code": "FAIL","message": "验签未通过，或者解密失败"}`)

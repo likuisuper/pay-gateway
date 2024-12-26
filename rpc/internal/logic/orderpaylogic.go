@@ -283,7 +283,7 @@ func (l *OrderPayLogic) createWeChatUniOrder(in *pb.OrderPayReq, info *client.Pa
 	payClient := client.NewWeChatCommPay(*payConf)
 	res, err := payClient.WechatPayV3(info, in.WxOpenID)
 	if err != nil {
-		// wechatUniPayFailNum.CounterInc()
+		wechatUniPayFailNum.CounterInc()
 		util.Error(l.ctx, "pkgName= %s, wechatUniPay，err:=%v", in.AppPkgName, err)
 		return
 	}
