@@ -156,6 +156,13 @@ func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (out *pb.OrderPayResp, err 
 			util.Error(l.ctx, err.Error())
 			return
 		}
+
+		logx.Sloww("payCfg", logx.Field("payCfg", payCfg))
+		if pkgCfg.WechatPayAppID == "wxd556462fcad66ebd" {
+			// 临时修改
+			payCfg.PublicKeyId = "PUB_KEY_ID_0116991134412024111200648800000208"
+		}
+
 		out.WxUniApp, err = l.createWeChatUniOrder(in, payOrder, payCfg.TransClientConfig())
 	case pb.PayType_WxWeb: //未用
 		payCfg, cfgErr := l.payConfigWechatModel.GetOneByAppID(pkgCfg.WechatPayAppID)
