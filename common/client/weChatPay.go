@@ -594,8 +594,10 @@ func (l *WeChatCommPay) Notify(r *http.Request) (orderInfo *payments.Transaction
 	//获取私钥
 	mchPrivateKey, err := utils.LoadPrivateKeyWithPath(l.Config.PrivateKeyPath)
 	if err != nil {
+		logx.Errorw("获取私钥发生错误1", logx.Field("err", err), logx.Field("config", l.Config))
+
 		weChatNotifyErr.CounterInc()
-		logx.Errorf("获取私钥发生错误！err=%v", err)
+		logx.Errorf("获取私钥发生错误 err=%v", err)
 		err = errors.New(`{"code": "FAIL","message": "获取入私钥发生错误"}`)
 		return nil, nil, err
 	}
@@ -616,8 +618,10 @@ func (l *WeChatCommPay) Notify(r *http.Request) (orderInfo *payments.Transaction
 		// 1. 使用 `RegisterDownloaderWithPrivateKey` 注册下载器
 		err = downloader.MgrInstance().RegisterDownloaderWithPrivateKey(l.Ctx, mchPrivateKey, l.Config.SerialNumber, l.Config.MchId, l.Config.ApiKey)
 		if err != nil {
+			logx.Errorw("下载解密器失败1", logx.Field("err", err), logx.Field("config", l.Config))
+
 			weChatNotifyErr.CounterInc()
-			logx.Errorf("下载解密器失败！err=%v", err)
+			logx.Errorf("下载解密器失败 err=%v", err)
 			err = errors.New(`{"code": "FAIL","message": "下载解密器失败"}`)
 			return nil, nil, err
 		}
