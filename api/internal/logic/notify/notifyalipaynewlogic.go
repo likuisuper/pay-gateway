@@ -75,7 +75,7 @@ func (l *NotifyAlipayNewLogic) NotifyAlipayNew(r *http.Request, w http.ResponseW
 
 	client, _, _, err := clientMgr.GetAlipayClientByAppIdWithCache(appId)
 	if err != nil {
-		logx.Errorf(err.Error())
+		logx.Errorf("GetAlipayClientByAppIdWithCache err:%s", err.Error())
 		notifyAlipayErrNum.CounterInc()
 		return
 	}
@@ -241,27 +241,29 @@ func (l *NotifyAlipayNewLogic) NotifyAlipayNew(r *http.Request, w http.ResponseW
 			//}
 
 			// 回调通知退款成功
-			if table.NotifyUrl != "" {
-				go func() {
-					defer exception.Recover()
-					dataMap := make(map[string]interface{})
-					dataMap["notify_type"] = code.APP_NOTIFY_TYPE_REFUND
-					dataMap["out_trade_refund_no"] = table.OutTradeRefundNo
-					dataMap["out_trade_no"] = outTradeNo
-					dataMap["refund_out_side_app"] = refundOutSideApp
-					dataMap["refund_status"] = model.REFUND_STATUS_SUCCESS
-					dataMap["refund_fee"] = refundAmount
-					headerMap := map[string]string{
-						"App-Origin": table.AppPkg,
-					}
-					err = utils.CallbackWithRetry(table.NotifyUrl, headerMap, dataMap, 5*time.Second)
-					if err != nil {
-						desc := fmt.Sprintf("回调通知用户退款成功 异常, app_pkg=%s, out_trade_no=%s", table.AppPkg, table.OutTradeNo)
-						alarm.ImmediateAlarm("notifyUserRefundErr", desc, alarm.ALARM_LEVEL_FATAL)
-					}
-				}()
-			} else {
-				logx.Errorf("refund id:%d, out_trade_refund_no:%s, notify url is empty", table.ID, table.OutTradeRefundNo)
+			if table != nil {
+				if table.NotifyUrl != "" {
+					go func() {
+						defer exception.Recover()
+						dataMap := make(map[string]interface{})
+						dataMap["notify_type"] = code.APP_NOTIFY_TYPE_REFUND
+						dataMap["out_trade_refund_no"] = table.OutTradeRefundNo
+						dataMap["out_trade_no"] = outTradeNo
+						dataMap["refund_out_side_app"] = refundOutSideApp
+						dataMap["refund_status"] = model.REFUND_STATUS_SUCCESS
+						dataMap["refund_fee"] = refundAmount
+						headerMap := map[string]string{
+							"App-Origin": table.AppPkg,
+						}
+						err = utils.CallbackWithRetry(table.NotifyUrl, headerMap, dataMap, 5*time.Second)
+						if err != nil {
+							desc := fmt.Sprintf("回调通知用户退款成功 异常, app_pkg=%s, out_trade_no=%s", table.AppPkg, table.OutTradeNo)
+							alarm.ImmediateAlarm("notifyUserRefundErr", desc, alarm.ALARM_LEVEL_FATAL)
+						}
+					}()
+				} else {
+					logx.Errorf("refund id:%d, out_trade_refund_no:%s, notify url is empty", table.ID, table.OutTradeRefundNo)
+				}
 			}
 		}
 
@@ -275,7 +277,7 @@ func (l *NotifyAlipayNewLogic) NotifyAlipayNew(r *http.Request, w http.ResponseW
 		}
 
 		if err != nil {
-			logx.Errorf(err.Error())
+			logx.Errorf("err:%s", err.Error())
 			notifyAlipaySignErrNum.CounterInc()
 			return
 		}
