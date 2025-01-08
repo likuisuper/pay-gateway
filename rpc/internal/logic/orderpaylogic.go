@@ -92,8 +92,8 @@ func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (out *pb.OrderPayResp, err 
 	if err != nil {
 		err = fmt.Errorf("获取订单信息错误 err:%v, orderSn:%s, appId:%s", err, in.OrderSn, payAppId)
 		l.Error(err)
-		// orderTableIOFailNum.CounterInc()
-		// return
+		orderTableIOFailNum.CounterInc()
+		return
 	}
 
 	if orderInfo == nil {

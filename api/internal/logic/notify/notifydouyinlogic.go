@@ -3,6 +3,10 @@ package notify
 import (
 	"context"
 	"fmt"
+	"io"
+	"net/http"
+	"time"
+
 	douyin "gitee.com/zhuyunkj/pay-gateway/common/client/douyinGeneralTrade"
 	"gitee.com/zhuyunkj/pay-gateway/common/define"
 	"gitee.com/zhuyunkj/pay-gateway/common/exception"
@@ -13,9 +17,6 @@ import (
 	"gitee.com/zhuyunkj/zhuyun-core/util"
 	"github.com/bytedance/sonic"
 	"github.com/google/uuid"
-	"io"
-	"net/http"
-	"time"
 
 	"gitee.com/zhuyunkj/pay-gateway/api/internal/svc"
 	"gitee.com/zhuyunkj/pay-gateway/api/internal/types"
@@ -152,8 +153,8 @@ func (l *NotifyDouyinLogic) notifyPayment(req *http.Request, body []byte, msgJso
 
 	//获取订单信息 根据订单号和appid查询
 	orderInfo, err := l.payOrderModel.GetOneByOrderSnAndAppId(msg.OutOrderNo, msg.AppId)
-	if err != nil || orderInfo == nil {
-		err = fmt.Errorf("获取订单失败！err=%v,order_code = %s", err, msg.OutOrderNo)
+	if err != nil || orderInfo == nil || orderInfo.ID < 1 {
+		err = fmt.Errorf("获取订单失败 err=%v, order_code:%s, appId:%s", err, msg.OutOrderNo, msg.AppId)
 		util.CheckError(err.Error())
 		return nil, err
 	}
@@ -204,7 +205,7 @@ func (l *NotifyDouyinLogic) notifyPayment(req *http.Request, body []byte, msgJso
 	return resp, nil
 }
 
-//抖音退款回调
+// 抖音退款回调
 func (l *NotifyDouyinLogic) notifyRefund(req *http.Request, body []byte, msgJson string, originData interface{}) (*types.DouyinResp, error) {
 	msg := new(douyin.RefundMsg)
 	err := sonic.UnmarshalString(msgJson, msg)

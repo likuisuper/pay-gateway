@@ -118,8 +118,8 @@ func (l *NotifyKspayLogic) NotifyKspay(r *http.Request, w http.ResponseWriter) (
 
 	//升级为根据订单号和Appid查询
 	orderInfo, err := l.payOrderModel.GetOneByOrderSnAndAppId(notifyData.Data.OutOrderNo, notifyData.AppId)
-	if err != nil {
-		err = fmt.Errorf("获取订单失败！err=%v,order_code = %s", err, notifyData.Data.OutOrderNo)
+	if err != nil || orderInfo == nil || orderInfo.ID < 1 {
+		err = fmt.Errorf("获取订单失败 err:%v, order_code:%s, appId:%s", err, notifyData.Data.OutOrderNo, notifyData.AppId)
 		util.CheckError(err.Error())
 		return
 	}

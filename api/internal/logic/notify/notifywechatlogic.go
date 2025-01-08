@@ -77,8 +77,8 @@ func (l *NotifyWechatLogic) NotifyWechat(request *http.Request) (resp *types.WeC
 
 	//升级为根据订单号和appid查询
 	orderInfo, err := l.payOrderModel.GetOneByOrderSnAndAppId(*transaction.OutTradeNo, appId)
-	if err != nil {
-		err = fmt.Errorf("微信支付回调 获取订单失败 err: %v, order_code: %v", err, transaction.OutTradeNo)
+	if err != nil || orderInfo == nil || orderInfo.ID < 1 {
+		err = fmt.Errorf("微信支付回调 获取订单失败 err:%v, order_code:%s, appId:%s", err, *transaction.OutTradeNo, appId)
 		util.CheckError(err.Error())
 		DingdingNotify(l.ctx, err.Error())
 		return

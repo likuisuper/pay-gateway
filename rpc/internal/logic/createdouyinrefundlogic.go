@@ -65,9 +65,9 @@ func (l *CreateDouyinRefundLogic) CreateDouyinRefund(in *pb.CreateDouyinRefundRe
 
 	//查询订单是否存在
 	payOrderInfo, err := l.orderModel.GetOneByOrderSnAndAppId(in.OrderSn, pkgCfg.TiktokPayAppID)
-	if err != nil {
+	if err != nil || payOrderInfo == nil || payOrderInfo.ID < 1 {
 		CreateDyRefundFailNum.CounterInc()
-		l.Errorf("CreateDouyinRefund pkgName= %s, order_sn: %v 获取抖音支付订单失败，err:=%v", in.AppPkgName, in.OrderSn, err)
+		l.Errorf("CreateDouyinRefund pkgName= %s, order_sn: %v 获取抖音支付订单失败 err:=%v", in.AppPkgName, in.OrderSn, err)
 		return nil, err
 	}
 
@@ -104,6 +104,7 @@ func (l *CreateDouyinRefundLogic) CreateDouyinRefund(in *pb.CreateDouyinRefundRe
 	}
 
 	itemOrderDetail := make([]*douyin.ItemOrderDetail, 0)
+
 	//是否是全额退款
 	if !in.RefundAll {
 		clientToken, err := l.svcCtx.BaseAppConfigServerApi.GetDyClientToken(l.ctx, pkgCfg.TiktokPayAppID)
