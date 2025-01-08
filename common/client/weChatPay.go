@@ -41,11 +41,12 @@ var (
 )
 
 const (
-	WeChatRequestUri = "https://api.mch.weixin.qq.com/pay/unifiedorder"
-	WechatTradeType  = "MWEB"
-	WechatSignType   = "MD5"
-	WechatSandboxUri = "https://api.mch.weixin.qq.com/xdc/apiv2sandbox/pay/unifiedorder"
-	SandboxUriSign   = "https://api.mch.weixin.qq.com/xdc/apiv2getsignkey/sign/getsignkey"
+	WeChatRequestUri  = "https://api.mch.weixin.qq.com/pay/unifiedorder"
+	WechatTradeType   = "MWEB"
+	WechatSignType    = "MD5"
+	WechatSandboxUri  = "https://api.mch.weixin.qq.com/xdc/apiv2sandbox/pay/unifiedorder"
+	SandboxUriSign    = "https://api.mch.weixin.qq.com/xdc/apiv2getsignkey/sign/getsignkey"
+	Wechat_PUB_KEY_ID = "PUB_KEY_ID"
 )
 
 // 微信支付配置
@@ -592,6 +593,7 @@ func (l *WeChatCommPay) GetOrderStatus(codeCode string) (orderInfo *payments.Tra
 // 通知权限验证。及解析内容
 // https://github.com/wechatpay-apiv3/wechatpay-go#%E6%95%8F%E6%84%9F%E4%BF%A1%E6%81%AF%E5%8A%A0%E8%A7%A3%E5%AF%86
 // https://developers.weixin.qq.com/community/develop/doc/00066c92930a58b026922d3ff61c00
+// https://pay.weixin.qq.com/doc/v3/merchant/4012154180
 func (l *WeChatCommPay) Notify(r *http.Request) (orderInfo *payments.Transaction, data map[string]interface{}, err error) {
 	//获取私钥
 	mchPrivateKey, err := utils.LoadPrivateKeyWithPath(l.Config.PrivateKeyPath)
@@ -605,6 +607,16 @@ func (l *WeChatCommPay) Notify(r *http.Request) (orderInfo *payments.Transaction
 	}
 
 	tmpPublicKeyPemFile := l.getPublickKeyPemFile(l.Config.PrivateKeyPath)
+
+	// 通知头Wechatpay-Serial包含PUB_KEY_ID表示必须使用支付公钥验证签名
+	wechatpaySerial := r.Header.Get("Wechatpay-Serial")
+	if strings.Contains(wechatpaySerial, Wechat_PUB_KEY_ID) && tmpPublicKeyPemFile == "" {
+		weChatNotifyErr.CounterInc()
+		logx.Errorf("获取公钥证书出错, 通知回调头包含PUB_KEY_ID但是公钥证书不存在 Wechatpay-Serial:%s", wechatpaySerial)
+		err = errors.New(`{"code": "FAIL","message": "获取公钥证书出错"}`)
+		return nil, nil, err
+	}
+
 	var handler *notify.Handler
 	if tmpPublicKeyPemFile != "" {
 		wechatpayPublicKey, err := utils.LoadPublicKeyWithPath(tmpPublicKeyPemFile)
@@ -652,7 +664,7 @@ func (l *WeChatCommPay) Notify(r *http.Request) (orderInfo *payments.Transaction
 
 	// 处理通知内容
 	logx.Slowf("Wechat notifyReq=%v", notifyReq.Summary)
-	logx.Slowf("Wechat content=%v", transaction)
+	logx.Slowf("Wechat content=%v", *transaction)
 	return transaction, nil, nil
 }
 
