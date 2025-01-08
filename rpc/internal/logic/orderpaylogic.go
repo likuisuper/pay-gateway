@@ -116,6 +116,9 @@ func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (out *pb.OrderPayResp, err 
 			return
 		}
 	} else {
+		// 其实到这里 应该是出错了 订单号不能重复
+		l.Errorf("下单创建了重复订单 orderSn:%s, appId:%s", in.OrderSn, payAppId)
+
 		if orderInfo.PayStatus != model.PmPayOrderTablePayStatusNo {
 			err = fmt.Errorf("订单不是未支付状态, orderSn:%s, appId:%s", in.OrderSn, payAppId)
 			util.Error(l.ctx, err.Error())
