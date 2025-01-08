@@ -47,7 +47,8 @@ func NewNotifyWechatLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Noti
 
 func (l *NotifyWechatLogic) NotifyWechat(request *http.Request) (resp *types.WeChatResp, err error) {
 	appId := request.Header.Get("AppId")
-	logx.Slowf("NotifyWechat %s", appId)
+
+	l.Slowf("NotifyWechat request: %+v", *request)
 
 	payCfg, err := l.payConfigWechatModel.GetOneByAppID(appId)
 	if err != nil {
