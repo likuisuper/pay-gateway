@@ -598,10 +598,9 @@ func (l *WeChatCommPay) Notify(r *http.Request) (orderInfo *payments.Transaction
 	//获取私钥
 	mchPrivateKey, err := utils.LoadPrivateKeyWithPath(l.Config.PrivateKeyPath)
 	if err != nil {
-		logx.Errorw("获取私钥发生错误1", logx.Field("err", err), logx.Field("config", l.Config))
+		logx.Errorw("获取私钥发生错误", logx.Field("err", err), logx.Field("config", l.Config))
 
 		weChatNotifyErr.CounterInc()
-		logx.Errorf("获取私钥发生错误 err=%v", err)
 		err = errors.New(`{"code": "FAIL","message": "获取入私钥发生错误"}`)
 		return nil, nil, err
 	}
