@@ -607,12 +607,14 @@ func (l *WeChatCommPay) Notify(r *http.Request) (orderInfo *payments.Transaction
 
 	tmpPublicKeyPemFile := l.getPublickKeyPemFile(l.Config.PrivateKeyPath)
 
+	// Wechatpay-Serial: 4DF076AC5A7D968D4A8B0B9C599A74CB4CF8EE8A => 平台证书ID
+	// Wechatpay-Serial: PUB_KEY_ID_0115635139512024101100397200000006 => 微信支付的应答也会带上，Wechatpay-Serial请求头，且注意微信支付公钥ID带有PUB_KEY_ID_前缀
 	// 通知头Wechatpay-Serial包含PUB_KEY_ID表示必须使用支付公钥验证签名
 	wechatpaySerial := r.Header.Get("Wechatpay-Serial")
 	if strings.Contains(wechatpaySerial, Wechat_PUB_KEY_ID) && tmpPublicKeyPemFile == "" {
 		weChatNotifyErr.CounterInc()
-		logx.Errorf("获取公钥证书出错, 通知回调头包含PUB_KEY_ID但是公钥证书不存在 Wechatpay-Serial:%s", wechatpaySerial)
-		err = errors.New(`{"code": "FAIL","message": "获取公钥证书出错"}`)
+		logx.Errorf("获取公钥证书出错, 通知回调头包含PUB_KEY_ID但是公钥证书不存在 Wechatpay-Serial: %s", wechatpaySerial)
+		err = errors.New(`{"code": "FAIL","message": "获取支付公钥证书出错"}`)
 		return nil, nil, err
 	}
 
@@ -620,7 +622,7 @@ func (l *WeChatCommPay) Notify(r *http.Request) (orderInfo *payments.Transaction
 	if tmpPublicKeyPemFile != "" {
 		wechatpayPublicKey, err := utils.LoadPublicKeyWithPath(tmpPublicKeyPemFile)
 		if err != nil {
-			logx.Errorf("load wechatpay public key tmpPublicKeyPemFile:%s err:%s", tmpPublicKeyPemFile, err.Error())
+			logx.Errorf("load wechatpay public key tmpPublicKeyPemFile: %s err: %s", tmpPublicKeyPemFile, err.Error())
 			return nil, nil, err
 		}
 
