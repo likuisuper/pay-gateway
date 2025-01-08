@@ -578,12 +578,14 @@ func (l *WeChatCommPay) GetOrderStatus(codeCode string) (orderInfo *payments.Tra
 			Mchid:      core.String(l.Config.MchId),
 		},
 	)
+
 	if err != nil {
 		weChatHttpRequestErr.CounterInc()
-		logx.Errorf("请求微信查询订单发生错误,err =%v", err)
+		logx.Errorf("请求微信查询订单发生错误 err =%v", err)
 		return nil, err
 	}
-	logx.Infof("请求微信支付成功！resp = %v,result=%v", resp, result)
+
+	logx.Slowf("请求微信支付成功 resp = %v,result=%v", resp, result)
 	return resp, nil
 }
 
@@ -748,6 +750,7 @@ func (l *WeChatCommPay) RefundOrder(refundOrder *RefundOrder) (*refunddomestic.R
 		logx.Errorf("退款发生错误,err =%v", err)
 		return nil, err
 	}
+
 	params, _ := url.Parse(l.Config.NotifyUrl)
 	notifyUri := fmt.Sprintf("%s://%s/notify/refund/wechat/%s", params.Scheme, params.Host, refundOrder.OutTradeNo)
 	svc := refunddomestic.RefundsApiService{Client: client}
@@ -766,6 +769,7 @@ func (l *WeChatCommPay) RefundOrder(refundOrder *RefundOrder) (*refunddomestic.R
 			},
 		},
 	)
+
 	if err != nil {
 		// 处理错误
 		weChatRefundOrderErr.CounterInc()
@@ -775,5 +779,6 @@ func (l *WeChatCommPay) RefundOrder(refundOrder *RefundOrder) (*refunddomestic.R
 		// 处理返回结果
 		logx.Infof("退款 status=%d resp=%s", result.Response.StatusCode, resp)
 	}
+
 	return resp, nil
 }

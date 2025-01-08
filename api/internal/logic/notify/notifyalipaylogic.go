@@ -88,9 +88,6 @@ func (l *NotifyAlipayLogic) NotifyAlipay(r *http.Request, w http.ResponseWriter)
 		return
 	}
 
-	//获取订单信息
-	//orderInfo, err := l.payOrderModel.GetOneByCode(outTradeNo)
-
 	//升级为根据订单号和appid查询
 	orderInfo, err := l.payOrderModel.GetOneByOrderSnAndAppId(outTradeNo, appId)
 	if err != nil || orderInfo == nil || orderInfo.ID < 1 {
@@ -112,7 +109,7 @@ func (l *NotifyAlipayLogic) NotifyAlipay(r *http.Request, w http.ResponseWriter)
 	//orderInfo.PayType = model.PmPayOrderTablePayTypeAlipay //改为创建订单时指定支付类型，用于补偿机制建设
 	err = l.payOrderModel.UpdateNotify(orderInfo)
 	if err != nil {
-		err = fmt.Errorf("orderSn = %s, UpdateNotify，err:=%v", orderInfo.OrderSn, err)
+		err = fmt.Errorf("orderSn = %s, UpdateNotify err:=%v", orderInfo.OrderSn, err)
 		util.CheckError(err.Error())
 		return
 	}

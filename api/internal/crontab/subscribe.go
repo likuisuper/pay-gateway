@@ -97,8 +97,7 @@ func (c *CrontabOrder) PayOrder() {
 			// 记录获取失败数
 			GetFirstUnpaidSubscribeFeeErrNum.CounterInc()
 		}
-		logx.Errorf("CrontabOrder::CreateOrder error: ", err)
-		logx.Errorf("没有可扣款单")
+		logx.Errorf("没有可扣款单 CrontabOrder::CreateOrder error: %v", err)
 		return
 	}
 
@@ -113,7 +112,7 @@ func (c *CrontabOrder) PayOrder() {
 		logx.Errorf("进入循环扣款")
 		models, err := orderModel.GetRangeData(lastId)
 		if err != nil {
-			logx.Errorf("orderModel::GetRangeData error: ", err)
+			logx.Errorf("orderModel::GetRangeData error: %v", err)
 			break
 		}
 
@@ -125,7 +124,7 @@ func (c *CrontabOrder) PayOrder() {
 			lastId = tmpOrderModel.ID
 			err = c.PaySubscribeFee(tmpOrderModel)
 			if err != nil {
-				logx.Errorf("扣款失败%v", err)
+				logx.Errorf("扣款失败 %v", err)
 				PaySubscribeFeeErrNum.CounterInc()
 			} else {
 				logx.Errorf("扣款成功：%s", tmpOrderModel.OutTradeNo)

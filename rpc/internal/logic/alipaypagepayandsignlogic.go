@@ -154,10 +154,11 @@ func (l *AlipayPagePayAndSignLogic) AlipayPagePayAndSign(in *pb.AlipayPageSignRe
 
 	if in.ProductType == code.PRODUCT_TYPE_SUBSCRIBE_FEE && in.BelongSignOrder != "" {
 		tb, err := l.orderModel.GetOneByOutTradeNo(in.BelongSignOrder)
-		if err != nil {
+		if err != nil || tb == nil || tb.ID < 1 {
 			logx.Errorf("创建续费订单异常：获取所属的签约订单失败， err = %s", err.Error())
 			return nil, errors.New("创建订单异常")
 		}
+
 		orderInfo.AgreementNo = tb.AgreementNo
 		orderInfo.ExternalAgreementNo = tb.ExternalAgreementNo
 		orderInfo.ProductType = int(in.ProductType)

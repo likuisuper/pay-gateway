@@ -41,7 +41,7 @@ func NewAlipayRefundLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Alip
 // 支付宝：退款
 func (l *AlipayRefundLogic) AlipayRefund(in *pb.AlipayRefundReq) (*pb.AliRefundResp, error) {
 	order, err := l.orderModel.GetOneByOutTradeNo(in.OutTradeNo)
-	if err != nil {
+	if err != nil || order == nil || order.ID < 1 {
 		errInfo := fmt.Sprintf("创建退款订单：获取订单失败!!! %s", in.OutTradeNo)
 		logx.Error(errInfo)
 		createRefundErr.CounterInc()

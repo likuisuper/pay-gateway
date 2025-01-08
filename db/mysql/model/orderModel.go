@@ -1,7 +1,6 @@
 package model
 
 import (
-	"errors"
 	"fmt"
 	"time"
 
@@ -62,7 +61,7 @@ func NewOrderModel(dbName string) *OrderModel {
 func (o *OrderModel) Create(info *OrderTable) error {
 	err := o.DB.Create(info).Error
 	if err != nil {
-		logx.Errorf("创建支付订单失败，err:=%v", err)
+		logx.Errorf("创建支付订单失败 err:=%v", err)
 		createOrderErr.CounterInc()
 	}
 	return err
@@ -72,14 +71,12 @@ func (o *OrderModel) Create(info *OrderTable) error {
 func (o *OrderModel) GetOneByOutTradeNo(outTradeNo string) (info *OrderTable, err error) {
 	var orderInfo OrderTable
 	err = o.DB.Where("`out_trade_no` = ? ", outTradeNo).First(&orderInfo).Error
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, nil
-	}
 	if err != nil {
-		logx.Errorf("获取订单信息失败，err:=%v, out_trade_no=%s", err, outTradeNo)
+		logx.Errorf("获取订单信息失败 err:%v, out_trade_no:%s", err, outTradeNo)
 		getOrderErr.CounterInc()
 		return nil, err
 	}
+
 	return &orderInfo, nil
 }
 
@@ -87,14 +84,11 @@ func (o *OrderModel) GetOneByOutTradeNo(outTradeNo string) (info *OrderTable, er
 func (o *OrderModel) GetOneByExternalAgreementNo(externalAgreementNo string) (info *OrderTable, err error) {
 	var orderInfo OrderTable
 	err = o.DB.Where("`external_agreement_no` = ? and `product_type` = ?", externalAgreementNo, code.PRODUCT_TYPE_SUBSCRIBE).First(&orderInfo).Error
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, nil
-	}
 	if err != nil {
-		logx.Errorf("获取订单信息失败，err:=%v, external_agreement_no=%s", err, externalAgreementNo)
+		logx.Errorf("获取订单信息失败 err:%v, external_agreement_no:%s", err, externalAgreementNo)
 		getOrderErr.CounterInc()
-		return nil, err
 	}
+
 	return &orderInfo, nil
 }
 
@@ -137,12 +131,12 @@ func (o *OrderModel) GetRangeData(id int) (records []*OrderTable, err error) {
 func (o *OrderModel) UpdateStatusByOutTradeNo(outTradeNo string, status int) error {
 	err := o.DB.Table("order").Where("`out_trade_no` = ? ", outTradeNo).Updates(map[string]interface{}{
 		"status": status,
-	})
+	}).Error
 	if err != nil {
-		logx.Errorf("UpdateStatusByOutTradeNo，err=%v", err)
+		logx.Errorf("UpdateStatusByOutTradeNo err:%v", err)
 		updateOrderNotifyErr.CounterInc()
 	}
-	return nil
+	return err
 }
 
 // 根据协议号关闭续费订单
@@ -150,9 +144,8 @@ func (o *OrderModel) CloseUnpaidSubscribeFeeOrderByExternalAgreementNo(externalA
 	err = o.DB.Table("order").Where("`external_agreement_no` = ? and `product_type` = ? and `status` = ?", externalAgreementNo, code.PRODUCT_TYPE_SUBSCRIBE_FEE, 0).
 		Update("`status`", -1).Error
 	if err != nil {
-		logx.Errorf("更新续费订单信息失败，err:=%v, external_agreement_no=%s", err, externalAgreementNo)
+		logx.Errorf("更新续费订单信息失败 err:%v, external_agreement_no:%s", err, externalAgreementNo)
 		getOrderErr.CounterInc()
-		return err
 	}
-	return nil
+	return err
 }

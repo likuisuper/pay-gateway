@@ -85,14 +85,12 @@ func (o *PmPayOrderModel) Create(info *PmPayOrderTable) error {
 func (o *PmPayOrderModel) GetOneByCode(orderSn string) (info *PmPayOrderTable, err error) {
 	var orderInfo PmPayOrderTable
 	err = o.DB.Where("`order_sn` = ? ", orderSn).First(&orderInfo).Error
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, nil
-	}
 	if err != nil {
-		logx.Errorf("获取订单信息失败，err:=%v,order_sn=%s", err, orderSn)
+		logx.Errorf("获取订单信息失败 err:%v, order_sn:%s", err, orderSn)
 		getPayOrderErr.CounterInc()
 		return nil, err
 	}
+
 	return &orderInfo, nil
 }
 
@@ -100,14 +98,12 @@ func (o *PmPayOrderModel) GetOneByCode(orderSn string) (info *PmPayOrderTable, e
 func (o *PmPayOrderModel) GetOneByOrderSnAndAppId(orderSn, appId string) (info *PmPayOrderTable, err error) {
 	var orderInfo PmPayOrderTable
 	err = o.DB.Where("`order_sn` = ? and `pay_app_id` = ?", orderSn, appId).First(&orderInfo).Error
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, nil
-	}
 	if err != nil {
-		logx.Errorf("GetOneByOrderSnAndPkgName 获取订单信息失败，err:=%v,order_sn=%s", err, orderSn)
+		logx.Errorf("GetOneByOrderSnAndPkgName 获取订单信息失败 err:%v, order_sn:%s", err, orderSn)
 		getPayOrderErr.CounterInc()
 		return nil, err
 	}
+
 	return &orderInfo, nil
 }
 
@@ -115,11 +111,11 @@ func (o *PmPayOrderModel) GetOneByOrderSnAndAppId(orderSn, appId string) (info *
 func (o *PmPayOrderModel) QueryAfterUpdate(orderSn, appId, thirdOrderNo string, totalAmount int) (bool, error) {
 	var orderInfo PmPayOrderTable
 	tx := o.DB.Begin()
-	err := o.DB.Where("`order_sn` = ? and  pay_app_id = ? ", orderSn, appId).First(&orderInfo).Error
+	err := o.DB.Where("`order_sn` = ? and pay_app_id = ? ", orderSn, appId).First(&orderInfo).Error
 	if err != nil {
 		tx.Rollback()
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
-			logx.Errorf("QueryAfterUpdate:获取订单信息失败，err:=%v,order_sn=%s", err, orderSn)
+			logx.Errorf("QueryAfterUpdate:获取订单信息失败 err:=%v,order_sn=%s", err, orderSn)
 			getPayOrderErr.CounterInc()
 		}
 		return false, err
@@ -136,7 +132,7 @@ func (o *PmPayOrderModel) QueryAfterUpdate(orderSn, appId, thirdOrderNo string, 
 	err = o.DB.Save(&orderInfo).Error
 	if err != nil {
 		tx.Rollback()
-		logx.Errorf("QueryAfterUpdate:更新回调订单失败，err=%v", err)
+		logx.Errorf("QueryAfterUpdate:更新回调订单失败 err=%v", err)
 		updateNofityOrderErr.CounterInc()
 		return false, err
 	}
@@ -189,7 +185,7 @@ func (o *PmPayOrderModel) GetListByCreateTimeRange(startTime, endTime time.Time)
 	}
 
 	if err != nil {
-		logx.Errorf("GetListByCreateTimeRange，err:%v, params:%v, %v", err, startTime, endTime)
+		logx.Errorf("GetListByCreateTimeRange err:%v, params:%v, %v", err, startTime, endTime)
 		return
 	}
 
@@ -199,13 +195,11 @@ func (o *PmPayOrderModel) GetListByCreateTimeRange(startTime, endTime time.Time)
 func (o *PmPayOrderModel) GetOneByThirdOrderNoAndAppId(orderSn, appId string) (info *PmPayOrderTable, err error) {
 	var orderInfo PmPayOrderTable
 	err = o.DB.Where("`third_order_no` = ? and pay_app_id = ?", orderSn, appId).First(&orderInfo).Error
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, nil
-	}
 	if err != nil {
-		logx.Errorf("GetOneByThirdOrderNoAndAppId 获取订单信息失败，err:=%v,order_sn=%s", err, orderSn)
+		logx.Errorf("GetOneByThirdOrderNoAndAppId 获取订单信息失败 err:%v, order_sn:%s", err, orderSn)
 		getPayOrderErr.CounterInc()
 		return nil, err
 	}
+
 	return &orderInfo, nil
 }

@@ -116,8 +116,6 @@ func (l *NotifyKspayLogic) NotifyKspay(r *http.Request, w http.ResponseWriter) (
 		return
 	}
 
-	//获取订单信息
-	//orderInfo, err := l.payOrderModel.GetOneByCode(notifyData.Data.OutOrderNo)
 	//升级为根据订单号和Appid查询
 	orderInfo, err := l.payOrderModel.GetOneByOrderSnAndAppId(notifyData.Data.OutOrderNo, notifyData.AppId)
 	if err != nil {

@@ -2,11 +2,12 @@ package model
 
 import (
 	"errors"
+	"time"
+
 	"gitee.com/zhuyunkj/pay-gateway/db"
 	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
 	"github.com/zeromicro/go-zero/core/logx"
 	"gorm.io/gorm"
-	"time"
 )
 
 var (
@@ -51,7 +52,7 @@ func NewPmRefundOrderModel(dbName string) *PmRefundOrderModel {
 	}
 }
 
-//创建订单
+// 创建订单
 func (o *PmRefundOrderModel) Create(info *PmRefundOrderTable) error {
 	err := o.DB.Create(info).Error
 	if err != nil {
@@ -61,7 +62,7 @@ func (o *PmRefundOrderModel) Create(info *PmRefundOrderTable) error {
 	return err
 }
 
-//更新订单
+// 更新订单
 func (o *PmRefundOrderModel) Update(outRefundNo string, info *PmRefundOrderTable) error {
 	err := o.DB.Where("out_refund_no = ?", outRefundNo).Updates(info).Error
 	if err != nil {
@@ -71,7 +72,7 @@ func (o *PmRefundOrderModel) Update(outRefundNo string, info *PmRefundOrderTable
 	return err
 }
 
-//获取订单
+// 获取订单
 func (o *PmRefundOrderModel) GetInfo(outRefundNo string) (info *PmRefundOrderTable, err error) {
 	info = new(PmRefundOrderTable)
 	err = o.DB.Where("out_refund_no = ?", outRefundNo).Find(info).Error

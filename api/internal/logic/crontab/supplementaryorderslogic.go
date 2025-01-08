@@ -5,13 +5,14 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strconv"
+	"time"
+
 	"gitee.com/zhuyunkj/pay-gateway/api/internal/logic/notify"
 	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
 	"github.com/zeromicro/go-zero/core/trace"
 	"go.opentelemetry.io/otel"
 	oteltrace "go.opentelemetry.io/otel/trace"
-	"strconv"
-	"time"
 
 	"gitee.com/zhuyunkj/pay-gateway/api/common/notice"
 	"gitee.com/zhuyunkj/pay-gateway/api/internal/svc"
@@ -289,72 +290,3 @@ func getNatureDayTime(ts time.Time) time.Time {
 	dayTime := time.Date(ts.Year(), ts.Month(), ts.Day(), 0, 0, 0, 0, ts.Location())
 	return dayTime
 }
-
-// httpPost 调试使用
-//func httpPost(url string, data interface{}, timeout time.Duration) (string, error) {
-//	jsonStr, _ := json.Marshal(data)
-//	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
-//	if err != nil {
-//		return "", err
-//	}
-//	req.Header.Add("content-type", "application/json")
-//
-//	defer req.Body.Close()
-//
-//	httpClient := &http.Client{Timeout: timeout}
-//	resp, err := httpClient.Do(req)
-//	if err != nil {
-//		return "", err
-//	}
-//	defer resp.Body.Close()
-//	result, err := io.ReadAll(resp.Body)
-//	return string(result), err
-//}
-
-// handleTiktokOrder 抖音支付，担保交易，已废弃
-//func (l *SupplementaryOrdersLogic) handleBytedanceOrder(orderInfo *model.PmPayOrderTable, appId string) error {
-//	payCfg, cfgErr := l.payConfigTiktokModel.GetOneByAppID(appId)
-//	if cfgErr != nil {
-//		return fmt.Errorf("pkgName= %s, 读取字节支付配置失败，err:=%v", orderInfo.AppPkgName, cfgErr)
-//	}
-//
-//	//查询抖音订单状态
-//	payConf := payCfg.TransClientConfig()
-//	payCli := client.NewTikTokPay(*payConf)
-//
-//	tiktokOrderInfo, err := payCli.GetOrderStatus(orderInfo.OrderSn)
-//	if err != nil {
-//		return fmt.Errorf("查询字节订单失败, orderSn=%s, err=%v", orderInfo.OrderSn, err)
-//	}
-//
-//	if tiktokOrderInfo.OrderStatus == "SUCCESS" {
-//		currentOrderInfo, err := l.payOrderModel.GetOneByCode(orderInfo.OrderSn)
-//		if err != nil {
-//			return fmt.Errorf("获取订单失败！err=%v,order_code = %s", err, orderInfo.OrderSn)
-//		}
-//
-//		if currentOrderInfo.PayStatus != model.PmPayOrderTablePayStatusNo { //任务执行期间，已触发了回调
-//			return nil
-//		}
-//
-//		currentOrderInfo.NotifyAmount = tiktokOrderInfo.TotalFee
-//		currentOrderInfo.PayStatus = model.PmPayOrderTablePayStatusPaid
-//		err = l.payOrderModel.UpdateNotify(currentOrderInfo)
-//		if err != nil {
-//			return fmt.Errorf("orderSn = %s, UpdateNotify，err:=%v", orderInfo.OrderSn, err)
-//		}
-//
-//		msg, _ := sonic.MarshalString(douyin.GeneralTradeMsg{
-//			OutOrderNo: orderInfo.OrderSn,
-//		})
-//		req := &types.ByteDanceReq{
-//			Msg: msg,
-//		}
-//		_, requestErr := util.HttpPost(orderInfo.NotifyUrl, req, 5*time.Second)
-//		if requestErr != nil {
-//			return fmt.Errorf("NotifyPayment-post, req:%+v, err:%v", orderInfo.OrderSn, err)
-//		}
-//	}
-//	//订单状态未完成，等待下次脚本刷新
-//	return nil
-//}

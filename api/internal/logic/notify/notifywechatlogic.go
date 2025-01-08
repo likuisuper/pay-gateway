@@ -75,8 +75,6 @@ func (l *NotifyWechatLogic) NotifyWechat(request *http.Request) (resp *types.WeC
 		return
 	}
 
-	//获取订单信息
-	//orderInfo, err := l.payOrderModel.GetOneByCode(*transaction.OutTradeNo)
 	//升级为根据订单号和appid查询
 	orderInfo, err := l.payOrderModel.GetOneByOrderSnAndAppId(*transaction.OutTradeNo, appId)
 	if err != nil {

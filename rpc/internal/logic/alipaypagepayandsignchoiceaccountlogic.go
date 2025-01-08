@@ -155,10 +155,11 @@ func (l *AlipayPagePayAndSignChoiceAccountLogic) AlipayPagePayAndSignChoiceAccou
 	logx.Slowf("请求参数: %v, err:%v", string(bytes), err)
 	if in.ProductType == code.PRODUCT_TYPE_SUBSCRIBE_FEE && in.BelongSignOrder != "" {
 		tb, err := l.orderModel.GetOneByOutTradeNo(in.BelongSignOrder)
-		if err != nil {
+		if err != nil || tb == nil || tb.ID < 1 {
 			logx.Errorf("创建续费订单异常：获取所属的签约订单失败， err = %s", err.Error())
 			return nil, errors.New("创建订单异常，获取所属的签约订单失败")
 		}
+
 		//如果支付账号不一至。要切换账号
 		if tb.PayAppID != orderInfo.PayAppID {
 			payClient, _, _, err = clientMgr.GetAlipayClientByAppIdWithCache(tb.PayAppID)
@@ -168,6 +169,7 @@ func (l *AlipayPagePayAndSignChoiceAccountLogic) AlipayPagePayAndSignChoiceAccou
 			}
 			orderInfo.PayAppID = tb.PayAppID
 		}
+
 		orderInfo.DeviceId = tb.DeviceId
 		orderInfo.AgreementNo = tb.AgreementNo
 		orderInfo.ExternalAgreementNo = tb.ExternalAgreementNo
@@ -175,6 +177,7 @@ func (l *AlipayPagePayAndSignChoiceAccountLogic) AlipayPagePayAndSignChoiceAccou
 		periodAmount, _ := strconv.ParseFloat(amount, 64)
 		orderInfo.Amount = int(periodAmount * 100)
 	}
+
 	result, err := payClient.TradeAppPay(appPay)
 	if err != nil {
 		logx.Errorf("创建订单异常,生成支付宝加签串失败,err=%s", err.Error())

@@ -102,7 +102,7 @@ func (l *NotifyAlipayNewLogic) NotifyAlipayNew(r *http.Request, w http.ResponseW
 		if refundFee == "" {
 			//获取订单信息
 			orderInfo, dbErr := l.orderModel.GetOneByOutTradeNo(outTradeNo)
-			if dbErr != nil || orderInfo == nil {
+			if dbErr != nil || orderInfo == nil || orderInfo.ID < 1 {
 				dbErr = fmt.Errorf("获取订单失败 err=%v, order_code=%s", dbErr, outTradeNo)
 				util.CheckError(dbErr.Error())
 				return
@@ -190,11 +190,12 @@ func (l *NotifyAlipayNewLogic) NotifyAlipayNew(r *http.Request, w http.ResponseW
 
 			//获取订单信息
 			orderInfo, dbErr := l.orderModel.GetOneByOutTradeNo(outTradeNo)
-			if dbErr != nil {
-				dbErr = fmt.Errorf("获取订单失败！err=%v,order_code = %s", dbErr, outTradeNo)
+			if dbErr != nil || orderInfo == nil || orderInfo.ID < 1 {
+				dbErr = fmt.Errorf("获取订单失败 err:%v, order_code:%s", dbErr, outTradeNo)
 				util.CheckError(dbErr.Error())
 				return
 			}
+
 			if orderInfo.Status != model.PmPayOrderTablePayStatusPaid {
 				notifyOrderHasDispose.CounterInc()
 				err = fmt.Errorf("订单状态异常")
@@ -203,9 +204,10 @@ func (l *NotifyAlipayNewLogic) NotifyAlipayNew(r *http.Request, w http.ResponseW
 
 			table, dbErr := l.refundModel.GetOneByOutTradeNo(outTradeNo)
 			if dbErr != nil && !errors.Is(dbErr, gorm.ErrRecordNotFound) {
-				err = fmt.Errorf("退款回调db服务异常， out_trade_no = %s, err:=%v", outTradeNo, dbErr)
+				err = fmt.Errorf("退款回调db服务异常 out_trade_no:%s, err:%v", outTradeNo, dbErr)
 				util.CheckError(err.Error())
 			}
+
 			if table != nil {
 				// 已经有退款单，是用户主动退款，不在这处理
 				return
@@ -213,7 +215,7 @@ func (l *NotifyAlipayNewLogic) NotifyAlipayNew(r *http.Request, w http.ResponseW
 
 			refundOutSideApp := false
 			if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-				err = fmt.Errorf("退款回调db服务异常， out_trade_no = %s, err:=%v", outTradeNo, err)
+				err = fmt.Errorf("退款回调db服务异常 out_trade_no:%s, err:%v", outTradeNo, err)
 				util.CheckError(err.Error())
 			}
 

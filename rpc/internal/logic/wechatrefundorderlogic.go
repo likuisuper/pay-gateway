@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
+
 	"gitee.com/zhuyunkj/pay-gateway/common/client"
 	"gitee.com/zhuyunkj/pay-gateway/common/code"
 	"gitee.com/zhuyunkj/pay-gateway/common/define"
@@ -12,7 +14,6 @@ import (
 	"gitee.com/zhuyunkj/pay-gateway/rpc/internal/svc"
 	"gitee.com/zhuyunkj/pay-gateway/rpc/pb/pb"
 	"gitee.com/zhuyunkj/zhuyun-core/util"
-	"time"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -36,35 +37,37 @@ func NewWechatRefundOrderLogic(ctx context.Context, svcCtx *svc.ServiceContext) 
 		refundModel:          model.NewRefundModel(define.DbPayGateway),
 		appConfigModel:       model.NewPmAppConfigModel(define.DbPayGateway),
 		payConfigWechatModel: model.NewPmPayConfigWechatModel(define.DbPayGateway),
-
 	}
 }
 
 // 微信统一支付退款
 func (l *WechatRefundOrderLogic) WechatRefundOrder(in *pb.WechatRefundOrderReq) (*pb.CreateRefundResp, error) {
 	order, err := l.orderModel.GetOneByOutTradeNo(in.OutTradeNo)
-	if err != nil {
-		util.CheckError("获取订单失败,订单号=%s，err:=%v", in.OutTradeNo, err)
+	if err != nil || order == nil || order.ID < 1 {
+		util.CheckError("获取订单失败订单号:%s err:%v", in.OutTradeNo, err)
 		err = errors.New("读取应用配置失败")
 		return nil, err
 	}
+
 	if order.Status != code.ORDER_SUCCESS {
 		err = errors.New("订单状态错误")
 		return nil, err
 	}
+
 	payCfg, cfgErr := l.payConfigWechatModel.GetOneByAppID(order.PayAppID)
 	if cfgErr != nil {
-		err = fmt.Errorf("pkgName= %s, 读取微信支付配置失败，err:=%v", order.AppPkg, cfgErr)
+		err = fmt.Errorf("pkgName:%s 读取微信支付配置失败 err:=%v", order.AppPkg, cfgErr)
 		util.CheckError(err.Error())
 		return nil, cfgErr
 	}
+
 	payClient := client.NewWeChatCommPay(*payCfg.TransClientConfig())
 
 	data := &client.RefundOrder{
-		OutTradeNo:  in.OutTradeNo,
-		OutRefundNo: "t" + utils.GenerateOrderCode(l.svcCtx.Config.SnowFlake.MachineNo, l.svcCtx.Config.SnowFlake.WorkerNo),
-		TotalFee:    in.TotalFee,
-		RefundFee:   in.RefundFee,
+		OutTradeNo:    in.OutTradeNo,
+		OutRefundNo:   "t" + utils.GenerateOrderCode(l.svcCtx.Config.SnowFlake.MachineNo, l.svcCtx.Config.SnowFlake.WorkerNo),
+		TotalFee:      in.TotalFee,
+		RefundFee:     in.RefundFee,
 		TransactionId: order.PlatformTradeNo,
 	}
 
@@ -74,9 +77,11 @@ func (l *WechatRefundOrderLogic) WechatRefundOrder(in *pb.WechatRefundOrderReq) 
 		util.CheckError(err.Error())
 		return nil, refundErr
 	}
+
 	//修改订单状态为退款中
 	order.Status = code.ORDER_REFUNDING
 	l.orderModel.UpdateNotify(order)
+
 	//创建退款订单
 	refund := model.RefundTable{
 		PayType:          order.PayType,
