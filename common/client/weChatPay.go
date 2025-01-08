@@ -429,15 +429,18 @@ func (l *WeChatCommPay) WechatPayUnified(info *PayOrder, appConfig *WechatPayCon
 
 	bytesReq, err := xml.Marshal(params)
 	if err != nil {
-		logx.Errorf("以xml形式编码发送错误, 原因: %v", err)
-		return
+		logx.Errorf("以xml形式编码发送错误, err: %v, params: %v", err, params)
+		return nil, err
 	}
+
+	logx.Sloww("WechatPayUnified", logx.Field("params", params))
 
 	strReq := string(bytesReq)
 	strReq = strings.Replace(strReq, "WXOrderParam", "xml", -1)
 	resBody, err := XmlHttpPost(requireUri, strReq)
 	if err != nil {
 		weChatHttpRequestErr.CounterInc()
+		logx.Errorf("XmlHttpPost err: %v, strReq: %s", err, strReq)
 		return nil, err
 	}
 
