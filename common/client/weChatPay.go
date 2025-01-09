@@ -62,6 +62,7 @@ type WechatPayConfig struct {
 	ApiKeyV2       string //apiKeyV2密钥
 	WapUrl         string // 支付H5域名
 	WapName        string // 支付名称
+	PlatformNumer  string // 微信支付平台证书编号
 }
 
 // WXOrderParam	微信请求参数
@@ -602,6 +603,7 @@ func (l *WeChatCommPay) GetOrderStatus(codeCode string) (orderInfo *payments.Tra
 // https://github.com/wechatpay-apiv3/wechatpay-go#%E6%95%8F%E6%84%9F%E4%BF%A1%E6%81%AF%E5%8A%A0%E8%A7%A3%E5%AF%86
 // https://developers.weixin.qq.com/community/develop/doc/00066c92930a58b026922d3ff61c00
 // https://pay.weixin.qq.com/doc/v3/merchant/4012154180
+// https://pay.weixin.qq.com/doc/v3/merchant/4013053420
 func (l *WeChatCommPay) Notify(r *http.Request) (orderInfo *payments.Transaction, data map[string]interface{}, err error) {
 	//获取私钥
 	mchPrivateKey, err := utils.LoadPrivateKeyWithPath(l.Config.PrivateKeyPath)
@@ -624,6 +626,21 @@ func (l *WeChatCommPay) Notify(r *http.Request) (orderInfo *payments.Transaction
 		logx.Errorf("获取公钥证书出错, 通知回调头包含PUB_KEY_ID但是公钥证书不存在 Wechatpay-Serial: %s", wechatpaySerial)
 		err = errors.New(`{"code": "FAIL","message": "获取支付公钥证书出错"}`)
 		return nil, nil, err
+	}
+
+	// https://pay.weixin.qq.com/doc/v3/merchant/4013053420
+	// 应先检查 HTTP 头 Wechatpay-Serial 的内容是否跟商户当前所持有的微信支付平台证书的序列号一致。若不一致，请重新获取证书。否则，签名的私钥和证书不匹配，将验证失败。
+
+	if strings.Contains(wechatpaySerial, Wechat_PUB_KEY_ID) {
+		if wechatpaySerial != l.Config.PublicKeyId {
+			// 公钥id不匹配
+			// 先记录错误日志
+			logx.Errorf("数据库公钥id和微信回调的不一致, 微信回调: %s , 数据库: %s", wechatpaySerial, l.Config.PublicKeyId)
+		}
+	} else if wechatpaySerial != l.Config.PlatformNumer {
+		// 平台证书不匹配
+		// 先记录错误日志
+		logx.Errorf("数据库平台证书和微信回调的不一致, 微信回调: %s , 数据库: %s", wechatpaySerial, l.Config.PlatformNumer)
 	}
 
 	var handler *notify.Handler
