@@ -116,6 +116,9 @@ func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (out *pb.OrderPayResp, err 
 			return
 		}
 	} else {
+		// 其实到这里 应该是出错了 订单号不能重复
+		l.Errorf("下单创建了重复订单 orderSn:%s, appId:%s", in.OrderSn, payAppId)
+
 		if orderInfo.PayStatus != model.PmPayOrderTablePayStatusNo {
 			err = fmt.Errorf("订单不是未支付状态, orderSn:%s, appId:%s", in.OrderSn, payAppId)
 			util.Error(l.ctx, err.Error())
@@ -336,11 +339,12 @@ func (l *OrderPayLogic) createWeChatNativeOrder(in *pb.OrderPayReq, info *client
 func (l *OrderPayLogic) createWeChatUnifiedOrder(in *pb.OrderPayReq, info *client.PayOrder, payConf *client.WechatPayConfig) (reply *pb.WxUnifiedPayReply, err error) {
 	payClient := client.NewWeChatCommPay(*payConf)
 	res, err := payClient.WechatPayUnified(info, payConf)
-	if err != nil {
+	if err != nil || res == nil {
 		wechatNativePayFailNum.CounterInc()
-		util.Error(l.ctx, "pkgName= %s, wechatUniPay，err:=%v", in.AppPkgName, err)
+		util.Error(l.ctx, "WechatPayUnified pkgName: %s, err: %v", in.AppPkgName, err)
 		return
 	}
+
 	reply = &pb.WxUnifiedPayReply{
 		Prepayid: res.PrepayID,
 		MwebUrl:  res.MwebURL,

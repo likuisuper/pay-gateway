@@ -415,6 +415,7 @@ func (l *WeChatCommPay) WechatPayUnified(info *PayOrder, appConfig *WechatPayCon
 	m["scene_info"] = params.SceneInfo
 	m["attach"] = params.Attach
 	params.Sign = WxPayCalcSign(m, l.Config.ApiKeyV2)
+
 	//开启沙箱测试
 	//	shaBoxSign := WxPayCalcSign(map[string]interface{}{
 	//		"mch_id":    params.MchID,
@@ -429,27 +430,34 @@ func (l *WeChatCommPay) WechatPayUnified(info *PayOrder, appConfig *WechatPayCon
 
 	bytesReq, err := xml.Marshal(params)
 	if err != nil {
-		logx.Errorf("以xml形式编码发送错误,原因:%v", err)
-		return
+		logx.Errorf("以xml形式编码发送错误, err: %v, params: %v", err, params)
+		return nil, err
 	}
+
+	logx.Sloww("WechatPayUnified", logx.Field("params", params))
+
 	strReq := string(bytesReq)
 	strReq = strings.Replace(strReq, "WXOrderParam", "xml", -1)
 	resBody, err := XmlHttpPost(requireUri, strReq)
 	if err != nil {
 		weChatHttpRequestErr.CounterInc()
+		logx.Errorf("XmlHttpPost err: %v, strReq: %s", err, strReq)
 		return nil, err
 	}
+
 	var wechatReply WXOrderReply
 	xmlErr := xml.Unmarshal(resBody, &wechatReply)
 	if xmlErr != nil {
-		logx.Errorf("wechatReply xmlErr,原因:%v", err)
+		logx.Errorf("wechatReply xmlErr, err: %v, raw str: %s", err, string(resBody))
 		return nil, xmlErr
 	}
+
 	if wechatReply.ResultCode == "FAIL" {
 		weChatReturnPayErr.CounterInc()
-		logx.Errorf("发起支付错误,原因:%s", wechatReply.ReturnMsg)
+		logx.Errorf("发起支付错误, msg: %s, raw str: %s", wechatReply.ReturnMsg, string(resBody))
 		return nil, nil
 	}
+
 	return &wechatReply, nil
 }
 

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+
 	"gitee.com/zhuyunkj/pay-gateway/common/client"
 	"gitee.com/zhuyunkj/pay-gateway/common/define"
 	"gitee.com/zhuyunkj/pay-gateway/common/types"
@@ -78,7 +79,7 @@ func (l *WechatUnifiedOrderLogic) WechatUnifiedOrder(in *pb.AlipayPageSignReq) (
 		ProductID:    int(in.ProductId),
 		Subject:      in.Subject,
 	}
-	data, err := l.createWeChatUnifiedOrder(orderInfo,in.Ip)
+	data, err := l.createWeChatUnifiedOrder(orderInfo, in.Ip)
 	if err != nil {
 		return nil, err
 	}
@@ -93,8 +94,8 @@ func (l *WechatUnifiedOrderLogic) WechatUnifiedOrder(in *pb.AlipayPageSignReq) (
 	return data, nil
 }
 
-//微信统一支付
-func (l *WechatUnifiedOrderLogic) createWeChatUnifiedOrder(orderInfo *model.OrderTable,ip string,) (reply *pb.WxUnifiedPayReply, err error) {
+// 微信统一支付
+func (l *WechatUnifiedOrderLogic) createWeChatUnifiedOrder(orderInfo *model.OrderTable, ip string) (reply *pb.WxUnifiedPayReply, err error) {
 	payCfg, cfgErr := l.payConfigWechatModel.GetOneByAppID(orderInfo.PayAppID)
 	if cfgErr != nil {
 		err = fmt.Errorf("pkgName= %s, 读取微信支付配置失败，err:=%v", orderInfo.AppPkg, cfgErr)
@@ -107,22 +108,24 @@ func (l *WechatUnifiedOrderLogic) createWeChatUnifiedOrder(orderInfo *model.Orde
 		OrderSn: orderInfo.OutTradeNo,
 		Amount:  orderInfo.Amount,
 		Subject: orderInfo.Subject,
-		IP: ip,
+		IP:      ip,
 	}
-	wechatPayConfig :=payCfg.TransClientConfig()
-	res, err := payClient.WechatPayUnified(payInfo,wechatPayConfig)
-	if err != nil {
+
+	wechatPayConfig := payCfg.TransClientConfig()
+	res, err := payClient.WechatPayUnified(payInfo, wechatPayConfig)
+	if err != nil || res == nil {
 		wechatNativePayFailNum.CounterInc()
-		util.CheckError("pkgName= %s, wechatUniPay，err:=%v", orderInfo.AppPkg, err)
+		util.CheckError("WechatPayUnified pkgName: %s, payInfo:%v , err: %v", orderInfo.AppPkg, payInfo, err)
 		return
 	}
+
 	reply = &pb.WxUnifiedPayReply{
 		Prepayid:   res.PrepayID,
 		MwebUrl:    res.MwebURL,
 		OutTradeNo: orderInfo.OutTradeNo,
 	}
 
-	if wechatPayConfig.WapName!=""&& wechatPayConfig.WapUrl !=""{
+	if wechatPayConfig.WapName != "" && wechatPayConfig.WapUrl != "" {
 		reply.WapName = wechatPayConfig.WapName
 		reply.WapUrl = wechatPayConfig.WapUrl
 	}
