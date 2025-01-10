@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"gitee.com/zhuyunkj/pay-gateway/api/common/payks"
 	"gitee.com/zhuyunkj/pay-gateway/common/utils"
 	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
 	"gitee.com/zhuyunkj/zhuyun-core/util"
@@ -235,6 +236,12 @@ func (p *KsPay) CreateOrder(info *PayOrder, openId string, accessToken string) (
 // 苹果价格档位
 // https://open.kuaishou.com/docs/develop/server/iosEpayAbility/feeStandards.html
 func (p *KsPay) CreateOrderIos(info *PayOrder, openId string, accessToken string) (respData *KsCreateOrderWithChannelResp, err error) {
+	if info.Amount > payks.Ks_ios_pay_max_amount {
+		util.CheckError("CreateOrderIos amount: %d 超过价格上限 : %d", info.Amount, payks.Ks_ios_pay_max_amount)
+		ksHttpRequestErr.CounterInc()
+		return
+	}
+
 	uri := fmt.Sprintf("%s?app_id=%s&access_token=%s", KsCreateOrderIos, p.Config.AppId, accessToken)
 
 	// 	说明：iap支付预下单，和担保支付(单次)下单入参的区别是：
@@ -242,14 +249,19 @@ func (p *KsPay) CreateOrderIos(info *PayOrder, openId string, accessToken string
 	// user_pay_amount一定要是苹果支持的档位，否则无法支付成功
 	// refund_notify_url，在预下单时，需要传入退款回调url，用于用户退款时，回调通知给开发者
 
+	originPrice := payks.GetKsIosRecentlyPrice(info.Amount)
+
+	// 记录一下日志
+	logx.Slowf("kuiahsou CreateOrderIos originPrice: %d, after handled price: %d", info.Amount, originPrice)
+
 	param := &KsCreateOrderReqIos{
 		OutOrderNo:      info.OrderSn,
 		OpenId:          openId,
 		Subject:         info.Subject, // string[1,128] 商品名称或者商品描述简介，建议长度在10个汉字以内，在收银台页面、支付账单中供用户查看使用。注：不可传入特殊符号、emoji 表情等，否则会影响支付成功，1汉字=2字符。
 		Detail:          info.Subject,
 		Type:            info.KsTypeId,
-		OrderAmount:     info.Amount,        // 必填
-		UserPayAmount:   info.Amount,        // 用户实际金额，单位为[分] 如果订单没有补贴，则user_pay_amount=order_amount
+		OrderAmount:     originPrice,        // 必填
+		UserPayAmount:   originPrice,        // 用户实际金额，单位为[分] 如果订单没有补贴，则user_pay_amount=order_amount
 		ExpireTime:      3600,               // 订单过期时间，单位秒，[300s,3600s]
 		NotifyUrl:       p.Config.NotifyUrl, // 支付回调
 		RefundNotifyUrl: p.Config.NotifyUrl, // 退款回调
