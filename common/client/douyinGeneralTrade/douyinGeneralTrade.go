@@ -33,6 +33,7 @@ type PayClient struct {
 	config *PayConfig
 }
 
+// 抖音普通商品请求体
 // RequestOrderData 请求体 https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/api/industry/general_trade/create_order/requestOrder#33efe69e
 type RequestOrderData struct {
 	SkuList          []*Sku  `json:"skuList,omitempty"`          // 下单商品信息 必填 支持一个
@@ -45,6 +46,26 @@ type RequestOrderData struct {
 	LimitPayWayList  []int32 `json:"limitPayWayList,omitempty"`  // 屏蔽的支付方式，当开发者没有进件某个支付渠道，可在下单时屏蔽对应的支付方式。如：[1, 2]表示屏蔽微信和支付宝 枚举说明： 1-微信 2-支付宝 非必填
 	PayScene         string  `json:"payScene,omitempty"`         // 指定支付场景 ios 传IM 安卓不传
 	Currency         string  `json:"currency,omitempty"`         // 指定支付币种 ios 钻石支付传DIAMOND 安卓不传
+}
+
+// 抖音签约周期代扣商品请求体
+// https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/api/industry/credit-products/createSignOrder
+type RequestPeriodOrderData struct {
+	OutAuthOrderNo     string           `json:"outAuthOrderNo"`               // 开发者侧签约单的单号，长度<=64byte
+	ServiceId          string           `json:"serviceId"`                    // 签约模板ID
+	OpenId             string           `json:"openId"`                       // 用户 openId
+	ExpireSeconds      int64            `json:"expireSeconds"`                // 签约或签约支付超时时间，单位[秒]，不传默认5分钟，最少30秒，不能超过48小时。建议开发者不要将超时时间设置太短
+	NotifyUrl          string           `json:"notifyUrl"`                    // 签约结果回调地址，https开头，长度<=512byte
+	FirstDeductionDate *string          `json:"firstDeductionDate,omitempty"` // 首次扣款日期,格式YYYY-MM-DD,纯签约场景需要传入,用于c端展示
+	OnBehalfUid        string           `json:"onBehalfUid"`                  // 代签约用户uid，该uid必须由ASCII字母、数字、下划线组成，长度<=64个字符，通常该字段应填入开发者自己系统的uid
+	AuthPayOrder       *AuthPayOrderObj `json:"authPayOrder,omitempty"`       // 扣款信息，如果传入该字段则会走签约支付流程，否则走纯签约流程
+}
+
+type AuthPayOrderObj struct {
+	OutPayOrderNo string `json:"outPayOrderNo"`           // 开发者侧代扣单的单号，长度<=64byte
+	MerchantUid   string `json:"merchantUid"`             // 开发者自定义收款商户号，限定在在小程序绑定的商户号内
+	InitialAmount *int64 `json:"initialAmount,omitempty"` // 首期代扣金额，单位[分]，不传则使用模板上的扣款金额，签约模板支持前N（N<=6）期优惠，该字段优先级高于模板的配置的第一期优惠价格，举例：如果当前参数传入扣款金额为10元，而实际模板中配置的第一期优惠价格为20元，那么第一期的实际扣款金额是10元
+	NotifyUrl     string `json:"notifyUrl"`               // 支付结果回调地址，https开头，长度<=512byte
 }
 
 type Sku struct {
@@ -88,7 +109,7 @@ func NewDouyinPay(config *PayConfig) *PayClient {
 	return client
 }
 
-func (c *PayClient) RequestOrder(data *RequestOrderData) (string, string, error) {
+func (c *PayClient) RequestOrder(data interface{}) (string, string, error) {
 	dataStr, err := sonic.MarshalString(data)
 	if err != nil {
 		return "", "", err

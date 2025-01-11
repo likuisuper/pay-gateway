@@ -17,6 +17,11 @@ message OrderPayReq {
   string os = 9; // 系统标识
   DouyinGeneralTradeReq douyinGeneralTradeReq = 10; //抖音小程序订单信息-通用交易系统
   Currency currency = 11; // 币种
+  bool IsPeriodProduct = 12; // 是否是周期代扣商品
+  int64 InnerUserId = 13; // 下单用户id(内部user表主键id)
+  string InnerUserOpen = 14; // 下单用户open id
+  int64 FirstDeductionAmount = 15; // 首期或者最近几期优惠扣款金额
+  string MerchantUid = 16; // 开发者自定义收款商户号，限定在在小程序绑定的商户号内
 }
 
 // 币种枚举

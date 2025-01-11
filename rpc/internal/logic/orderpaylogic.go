@@ -63,7 +63,7 @@ func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (out *pb.OrderPayResp, err 
 	//读取应用配置
 	pkgCfg, err := l.appConfigModel.GetOneByPkgName(in.AppPkgName)
 	if err != nil {
-		err = fmt.Errorf("pkgName= %s, 读取应用配置失败，err:=%v", in.AppPkgName, err)
+		err = fmt.Errorf("GetOneByPkgName failed pkgName: %s, err: %v ", in.AppPkgName, err)
 		util.Error(l.ctx, err.Error())
 		return
 	}
@@ -90,7 +90,7 @@ func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (out *pb.OrderPayResp, err 
 	//创建订单时订单号对包隔离 规避业务方订单号重复case
 	orderInfo, err := l.payOrderModel.GetOneByOrderSnAndAppId(in.OrderSn, payAppId)
 	if err != nil {
-		err = fmt.Errorf("获取订单信息错误 err:%v, orderSn:%s, appId:%s", err, in.OrderSn, payAppId)
+		err = fmt.Errorf("GetOneByOrderSnAndAppId err:%v, orderSn:%s, appId:%s ", err, in.OrderSn, payAppId)
 		l.Error(err)
 		orderTableIOFailNum.CounterInc()
 		return
@@ -211,19 +211,20 @@ func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (out *pb.OrderPayResp, err 
 		checkParamErr := l.checkDouyinGeneralTradeParam(in)
 		if checkParamErr != nil {
 			err = checkParamErr
-			util.CheckError("checkParam fail pkgName= %s, tiktokEcPay，err:=%v", in.AppPkgName, checkParamErr)
+			util.CheckError("checkDouyinGeneralTradeParam fail pkgName: %s, err: %v ", in.AppPkgName, checkParamErr)
 			return
 		}
 
 		payCfg, cfgErr := model.NewPmPayConfigTiktokModel(define.DbPayGateway).GetOneByAppID(pkgCfg.TiktokPayAppID)
 		if cfgErr != nil {
-			err = fmt.Errorf("pkgName= %s, 读取抖音通用交易系统支付配置失败，err:=%v", in.AppPkgName, cfgErr)
+			err = fmt.Errorf("GetOneByAppID pkgName: %s, err: %v ", in.AppPkgName, cfgErr)
 			util.Error(l.ctx, err.Error())
 			return
 		}
 
 		out.DouyinGeneralTrade, err = l.createDouyinGeneralTradeOrder(in, payCfg.GetGeneralTradeConfig())
 	}
+
 	return
 }
 
@@ -400,6 +401,7 @@ func (l *OrderPayLogic) checkDouyinGeneralTradeParam(in *pb.OrderPayReq) error {
 	if in.DouyinGeneralTradeReq == nil {
 		return errors.New("invalid DouyinGeneralTradeReq")
 	}
+
 	req := in.DouyinGeneralTradeReq
 	if req.Type == pb.DouyinGeneralTradeReq_Unknown || pb.DouyinGeneralTradeReq_SkuType_name[int32(req.Type)] == "" {
 		return errors.New("invalid sku type")
@@ -410,6 +412,11 @@ func (l *OrderPayLogic) checkDouyinGeneralTradeParam(in *pb.OrderPayReq) error {
 
 // 抖音小程序通用交易系统
 func (l *OrderPayLogic) createDouyinGeneralTradeOrder(in *pb.OrderPayReq, payConf *douyin.PayConfig) (reply *pb.DouyinGeneralTradeReply, err error) {
+	if in.IsPeriodProduct {
+		// 抖音周期代扣
+		return l.createDouyinPeriodOrder(in, payConf)
+	}
+
 	payClient := douyin.NewDouyinPay(payConf)
 	douyinReq := in.DouyinGeneralTradeReq
 	sku := &douyin.Sku{
@@ -462,6 +469,7 @@ func (l *OrderPayLogic) createDouyinGeneralTradeOrder(in *pb.OrderPayReq, payCon
 		}
 	}
 
+	// 生成签名
 	dataStr, byteAuthorization, err := payClient.RequestOrder(data)
 	if err != nil {
 		tiktokEcPayFailNum.CounterInc()
@@ -474,6 +482,48 @@ func (l *OrderPayLogic) createDouyinGeneralTradeOrder(in *pb.OrderPayReq, payCon
 		Data:              dataStr,
 		ByteAuthorization: byteAuthorization,
 		CustomerImId:      payConf.CustomerImId,
+	}
+	return
+}
+
+// 抖音小程序生成周期代扣签名等
+// https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/api/industry/credit-products/createSignOrder
+func (l *OrderPayLogic) createDouyinPeriodOrder(in *pb.OrderPayReq, payConf *douyin.PayConfig) (reply *pb.DouyinGeneralTradeReply, err error) {
+	douyinReq := in.DouyinGeneralTradeReq
+
+	authPayOrder := &douyin.AuthPayOrderObj{
+		OutPayOrderNo: in.GetOrderSn() + "00", // 订单号后面增加00
+		MerchantUid:   in.GetMerchantUid(),
+		NotifyUrl:     payConf.NotifyUrl,
+	}
+
+	initialAmount := in.GetFirstDeductionAmount()
+	if initialAmount > 0 {
+		authPayOrder.InitialAmount = &initialAmount
+	}
+
+	data := &douyin.RequestPeriodOrderData{
+		OutAuthOrderNo: in.GetOrderSn(),
+		ServiceId:      douyinReq.GetSkuId(),
+		OpenId:         in.GetInnerUserOpen(),
+		ExpireSeconds:  code.DouyinPayExpireSeconds, // 默认是半个小时
+		NotifyUrl:      payConf.NotifyUrl,
+		OnBehalfUid:    strconv.Itoa(int(in.GetInnerUserId())),
+		AuthPayOrder:   authPayOrder,
+	}
+
+	// 生成签名
+	dataStr, byteAuthorization, err := douyin.NewDouyinPay(payConf).RequestOrder(data)
+	if err != nil {
+		tiktokEcPayFailNum.CounterInc()
+		msg := fmt.Sprintf("createDouyinPeriodOrder pkgName: %s, err: %v ", in.AppPkgName, err)
+		l.Error(msg)
+		return
+	}
+
+	reply = &pb.DouyinGeneralTradeReply{
+		Data:              dataStr,
+		ByteAuthorization: byteAuthorization,
 	}
 	return
 }
