@@ -90,13 +90,15 @@ func (l *NotifyDouyinLogic) NotifyDouyin(req *http.Request) (resp *types.DouyinR
 		return l.notifyPayment(req, body, data.Msg, data)
 	case douyin.EventRefund:
 		return l.notifyRefund(req, body, data.Msg, data)
-	case douyin.EventSettle: //该类型线上未接入，后续需要再实现对应逻辑
+	case douyin.EventSettle:
+		// 该类型线上未接入，后续需要再实现对应逻辑
 		return &types.DouyinResp{
 			ErrNo:   0,
 			ErrTips: "success",
 		}, nil
 	case douyin.EventPreCreateRefund:
-
+		// 退款申请回调
+		return l.notifyPreCreateRefund(req, body, data.Msg, data)
 	}
 
 	l.Errorf("NotifyDouyin, invalid msg type:%s, data:%v", data.Type, data)
@@ -382,6 +384,7 @@ func (l *NotifyDouyinLogic) notifyPreCreateRefund(req *http.Request, body []byte
 	resp := &types.DouyinResp{
 		ErrNo:   0,
 		ErrTips: "success",
+		Data:    nil,
 	}
 	return resp, nil
 }
