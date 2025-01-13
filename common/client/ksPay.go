@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"gitee.com/zhuyunkj/pay-gateway/api/common/payks"
 	"gitee.com/zhuyunkj/pay-gateway/common/utils"
 	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
 	"gitee.com/zhuyunkj/zhuyun-core/util"
@@ -93,22 +94,23 @@ type KsCreateOrderReq struct {
 	Subject     string `json:"subject"`      //商品描述
 	Detail      string `json:"detail"`       //商品详情
 	Type        int    `json:"type"`         //商品类型，不同商品类目的编号
-	ExpireTime  int    `json:"expire_time"`  //订单过期时间，单位秒，300s - 172800s
+	ExpireTime  int    `json:"expire_time"`  //订单过期时间，单位秒，300s - 3600s
 	Sign        string `json:"sign"`         //签名
-	NotifyUrl   string `json:"notify_url"`   //通知URL，不允许携带查询串
+	NotifyUrl   string `json:"notify_url"`   //支付回调，不允许携带查询串
 }
 
 type KsCreateOrderReqIos struct {
-	OutOrderNo    string `json:"out_order_no"`    //商户系统内部订单号
-	OpenId        string `json:"open_id"`         //快手用户在当前小程序的open_id
-	UserPayAmount int    `json:"user_pay_amount"` //用户实际金额，单位为[分]
-	OrderAmount   int    `json:"order_amount"`    //订单原价，单位为[分]，不允许传非整数的数值。
-	Subject       string `json:"subject"`         //商品描述
-	Detail        string `json:"detail"`          //商品详情
-	Type          int    `json:"type"`            //商品类型，不同商品类目的编号
-	ExpireTime    int    `json:"expire_time"`     //订单过期时间，单位秒，300s - 172800s
-	Sign          string `json:"sign"`            //签名
-	NotifyUrl     string `json:"notify_url"`      //通知URL，不允许携带查询串
+	OutOrderNo      string `json:"out_order_no"`      //商户系统内部订单号
+	OpenId          string `json:"open_id"`           //快手用户在当前小程序的open_id
+	Subject         string `json:"subject"`           //商品描述
+	Detail          string `json:"detail"`            //商品详情
+	Type            int    `json:"type"`              //商品类型，不同商品类目的编号
+	OrderAmount     int    `json:"order_amount"`      //订单原价，单位为[分]，不允许传非整数的数值。
+	UserPayAmount   int    `json:"user_pay_amount"`   //用户实际金额，单位为[分]
+	ExpireTime      int    `json:"expire_time"`       //订单过期时间，订单过期时间，单位秒，300s - 3600s
+	Sign            string `json:"sign"`              //签名
+	NotifyUrl       string `json:"notify_url"`        //支付回调，不允许携带查询串
+	RefundNotifyUrl string `json:"refund_notify_url"` //退款回调
 }
 
 type KsProvider struct {
@@ -198,12 +200,12 @@ func (p *KsPay) CreateOrder(info *PayOrder, openId string, accessToken string) (
 		Subject:     info.Subject,
 		Detail:      info.Subject,
 		Type:        info.KsTypeId,
-		ExpireTime:  3600, // 订单过期时间，单位秒，300s - 172800s
+		ExpireTime:  3600, // 订单过期时间，单位秒，300s - 3600s
 		NotifyUrl:   p.Config.NotifyUrl,
 	}
 	param.Sign = p.Sign(param)
 
-	dataStr, err := util.HttpPost(uri, param, 3*time.Second)
+	dataStr, err := util.HttpPost(uri, param, 5*time.Second)
 	if err != nil {
 		jsonStr, _ := jsoniter.MarshalToString(param)
 		util.CheckError("CreateOrder Err:%v, dataJson: %s", err, jsonStr)
@@ -216,7 +218,7 @@ func (p *KsPay) CreateOrder(info *PayOrder, openId string, accessToken string) (
 		errorMsg := jsoniter.Get([]byte(dataStr), "error_msg").ToString()
 		err = errors.New(errorMsg)
 		jsonStr, _ := jsoniter.MarshalToString(param)
-		util.CheckError("CreateOrderWithChannel Err:%v, dataJson: %s", err, jsonStr)
+		util.CheckError("CreateOrder Err:%v, dataJson: %s", err, jsonStr)
 		ksHttpRequestErr.CounterInc()
 		return
 	}
@@ -234,25 +236,43 @@ func (p *KsPay) CreateOrder(info *PayOrder, openId string, accessToken string) (
 // 苹果价格档位
 // https://open.kuaishou.com/docs/develop/server/iosEpayAbility/feeStandards.html
 func (p *KsPay) CreateOrderIos(info *PayOrder, openId string, accessToken string) (respData *KsCreateOrderWithChannelResp, err error) {
+	if info.Amount > payks.Ks_ios_pay_max_amount {
+		util.CheckError("CreateOrderIos amount: %d 超过价格上限 : %d", info.Amount, payks.Ks_ios_pay_max_amount)
+		ksHttpRequestErr.CounterInc()
+		return
+	}
+
 	uri := fmt.Sprintf("%s?app_id=%s&access_token=%s", KsCreateOrderIos, p.Config.AppId, accessToken)
 
+	// 	说明：iap支付预下单，和担保支付(单次)下单入参的区别是：
+	// 需要传入一个user_pay_amount字段，在无补贴情况下，user_pay_amount=order_amount
+	// user_pay_amount一定要是苹果支持的档位，否则无法支付成功
+	// refund_notify_url，在预下单时，需要传入退款回调url，用于用户退款时，回调通知给开发者
+
+	originPrice := payks.GetKsIosRecentlyPrice(info.Amount)
+
+	// 记录一下日志
+	logx.Slowf("kuiahsou CreateOrderIos originPrice: %d, after handled price: %d", info.Amount, originPrice)
+
 	param := &KsCreateOrderReqIos{
-		OutOrderNo:    info.OrderSn,
-		OpenId:        openId,
-		UserPayAmount: info.Amount, // 用户实际金额，单位为[分] 如果订单没有补贴，则user_pay_amount=order_amount
-		OrderAmount:   info.Amount, // 必填
-		Subject:       info.Subject,
-		Detail:        info.Subject,
-		Type:          info.KsTypeId,
-		ExpireTime:    3600, // 订单过期时间，单位秒，300s - 172800s
-		NotifyUrl:     p.Config.NotifyUrl,
+		OutOrderNo:      info.OrderSn,
+		OpenId:          openId,
+		Subject:         info.Subject, // string[1,128] 商品名称或者商品描述简介，建议长度在10个汉字以内，在收银台页面、支付账单中供用户查看使用。注：不可传入特殊符号、emoji 表情等，否则会影响支付成功，1汉字=2字符。
+		Detail:          info.Subject,
+		Type:            info.KsTypeId,
+		OrderAmount:     originPrice,        // 必填
+		UserPayAmount:   originPrice,        // 用户实际金额，单位为[分] 如果订单没有补贴，则user_pay_amount=order_amount
+		ExpireTime:      3600,               // 订单过期时间，单位秒，[300s,3600s]
+		NotifyUrl:       p.Config.NotifyUrl, // 支付回调
+		RefundNotifyUrl: p.Config.NotifyUrl, // 退款回调
 	}
+
 	param.Sign = p.Sign(param)
 
-	dataStr, err := util.HttpPost(uri, param, 3*time.Second)
+	dataStr, err := util.HttpPost(uri, param, 5*time.Second)
 	if err != nil {
 		jsonStr, _ := jsoniter.MarshalToString(param)
-		util.CheckError("CreateOrder Err:%v, dataJson: %s", err, jsonStr)
+		util.CheckError("CreateOrderIos Err:%v, dataJson: %s", err, jsonStr)
 		ksHttpRequestErr.CounterInc()
 		return
 	}
@@ -262,7 +282,7 @@ func (p *KsPay) CreateOrderIos(info *PayOrder, openId string, accessToken string
 		errorMsg := jsoniter.Get([]byte(dataStr), "error_msg").ToString()
 		err = errors.New(errorMsg)
 		jsonStr, _ := jsoniter.MarshalToString(param)
-		util.CheckError("CreateOrderWithChannel Err:%v, dataJson: %s", err, jsonStr)
+		util.CheckError("CreateOrderIos Err:%v, dataJson: %s", err, jsonStr)
 		ksHttpRequestErr.CounterInc()
 		return
 	}

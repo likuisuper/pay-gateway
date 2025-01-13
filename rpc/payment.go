@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+
 	"gitee.com/zhuyunkj/pay-gateway/common/global"
 	"gitee.com/zhuyunkj/pay-gateway/db"
 	"gitee.com/zhuyunkj/pay-gateway/rpc/internal/config"
@@ -82,7 +83,7 @@ func main() {
 		LogRollingConfig:    logRollingConfig,
 	}
 
-	opts := nacos2.NewNacosConfig( c.Name, c.Nacos.ListenOn, sc, cc)
+	opts := nacos2.NewNacosConfig(c.Name, c.Nacos.ListenOn, sc, cc)
 	err = nacos2.RegisterService(opts)
 	if err != nil {
 		logx.Errorf("nacosService err:%v", err)
