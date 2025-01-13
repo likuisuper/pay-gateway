@@ -75,7 +75,7 @@ func NewPmPayOrderModel(dbName string) *PmPayOrderModel {
 func (o *PmPayOrderModel) Create(info *PmPayOrderTable) error {
 	err := o.DB.Create(info).Error
 	if err != nil {
-		logx.Errorf("创建支付订单失败，err:=%v", err)
+		logx.Errorf("创建支付订单失败 err: %v", err)
 		createPayOrderErr.CounterInc()
 	}
 	return err

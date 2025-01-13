@@ -37,8 +37,9 @@ type OrderPayLogic struct {
 	ctx    context.Context
 	svcCtx *svc.ServiceContext
 	logx.Logger
-	payOrderModel  *model.PmPayOrderModel
-	appConfigModel *model.PmAppConfigModel
+	payOrderModel         *model.PmPayOrderModel
+	payDyPeriodOrderModel *model.PmDyPeriodOrderModel
+	appConfigModel        *model.PmAppConfigModel
 
 	payConfigAlipayModel *model.PmPayConfigAlipayModel
 	payConfigWechatModel *model.PmPayConfigWechatModel
@@ -47,16 +48,20 @@ type OrderPayLogic struct {
 
 func NewOrderPayLogic(ctx context.Context, svcCtx *svc.ServiceContext) *OrderPayLogic {
 	return &OrderPayLogic{
-		ctx:                  ctx,
-		svcCtx:               svcCtx,
-		Logger:               logx.WithContext(ctx),
-		payOrderModel:        model.NewPmPayOrderModel(define.DbPayGateway),
-		appConfigModel:       model.NewPmAppConfigModel(define.DbPayGateway),
-		payConfigAlipayModel: model.NewPmPayConfigAlipayModel(define.DbPayGateway),
-		payConfigWechatModel: model.NewPmPayConfigWechatModel(define.DbPayGateway),
-		payConfigKsModel:     model.NewPmPayConfigKsModel(define.DbPayGateway),
+		ctx:                   ctx,
+		svcCtx:                svcCtx,
+		Logger:                logx.WithContext(ctx),
+		payOrderModel:         model.NewPmPayOrderModel(define.DbPayGateway),
+		payDyPeriodOrderModel: model.NewPmDyPeriodOrderModel(),
+		appConfigModel:        model.NewPmAppConfigModel(define.DbPayGateway),
+		payConfigAlipayModel:  model.NewPmPayConfigAlipayModel(define.DbPayGateway),
+		payConfigWechatModel:  model.NewPmPayConfigWechatModel(define.DbPayGateway),
+		payConfigKsModel:      model.NewPmPayConfigKsModel(define.DbPayGateway),
 	}
 }
+
+// 抖音签约单后缀
+const dy_sign_order_suffix = "00"
 
 // OrderPay 创建支付订单
 func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (out *pb.OrderPayResp, err error) {
@@ -96,9 +101,44 @@ func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (out *pb.OrderPayResp, err 
 		return
 	}
 
-	if orderInfo == nil {
-		orderInfo = &model.PmPayOrderTable{
-			OrderSn:    in.OrderSn,
+	if orderInfo != nil && orderInfo.ID > 0 {
+		// 其实到这里 应该是出错了 订单号不能重复
+		err = fmt.Errorf("订单号不能重复 orderSn:%s, appId:%s ", in.OrderSn, payAppId)
+		l.Error(err.Error())
+		orderTableIOFailNum.CounterInc()
+		return
+
+		// if orderInfo.PayStatus != model.PmPayOrderTablePayStatusNo {
+		// 	err = fmt.Errorf("订单不是未支付状态, orderSn:%s, appId:%s", in.OrderSn, payAppId)
+		// 	util.Error(l.ctx, err.Error())
+		// 	return
+		// }
+	}
+
+	orderInfo = &model.PmPayOrderTable{
+		OrderSn:    in.OrderSn,
+		AppPkgName: in.AppPkgName,
+		Amount:     int(in.Amount),
+		Subject:    in.Subject,
+		NotifyUrl:  in.NotifyURL,
+		PayAppId:   payAppId,        //创建订单时，直接指定PayAppid，减少一次DB操作
+		PayType:    int(in.PayType), // 创建订单时，传入支付类型，补偿机制依赖
+		PayStatus:  model.PmPayOrderTablePayStatusNo,
+		Currency:   in.Currency.String(),
+	}
+	err = l.payOrderModel.Create(orderInfo)
+	if err != nil {
+		err = fmt.Errorf("创建支付订单失败 %w", err)
+		l.Errorw("创建支付订单失败", logx.Field("err", err), logx.Field("orderInfo", orderInfo))
+		orderTableIOFailNum.CounterInc()
+		return
+	}
+
+	if in.IsPeriodProduct {
+		// 周期签约订单
+		orderInfo2 := &model.PmDyPeriodOrderTable{
+			OrderSn:    in.OrderSn + dy_sign_order_suffix, // 周期签约订单后面固定添加
+			UserId:     int(in.InnerUserId),
 			AppPkgName: in.AppPkgName,
 			Amount:     int(in.Amount),
 			Subject:    in.Subject,
@@ -108,20 +148,12 @@ func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (out *pb.OrderPayResp, err 
 			PayStatus:  model.PmPayOrderTablePayStatusNo,
 			Currency:   in.Currency.String(),
 		}
-		err = l.payOrderModel.Create(orderInfo)
-		if err != nil {
-			err = fmt.Errorf("创建支付订单失败 %w", err)
-			l.Errorw("创建支付订单失败", logx.Field("err", err), logx.Field("orderInfo", orderInfo))
-			orderTableIOFailNum.CounterInc()
-			return
-		}
-	} else {
-		// 其实到这里 应该是出错了 订单号不能重复
-		l.Errorf("下单创建了重复订单 orderSn:%s, appId:%s", in.OrderSn, payAppId)
 
-		if orderInfo.PayStatus != model.PmPayOrderTablePayStatusNo {
-			err = fmt.Errorf("订单不是未支付状态, orderSn:%s, appId:%s", in.OrderSn, payAppId)
-			util.Error(l.ctx, err.Error())
+		err = l.payDyPeriodOrderModel.Create(orderInfo2)
+		if err != nil {
+			err = fmt.Errorf("创建周期签约订单失败 %w", err)
+			l.Errorw("创建周期签约订单失败", logx.Field("err", err), logx.Field("orderInfo2", orderInfo2))
+			orderTableIOFailNum.CounterInc()
 			return
 		}
 	}
@@ -492,7 +524,7 @@ func (l *OrderPayLogic) createDouyinPeriodOrder(in *pb.OrderPayReq, payConf *dou
 	douyinReq := in.DouyinGeneralTradeReq
 
 	authPayOrder := &douyin.AuthPayOrderObj{
-		OutPayOrderNo: in.GetOrderSn() + "00", // 订单号后面增加00
+		OutPayOrderNo: in.GetOrderSn(), // 代扣单单号 订单号后面增加00
 		MerchantUid:   in.GetMerchantUid(),
 		NotifyUrl:     payConf.NotifyUrl,
 	}
@@ -503,7 +535,7 @@ func (l *OrderPayLogic) createDouyinPeriodOrder(in *pb.OrderPayReq, payConf *dou
 	}
 
 	data := &douyin.RequestPeriodOrderData{
-		OutAuthOrderNo: in.GetOrderSn(),
+		OutAuthOrderNo: in.GetOrderSn() + dy_sign_order_suffix, // 周期签约订单后面固定添加
 		ServiceId:      douyinReq.GetSkuId(),
 		OpenId:         in.GetInnerUserOpen(),
 		ExpireSeconds:  code.DouyinPayExpireSeconds, // 默认是半个小时
