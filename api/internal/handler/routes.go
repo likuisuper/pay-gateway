@@ -69,6 +69,11 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 				Path:    "/internal/complain",
 				Handler: inter.HandleComplainHandler(serverCtx),
 			},
+			{
+				Method:  http.MethodGet,
+				Path:    "/internal/paySubscribeMoney",
+				Handler: inter.HandlePaySubscribeMoneyHandler(serverCtx),
+			},
 		},
 	)
 
@@ -128,21 +133,6 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 				Method:  http.MethodPost,
 				Path:    "/notify/huawei",
 				Handler: notify.NotifyHuaweiHandler(serverCtx),
-			},
-			{
-				Method:  http.MethodGet,
-				Path:    "/internal/paySubscribeMoney",
-				Handler: inter.HandlePaySubscribeMoneyHandler(serverCtx),
-			},
-		},
-	)
-
-	server.AddRoutes(
-		[]rest.Route{
-			{
-				Method:  http.MethodPost,
-				Path:    "/crontab/supplementaryOrders",
-				Handler: crontab.SupplementaryOrdersHandler(serverCtx),
 			},
 		},
 	)
