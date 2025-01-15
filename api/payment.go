@@ -4,6 +4,9 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"strconv"
+	"time"
+
 	"gitee.com/zhuyunkj/pay-gateway/api/internal/crontab"
 	"gitee.com/zhuyunkj/pay-gateway/db"
 	"gitee.com/zhuyunkj/zhuyun-core/alarm"
@@ -11,8 +14,6 @@ import (
 	"gitee.com/zhuyunkj/zhuyun-core/nacos"
 	"gitee.com/zhuyunkj/zhuyun-core/util"
 	"github.com/zeromicro/go-zero/core/logx"
-	"strconv"
-	"time"
 
 	"gitee.com/zhuyunkj/pay-gateway/api/internal/config"
 	"gitee.com/zhuyunkj/pay-gateway/api/internal/handler"
@@ -36,13 +37,13 @@ func main() {
 	conf.MustLoad(*nacosConfigFile, &nacosConfig)
 	nacosClient, nacosErr := nacos.InitNacosClient(nacosConfig)
 	if nacosErr != nil {
-		logx.Errorf("初始化nacos客户端失败: " + nacosErr.Error())
+		logx.Error("初始化nacos客户端失败: " + nacosErr.Error())
 	}
 
 	// 加载一次配置
 	err := nacosClient.GetConfig(nacosConfig.DataId, nacosConfig.GroupId, &c)
 	if err != nil {
-		logx.Errorf("获取配置失败：" + err.Error())
+		logx.Error("获取配置失败：" + err.Error())
 		return
 	}
 

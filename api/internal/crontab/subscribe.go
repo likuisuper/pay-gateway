@@ -41,7 +41,7 @@ type CrontabOrder struct {
 }
 
 const (
-	payOrderTime = "0 30 23 * * ?"
+	payOrderTime = "0 0 11 * * ?"
 )
 
 var crontabOrder *CrontabOrder
@@ -70,6 +70,11 @@ func InitCrontabOrder(namingClient *nacos.Instance, svcName string, c *config.Co
 
 var orderModel *dbmodel.OrderModel
 
+func GetCrontabOrder() *CrontabOrder {
+
+	return crontabOrder
+}
+
 func (c *CrontabOrder) PayOrder() {
 	instances, err := c.Nacos.SelectAllInstances(&c.SvcName)
 	if err != nil {
@@ -82,6 +87,7 @@ func (c *CrontabOrder) PayOrder() {
 	if !localDo {
 		return
 	}
+	logx.Errorf("开始执行订阅扣款")
 
 	orderModel = dbmodel.NewOrderModel(define.DbPayGateway)
 
@@ -91,33 +97,37 @@ func (c *CrontabOrder) PayOrder() {
 			// 记录获取失败数
 			GetFirstUnpaidSubscribeFeeErrNum.CounterInc()
 		}
-
-		logx.Errorf("CrontabOrder::CreateOrder error: ", err)
+		logx.Errorf("没有可扣款单 CrontabOrder::CreateOrder error: %v", err)
 		return
 	}
 
 	if firstModel.ID == 0 {
 		logx.Info("暂时没有需要扣款的VIP订阅")
+		logx.Errorf("没有可扣款单")
 		return
 	}
 
 	lastId := firstModel.ID - 1
 	for {
+		logx.Errorf("进入循环扣款")
 		models, err := orderModel.GetRangeData(lastId)
 		if err != nil {
-			logx.Errorf("orderModel::GetRangeData error: ", err)
+			logx.Errorf("orderModel::GetRangeData error: %v", err)
 			break
 		}
 
 		if len(models) == 0 {
 			break
 		}
-
 		for _, tmpOrderModel := range models {
+			logx.Errorf("开始扣款订单号：%s", tmpOrderModel.OutTradeNo)
 			lastId = tmpOrderModel.ID
 			err = c.PaySubscribeFee(tmpOrderModel)
 			if err != nil {
+				logx.Errorf("扣款失败 %v", err)
 				PaySubscribeFeeErrNum.CounterInc()
+			} else {
+				logx.Errorf("扣款成功：%s", tmpOrderModel.OutTradeNo)
 			}
 			time.Sleep(50 * time.Millisecond)
 		}

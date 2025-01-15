@@ -1,12 +1,14 @@
 package model
 
 import (
+	"errors"
+	"time"
+
 	"gitee.com/zhuyunkj/pay-gateway/common/client"
 	"gitee.com/zhuyunkj/pay-gateway/db"
 	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
 	"github.com/zeromicro/go-zero/core/logx"
 	"gorm.io/gorm"
-	"time"
 )
 
 var (
@@ -47,8 +49,12 @@ func NewPmPayConfigKsModel(dbName string) *PmPayConfigKsModel {
 	}
 }
 
-//获取应用配置信息
+// 获取应用配置信息
 func (o *PmPayConfigKsModel) GetOneByAppID(appID string) (appConfig *PmPayConfigKsTable, err error) {
+	if appID == "" {
+		return nil, errors.New("appID cannot be empty")
+	}
+
 	var cfg PmPayConfigKsTable
 	err = o.DB.Where(" `app_id` = ?", appID).First(&cfg).Error
 	if err != nil {
@@ -56,5 +62,6 @@ func (o *PmPayConfigKsModel) GetOneByAppID(appID string) (appConfig *PmPayConfig
 		getPayConfigKsErr.CounterInc()
 		return nil, err
 	}
+
 	return &cfg, nil
 }

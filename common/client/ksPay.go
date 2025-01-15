@@ -6,30 +6,66 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"gitee.com/zhuyunkj/pay-gateway/common/global"
-	"gitee.com/zhuyunkj/pay-gateway/common/utils"
-	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
-	"gitee.com/zhuyunkj/zhuyun-core/util"
-	jsoniter "github.com/json-iterator/go"
-	"github.com/zeromicro/go-zero/core/logx"
 	"io/ioutil"
 	"net/http"
 	"sort"
 	"strings"
 	"time"
+
+	"gitee.com/zhuyunkj/pay-gateway/api/common/payks"
+	"gitee.com/zhuyunkj/pay-gateway/common/utils"
+	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
+	"gitee.com/zhuyunkj/zhuyun-core/util"
+	jsoniter "github.com/json-iterator/go"
+	"github.com/zeromicro/go-zero/core/logx"
 )
 
 var (
 	ksHttpRequestErr = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "ksHttpRequestErr", nil, "快手请求错误", nil})}
 )
 
-//请求地址
+// 快手开发接口文档
+// https://open.kuaishou.com/docs/develop/server/epay/open-api-new/prePay-new.html
+
+// =============================IOS支付说明=============================
+// https://open.kuaishou.com/docs/develop/server/iosEpayAbility/iosEpayGuide.html
+// 快手小程序接入iOS的IAP支付，相较于担保支付(单次) (opens new window)，有两处变动改造点
+// 使用/openapi/mp/developer/epay/iap/create_order预下单接口
+// ks.pay接口增加苹果内购标识
+//
+// 苹果内购不支持线上退款，因此没有退款请求接口。若用户有退款请求，可使用以下方式
+// 商家可联系用户线下协商退款
+// 引导用户至苹果客服侧申请退款
+// 1.3 关于订单同步
+// IAP支付的订单需要进行订单同步，使用订单信息同步接口(opens new window)
+//
+// 1.4 关于账单查询
+// 与担保支付的账单查询接口保持一致：担保支付|账单查询能力(opens new window)
+//
+// 支付方式为APPLE_PAY的订单，即为苹果支付的订单
+//
+// IAP订单会在支付账单里面添加
+//
+// 订单原价
+// 用户支付金额
+// 平台补贴金额
+// 支付渠道：APPLE_PAY
+// 在退款账单新增：
+//
+// 支付渠道：APPLE_PAY
+// 1.5 版本说明
+// 在iOS系统中，快手11.6.50版本开始封禁小程序支付能力，无法通过微信或者支付宝支付。
+//
+// 在12.0.20版本中支持苹果IAP支付，因此在接入IAP支付时，需要把测试机版本升级到12.0.20及以上
+// =====================================================================
+
+// 请求地址
 const (
-	ksAccessToken            = "https://open.kuaishou.com/oauth2/access_token"                                 //获取accessToken
-	KsCreateOrderWithChannel = "https://open.kuaishou.com/openapi/mp/developer/epay/create_order_with_channel" //预下单接口（无收银台版）
-	KsCreateOrder            = "https://open.kuaishou.com/openapi/mp/developer/epay/create_order"              //预下单接口（有收银台版）
-	KsCancelChannel          = "https://open.kuaishou.com/openapi/mp/developer/epay/cancel_channel"            //取消支付方式
-	KsQueryOrder             = "https://open.kuaishou.com/openapi/mp/developer/epay/query_order"               //查询订单
+	KsCreateOrderWithChannel = "https://open.kuaishou.com/openapi/mp/developer/epay/create_order_with_channel" // 预下单接口安卓（无收银台版）
+	KsCreateOrder            = "https://open.kuaishou.com/openapi/mp/developer/epay/create_order"              // 预下单接口安卓（有收银台版）
+	KsCreateOrderIos         = "https://open.kuaishou.com/openapi/mp/developer/epay/iap/create_order"          // 预下单接口苹果（有收银台版） 注：IAP支付接入，仅因对iOS系统内，安卓系统无需关注，使用老的担保支付即可
+	KsCancelChannel          = "https://open.kuaishou.com/openapi/mp/developer/epay/cancel_channel"            // 取消支付方式
+	KsQueryOrder             = "https://open.kuaishou.com/openapi/mp/developer/epay/query_order"               // 查询订单
 )
 
 type KsPayConfig struct {
@@ -58,9 +94,23 @@ type KsCreateOrderReq struct {
 	Subject     string `json:"subject"`      //商品描述
 	Detail      string `json:"detail"`       //商品详情
 	Type        int    `json:"type"`         //商品类型，不同商品类目的编号
-	ExpireTime  int    `json:"expire_time"`  //订单过期时间，单位秒，300s - 172800s
+	ExpireTime  int    `json:"expire_time"`  //订单过期时间，单位秒，300s - 3600s
 	Sign        string `json:"sign"`         //签名
-	NotifyUrl   string `json:"notify_url"`   //通知URL，不允许携带查询串
+	NotifyUrl   string `json:"notify_url"`   //支付回调，不允许携带查询串
+}
+
+type KsCreateOrderReqIos struct {
+	OutOrderNo      string `json:"out_order_no"`      //商户系统内部订单号
+	OpenId          string `json:"open_id"`           //快手用户在当前小程序的open_id
+	Subject         string `json:"subject"`           //商品描述
+	Detail          string `json:"detail"`            //商品详情
+	Type            int    `json:"type"`              //商品类型，不同商品类目的编号
+	OrderAmount     int    `json:"order_amount"`      //订单原价，单位为[分]，不允许传非整数的数值。
+	UserPayAmount   int    `json:"user_pay_amount"`   //用户实际金额，单位为[分]
+	ExpireTime      int    `json:"expire_time"`       //订单过期时间，订单过期时间，单位秒，300s - 3600s
+	Sign            string `json:"sign"`              //签名
+	NotifyUrl       string `json:"notify_url"`        //支付回调，不允许携带查询串
+	RefundNotifyUrl string `json:"refund_notify_url"` //退款回调
 }
 
 type KsProvider struct {
@@ -84,69 +134,19 @@ type KsQueryOrderResp struct {
 	PromotionAmount int    `json:"promotion_amount"` //预计分销金额，单位：分
 }
 
-//快手支付
+// 快手支付
 type KsPay struct {
 	Config KsPayConfig
 }
 
-var ksPay *KsPay
-
 func NewKsPay(config KsPayConfig) *KsPay {
-	if ksPay == nil {
-		ksPay = &KsPay{
-			Config: config,
-		}
+	return &KsPay{
+		Config: config,
 	}
-	return ksPay
 }
 
-//获取accessToken
-func (p *KsPay) HttpGetAccessToken() (accessToken string, err error) {
-	dataMap := map[string]string{
-		"app_id":     p.Config.AppId,
-		"app_secret": p.Config.AppSecret,
-		"grant_type": "client_credentials",
-	}
-	body, err := p.post(ksAccessToken, dataMap)
-	if err != nil {
-		util.CheckError("HttpGetAccessToken :%v", err)
-		ksHttpRequestErr.CounterInc()
-		return
-	}
-	resultCode := jsoniter.Get(body, "result").ToInt()
-	if resultCode != 1 {
-		err = errors.New("获取失败")
-		return
-	}
-	accessToken = jsoniter.Get(body, "access_token").ToString()
-	return
-}
-
-//获取accessToken 有缓存
-func (p *KsPay) GetAccessTokenWithCache() (accessToken string, err error) {
-	cacheKey := "ks:access:token:" + p.Config.AppId
-	source := func() interface{} {
-		at, atErr := p.HttpGetAccessToken()
-		if atErr != nil {
-			return atErr
-		}
-		return at
-	}
-	expire := 86400
-	err = global.MemoryCacheInstance.GetDataWithCache(cacheKey, expire, &accessToken, source)
-	if err != nil {
-		return
-	}
-	return
-}
-
-//预下单接口(无收银台版)
-func (p *KsPay) CreateOrderWithChannel(info *PayOrder, openId string) (respData *KsCreateOrderWithChannelResp, err error) {
-	accessToken, err := p.GetAccessTokenWithCache()
-	if err != nil {
-		util.CheckError("CreateOrderWithChannel Err:%v", err)
-		return
-	}
+// 预下单接口(无收银台版)
+func (p *KsPay) CreateOrderWithChannel(info *PayOrder, openId string, accessToken string) (respData *KsCreateOrderWithChannelResp, err error) {
 	uri := fmt.Sprintf("%s?app_id=%s&access_token=%s", KsCreateOrderWithChannel, p.Config.AppId, accessToken)
 	provider := KsProvider{
 		Provider:            "WECHAT",
@@ -189,13 +189,8 @@ func (p *KsPay) CreateOrderWithChannel(info *PayOrder, openId string) (respData 
 	return
 }
 
-//预下单接口(有收银台版)
-func (p *KsPay) CreateOrder(info *PayOrder, openId string) (respData *KsCreateOrderWithChannelResp, err error) {
-	accessToken, err := p.GetAccessTokenWithCache()
-	if err != nil {
-		util.CheckError("CreateOrder Err:%v", err)
-		return
-	}
+// 预下单接口安卓(有收银台版)
+func (p *KsPay) CreateOrder(info *PayOrder, openId string, accessToken string) (respData *KsCreateOrderWithChannelResp, err error) {
 	uri := fmt.Sprintf("%s?app_id=%s&access_token=%s", KsCreateOrder, p.Config.AppId, accessToken)
 
 	param := &KsCreateOrderReq{
@@ -205,24 +200,25 @@ func (p *KsPay) CreateOrder(info *PayOrder, openId string) (respData *KsCreateOr
 		Subject:     info.Subject,
 		Detail:      info.Subject,
 		Type:        info.KsTypeId,
-		ExpireTime:  3600,
+		ExpireTime:  3600, // 订单过期时间，单位秒，300s - 3600s
 		NotifyUrl:   p.Config.NotifyUrl,
 	}
 	param.Sign = p.Sign(param)
 
-	dataStr, err := util.HttpPost(uri, param, 3*time.Second)
+	dataStr, err := util.HttpPost(uri, param, 5*time.Second)
 	if err != nil {
 		jsonStr, _ := jsoniter.MarshalToString(param)
 		util.CheckError("CreateOrder Err:%v, dataJson: %s", err, jsonStr)
 		ksHttpRequestErr.CounterInc()
 		return
 	}
+
 	resultCode := jsoniter.Get([]byte(dataStr), "result").ToInt()
 	if resultCode != 1 {
 		errorMsg := jsoniter.Get([]byte(dataStr), "error_msg").ToString()
 		err = errors.New(errorMsg)
 		jsonStr, _ := jsoniter.MarshalToString(param)
-		util.CheckError("CreateOrderWithChannel Err:%v, dataJson: %s", err, jsonStr)
+		util.CheckError("CreateOrder Err:%v, dataJson: %s", err, jsonStr)
 		ksHttpRequestErr.CounterInc()
 		return
 	}
@@ -231,17 +227,75 @@ func (p *KsPay) CreateOrder(info *PayOrder, openId string) (respData *KsCreateOr
 	jsoniter.Get([]byte(dataStr), "order_info").ToVal(respData)
 
 	logx.Slowf("KsPay-CreateOrder, param:%+v, dataStr:%s", param, dataStr)
-
 	return
 }
 
-//取消支付方式接口
-func (p *KsPay) CancelChannel(orderSn string) (err error) {
-	accessToken, err := p.GetAccessTokenWithCache()
-	if err != nil {
-		util.CheckError("CreateOrderWithChannel Err:%v", err)
+// 预下单接口苹果ios
+// https://open.kuaishou.com/docs/develop/server/iosEpayAbility/iosEpayGuide.html
+//
+// 苹果价格档位
+// https://open.kuaishou.com/docs/develop/server/iosEpayAbility/feeStandards.html
+func (p *KsPay) CreateOrderIos(info *PayOrder, openId string, accessToken string) (respData *KsCreateOrderWithChannelResp, err error) {
+	if info.Amount > payks.Ks_ios_pay_max_amount {
+		util.CheckError("CreateOrderIos amount: %d 超过价格上限 : %d", info.Amount, payks.Ks_ios_pay_max_amount)
+		ksHttpRequestErr.CounterInc()
 		return
 	}
+
+	uri := fmt.Sprintf("%s?app_id=%s&access_token=%s", KsCreateOrderIos, p.Config.AppId, accessToken)
+
+	// 	说明：iap支付预下单，和担保支付(单次)下单入参的区别是：
+	// 需要传入一个user_pay_amount字段，在无补贴情况下，user_pay_amount=order_amount
+	// user_pay_amount一定要是苹果支持的档位，否则无法支付成功
+	// refund_notify_url，在预下单时，需要传入退款回调url，用于用户退款时，回调通知给开发者
+
+	originPrice := payks.GetKsIosRecentlyPrice(info.Amount)
+
+	// 记录一下日志
+	logx.Slowf("kuiahsou CreateOrderIos originPrice: %d, after handled price: %d", info.Amount, originPrice)
+
+	param := &KsCreateOrderReqIos{
+		OutOrderNo:      info.OrderSn,
+		OpenId:          openId,
+		Subject:         info.Subject, // string[1,128] 商品名称或者商品描述简介，建议长度在10个汉字以内，在收银台页面、支付账单中供用户查看使用。注：不可传入特殊符号、emoji 表情等，否则会影响支付成功，1汉字=2字符。
+		Detail:          info.Subject,
+		Type:            info.KsTypeId,
+		OrderAmount:     originPrice,        // 必填
+		UserPayAmount:   originPrice,        // 用户实际金额，单位为[分] 如果订单没有补贴，则user_pay_amount=order_amount
+		ExpireTime:      3600,               // 订单过期时间，单位秒，[300s,3600s]
+		NotifyUrl:       p.Config.NotifyUrl, // 支付回调
+		RefundNotifyUrl: p.Config.NotifyUrl, // 退款回调
+	}
+
+	param.Sign = p.Sign(param)
+
+	dataStr, err := util.HttpPost(uri, param, 5*time.Second)
+	if err != nil {
+		jsonStr, _ := jsoniter.MarshalToString(param)
+		util.CheckError("CreateOrderIos Err:%v, dataJson: %s", err, jsonStr)
+		ksHttpRequestErr.CounterInc()
+		return
+	}
+
+	resultCode := jsoniter.Get([]byte(dataStr), "result").ToInt()
+	if resultCode != 1 {
+		errorMsg := jsoniter.Get([]byte(dataStr), "error_msg").ToString()
+		err = errors.New(errorMsg)
+		jsonStr, _ := jsoniter.MarshalToString(param)
+		util.CheckError("CreateOrderIos Err:%v, dataJson: %s", err, jsonStr)
+		ksHttpRequestErr.CounterInc()
+		return
+	}
+
+	respData = new(KsCreateOrderWithChannelResp)
+	jsoniter.Get([]byte(dataStr), "order_info").ToVal(respData)
+
+	logx.Slowf("KsPay-CreateOrder, param:%+v, dataStr:%s", param, dataStr)
+	return
+}
+
+// 取消支付方式接口
+func (p *KsPay) CancelChannel(orderSn string, accessToken string) (err error) {
 	uri := fmt.Sprintf("%s?app_id=%s&access_token=%s", KsCancelChannel, p.Config.AppId, accessToken)
 	params := map[string]interface{}{
 		"out_order_no": orderSn,
@@ -267,13 +321,8 @@ func (p *KsPay) CancelChannel(orderSn string) (err error) {
 
 }
 
-//查询订单
-func (p *KsPay) QueryOrder(orderSn string) (paymentInfo *KsQueryOrderResp, err error) {
-	accessToken, err := p.GetAccessTokenWithCache()
-	if err != nil {
-		util.CheckError("QueryOrder Err:%v", err)
-		return
-	}
+// 查询订单
+func (p *KsPay) QueryOrder(orderSn string, accessToken string) (paymentInfo *KsQueryOrderResp, err error) {
 	uri := fmt.Sprintf("%s?app_id=%s&access_token=%s", KsQueryOrder, p.Config.AppId, accessToken)
 	params := map[string]interface{}{
 		"out_order_no": orderSn,
@@ -285,6 +334,7 @@ func (p *KsPay) QueryOrder(orderSn string) (paymentInfo *KsQueryOrderResp, err e
 		ksHttpRequestErr.CounterInc()
 		return
 	}
+
 	resultCode := jsoniter.Get([]byte(dataStr), "result").ToInt()
 	if resultCode != 1 {
 		errorMsg := jsoniter.Get([]byte(dataStr), "error_msg").ToString()
@@ -293,6 +343,7 @@ func (p *KsPay) QueryOrder(orderSn string) (paymentInfo *KsQueryOrderResp, err e
 		ksHttpRequestErr.CounterInc()
 		return
 	}
+
 	paymentInfo = new(KsQueryOrderResp)
 	jsoniter.Get([]byte(dataStr), "payment_info").ToVal(paymentInfo)
 	return
@@ -300,6 +351,8 @@ func (p *KsPay) QueryOrder(orderSn string) (paymentInfo *KsQueryOrderResp, err e
 
 //==========================  util  ========================================================================
 
+// 快手支付核心签名
+// https://open.kuaishou.com/docs/develop/server/epay/appendix.html
 func (p *KsPay) Sign(param interface{}) (sign string) {
 	dataMap := make(map[string]interface{}, 0)
 	jsonBytes, _ := json.Marshal(param)
@@ -320,13 +373,13 @@ func (p *KsPay) Sign(param interface{}) (sign string) {
 	return
 }
 
-//参数生成签名
+// 参数生成签名
 func (p *KsPay) makeSign(data map[string]string) string {
 	str := ""
 
 	//map根据key排序
 	var keys = make([]string, 0)
-	for k, _ := range data {
+	for k := range data {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
@@ -347,7 +400,7 @@ func (p *KsPay) makeSign(data map[string]string) string {
 	return sign
 }
 
-//请求快手post  x-www-form-urlencoded方式传参
+// 请求快手post  x-www-form-urlencoded方式传参
 func (p *KsPay) post(url string, postData map[string]string) (body []byte, err error) {
 	dataStr := ""
 	for k, v := range postData {
@@ -378,7 +431,7 @@ func (p *KsPay) post(url string, postData map[string]string) (body []byte, err e
 	return
 }
 
-//回调签名
+// 回调签名
 func (p *KsPay) NotifySign(bodyStr string) (sign string) {
 	str := bodyStr + p.Config.AppSecret
 	h := md5.New()

@@ -1,12 +1,12 @@
 package model
 
 import (
-	"errors"
+	"time"
+
 	"gitee.com/zhuyunkj/pay-gateway/db"
 	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
 	"github.com/zeromicro/go-zero/core/logx"
 	"gorm.io/gorm"
-	"time"
 )
 
 var (
@@ -55,7 +55,7 @@ func NewRefundModel(dbName string) *RefundModel {
 	}
 }
 
-//创建订单
+// 创建订单
 func (o *RefundModel) Create(info *RefundTable) error {
 	err := o.DB.Create(info).Error
 	if err != nil {
@@ -65,7 +65,7 @@ func (o *RefundModel) Create(info *RefundTable) error {
 	return err
 }
 
-//更新订单
+// 更新订单
 func (o *RefundModel) Update(outRefundNo string, info *RefundTable) error {
 	err := o.DB.Where("out_trade_refund_no = ?", outRefundNo).Updates(info).Error
 	if err != nil {
@@ -75,40 +75,36 @@ func (o *RefundModel) Update(outRefundNo string, info *RefundTable) error {
 	return err
 }
 
-//获取订单信息
+// 获取订单信息
 func (o *RefundModel) GetOneByOutTradeRefundNo(outTradeRefundNo string) (info *RefundTable, err error) {
 	var refundInfo RefundTable
 	err = o.DB.Where("`out_trade_refund_no` = ? ", outTradeRefundNo).First(&refundInfo).Error
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, nil
-	}
 	if err != nil {
-		logx.Errorf("获取退款订单信息失败，err:=%v, out_trade_refund_no=%s", err, outTradeRefundNo)
+		logx.Errorf("获取退款订单信息失败 err:=%v, out_trade_refund_no=%s", err, outTradeRefundNo)
 		getRefundOrderErr.CounterInc()
 		return nil, err
 	}
+
 	return &refundInfo, nil
 }
 
-//获取订单信息
+// 获取订单信息
 func (o *RefundModel) GetOneByOutTradeNo(outTradeNo string) (info *RefundTable, err error) {
 	var refundInfo RefundTable
 	err = o.DB.Where("`out_trade_no` = ? ", outTradeNo).First(&refundInfo).Error
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, nil
-	}
 	if err != nil {
-		logx.Errorf("获取订单信息失败，err:=%v, out_trade_no=%s", err, outTradeNo)
+		logx.Errorf("获取订单信息失败 err:%v, out_trade_no:%s", err, outTradeNo)
 		getRefundOrderErr.CounterInc()
 		return nil, err
 	}
+
 	return &refundInfo, nil
 }
 
 func (o *RefundModel) UpdateNotify(info *RefundTable) error {
 	err := o.DB.Save(&info).Error
 	if err != nil {
-		logx.Errorf("更新回调退款订单失败，err=%v", err)
+		logx.Errorf("更新回调退款订单失败 err=%v", err)
 		updateRefundOrderNotifyErr.CounterInc()
 	}
 	return err

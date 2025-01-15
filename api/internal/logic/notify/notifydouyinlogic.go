@@ -3,6 +3,10 @@ package notify
 import (
 	"context"
 	"fmt"
+	"io"
+	"net/http"
+	"time"
+
 	douyin "gitee.com/zhuyunkj/pay-gateway/common/client/douyinGeneralTrade"
 	"gitee.com/zhuyunkj/pay-gateway/common/define"
 	"gitee.com/zhuyunkj/pay-gateway/common/exception"
@@ -13,9 +17,6 @@ import (
 	"gitee.com/zhuyunkj/zhuyun-core/util"
 	"github.com/bytedance/sonic"
 	"github.com/google/uuid"
-	"io"
-	"net/http"
-	"time"
 
 	"gitee.com/zhuyunkj/pay-gateway/api/internal/svc"
 	"gitee.com/zhuyunkj/pay-gateway/api/internal/types"
@@ -89,13 +90,15 @@ func (l *NotifyDouyinLogic) NotifyDouyin(req *http.Request) (resp *types.DouyinR
 		return l.notifyPayment(req, body, data.Msg, data)
 	case douyin.EventRefund:
 		return l.notifyRefund(req, body, data.Msg, data)
-	case douyin.EventSettle: //该类型线上未接入，后续需要再实现对应逻辑
+	case douyin.EventSettle:
+		// 该类型线上未接入，后续需要再实现对应逻辑
 		return &types.DouyinResp{
 			ErrNo:   0,
 			ErrTips: "success",
 		}, nil
 	case douyin.EventPreCreateRefund:
-
+		// 退款申请回调
+		return l.notifyPreCreateRefund(req, body, data.Msg, data)
 	}
 
 	l.Errorf("NotifyDouyin, invalid msg type:%s, data:%v", data.Type, data)
@@ -152,8 +155,8 @@ func (l *NotifyDouyinLogic) notifyPayment(req *http.Request, body []byte, msgJso
 
 	//获取订单信息 根据订单号和appid查询
 	orderInfo, err := l.payOrderModel.GetOneByOrderSnAndAppId(msg.OutOrderNo, msg.AppId)
-	if err != nil || orderInfo == nil {
-		err = fmt.Errorf("获取订单失败！err=%v,order_code = %s", err, msg.OutOrderNo)
+	if err != nil || orderInfo == nil || orderInfo.ID < 1 {
+		err = fmt.Errorf("获取订单失败 err=%v, order_code:%s, appId:%s", err, msg.OutOrderNo, msg.AppId)
 		util.CheckError(err.Error())
 		return nil, err
 	}
@@ -204,7 +207,7 @@ func (l *NotifyDouyinLogic) notifyPayment(req *http.Request, body []byte, msgJso
 	return resp, nil
 }
 
-//抖音退款回调
+// 抖音退款回调
 func (l *NotifyDouyinLogic) notifyRefund(req *http.Request, body []byte, msgJson string, originData interface{}) (*types.DouyinResp, error) {
 	msg := new(douyin.RefundMsg)
 	err := sonic.UnmarshalString(msgJson, msg)
@@ -381,6 +384,7 @@ func (l *NotifyDouyinLogic) notifyPreCreateRefund(req *http.Request, body []byte
 	resp := &types.DouyinResp{
 		ErrNo:   0,
 		ErrTips: "success",
+		Data:    nil,
 	}
 	return resp, nil
 }

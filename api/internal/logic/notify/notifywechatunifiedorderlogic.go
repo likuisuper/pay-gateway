@@ -5,6 +5,10 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+	"time"
+
 	"gitee.com/zhuyunkj/pay-gateway/api/internal/svc"
 	"gitee.com/zhuyunkj/pay-gateway/api/internal/types"
 	"gitee.com/zhuyunkj/pay-gateway/common/code"
@@ -12,9 +16,6 @@ import (
 	"gitee.com/zhuyunkj/pay-gateway/common/exception"
 	"gitee.com/zhuyunkj/pay-gateway/db/mysql/model"
 	"gitee.com/zhuyunkj/zhuyun-core/util"
-	"io/ioutil"
-	"net/http"
-	"time"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -87,17 +88,20 @@ type wechatRefundReply struct {
 func (l *NotifyWechatUnifiedOrderLogic) NotifyWechatUnifiedOrder(r *http.Request) (resp *types.WeChatResp, err error) {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		logx.Errorf("获取请求体错误！err:=%v", err)
+		logx.Errorf("获取请求体错误 err:=%v", err)
 		return nil, err
 	}
+
 	logx.Slow("NotifyWechatUnifiedOrder:", string(body))
+
 	//支付回调
 	var data wechatCallbackRepay
 	err = xml.Unmarshal(body, &data)
 	if err != nil {
-		logx.Errorf("xml Unmarshal！err:=%v", err)
+		logx.Errorf("xml Unmarshal err:=%v", err)
 		return nil, err
 	}
+
 	//回调支付成功
 	if data.ResultCode == "SUCCESS" {
 		//退款回调
@@ -107,40 +111,45 @@ func (l *NotifyWechatUnifiedOrderLogic) NotifyWechatUnifiedOrder(r *http.Request
 			logx.Errorf("json.Unmarshal Attach  err:=%v", err)
 			return nil, err
 		}
+
 		//获取订单信息
 		orderInfo, dbErr := l.orderModel.GetOneByOutTradeNo(attachInfo.OrderSn)
-		if dbErr != nil {
-			dbErr = fmt.Errorf("获取订单失败！err=%v,order_code = %s", dbErr, attachInfo.OrderSn)
+		if dbErr != nil || orderInfo == nil || orderInfo.ID < 1 {
+			dbErr = fmt.Errorf("获取订单失败 err:%v, order_code:%s", dbErr, attachInfo.OrderSn)
 			util.CheckError(dbErr.Error())
 			return nil, err
 		}
+
 		if orderInfo.PayAppID != data.Appid || orderInfo.Amount != data.CashFee {
-			logx.Errorf("当前回调的订单信息不匹配", attachInfo.OrderSn)
+			logx.Errorf("当前回调的订单信息不匹配 order_code: %s", attachInfo.OrderSn)
 			return nil, err
 		}
+
 		if orderInfo.Status != model.PmPayOrderTablePayStatusNo {
 			notifyOrderHasDispose.CounterInc()
 			err = fmt.Errorf("订单已处理")
 			return nil, err
 		}
+
 		//修改数据库
 		orderInfo.Status = model.PmPayOrderTablePayStatusPaid
 		orderInfo.PlatformTradeNo = data.TransactionId
 		err = l.orderModel.UpdateNotify(orderInfo)
 		if err != nil {
-			err = fmt.Errorf("trade_no = %s, UpdateNotify，err:=%v", orderInfo.PlatformTradeNo, err)
+			err = fmt.Errorf("UpdateNotify err:%v trade_no:%s", err, orderInfo.PlatformTradeNo)
 			util.CheckError(err.Error())
 			return nil, err
 		}
+
 		//回调业务方接口
 		go func() {
 			defer exception.Recover()
 			dataMap := make(map[string]interface{})
 			dataMap["notify_type"] = code.APP_NOTIFY_TYPE_PAY
 			dataMap["out_trade_no"] = orderInfo.OutTradeNo
-			headerMap := make(map[string]string,1)
+			headerMap := make(map[string]string, 1)
 			headerMap["App-Origin"] = orderInfo.AppPkg
-			_, _ = util.HttpPostWithHeader(orderInfo.AppNotifyUrl, dataMap, headerMap,5*time.Second)
+			_, _ = util.HttpPostWithHeader(orderInfo.AppNotifyUrl, dataMap, headerMap, 5*time.Second)
 		}()
 
 	} else {

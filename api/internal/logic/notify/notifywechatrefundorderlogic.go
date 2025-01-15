@@ -3,6 +3,9 @@ package notify
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"time"
+
 	"gitee.com/zhuyunkj/pay-gateway/common/client"
 	"gitee.com/zhuyunkj/pay-gateway/common/code"
 	"gitee.com/zhuyunkj/pay-gateway/common/define"
@@ -10,8 +13,6 @@ import (
 	"gitee.com/zhuyunkj/pay-gateway/db/mysql/model"
 	"gitee.com/zhuyunkj/zhuyun-core/util"
 	jsoniter "github.com/json-iterator/go"
-	"net/http"
-	"time"
 
 	"gitee.com/zhuyunkj/pay-gateway/api/internal/svc"
 	"gitee.com/zhuyunkj/pay-gateway/api/internal/types"
@@ -66,35 +67,45 @@ func (l *NotifyWechatRefundOrderLogic) NotifyWechatRefundOrder(req *types.Wechat
 			orderInfo.RefundStatus = code.ORDER_SUCCESS
 		} else {
 			//原订单信息
-			originOrderInfo, _ := l.orderModel.GetOneByOutTradeNo(req.OutTradeNo)
+			originOrderInfo, tmpErr := l.orderModel.GetOneByOutTradeNo(req.OutTradeNo)
+			if tmpErr != nil || originOrderInfo == nil || originOrderInfo.ID < 1 {
+				err = fmt.Errorf("GetOneByOutTradeNo fail OutTradeNo:%s, err:%v", req.OutTradeNo, tmpErr)
+				logx.Error(err.Error())
+				return nil, tmpErr
+			}
+
 			payCfg, getPayErr := l.payConfigWechatModel.GetOneByAppID(originOrderInfo.PayAppID)
-			if getPayErr != nil {
-				err = fmt.Errorf("获取配置失败！err=%v，appid=%s ", err, originOrderInfo.PayAppID)
-				logx.Errorf(err.Error())
+			if getPayErr != nil || payCfg == nil {
+				err = fmt.Errorf("获取配置失败 err:%v appid:%s", err, originOrderInfo.PayAppID)
+				logx.Error(err.Error())
 				return nil, err
 			}
+
 			notifyData, jErr := jsoniter.MarshalToString(req)
 			if jErr != nil {
 				orderInfo.NotifyData = notifyData
 			}
-			var wxCli *client.WeChatCommPay
-			wxCli = client.NewWeChatCommPay(*payCfg.TransClientConfig())
+
 			//查询订单状态
+			wxCli := client.NewWeChatCommPay(*payCfg.TransClientConfig())
 			wxRefundOrderInfo, refundErr := wxCli.GetOrderStatus(req.OutTradeNo)
 			if refundErr != nil {
-				err = fmt.Errorf("查询订单失败！err=%v ", err)
-				logx.Errorf(err.Error())
+				err = fmt.Errorf("查询订单失败 err=%v ", err)
+				logx.Error(err.Error())
 				return nil, err
 			}
+
 			if *wxRefundOrderInfo.TradeState == "REFUND" {
 				orderInfo.RefundStatus = code.ORDER_SUCCESS
 			}
-
 		}
+
 		//修改订单退款状态
 		l.orderModel.UpdateStatusByOutTradeNo(req.OutTradeNo, code.ORDER_REFUNDED)
+
 		//修改退款订单信息
 		l.refundModel.Update(orderInfo.OutTradeRefundNo, orderInfo)
+
 		// 回调退款成功
 		go func() {
 			defer exception.Recover()

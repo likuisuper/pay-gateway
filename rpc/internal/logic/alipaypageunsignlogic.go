@@ -44,8 +44,9 @@ func (l *AlipayPageUnSignLogic) AlipayPageUnSign(in *pb.AlipayPageUnSignReq) (*p
 	}
 
 	table, err := l.orderModel.GetOneByOutTradeNo(in.OutTradeNo)
-	if err != nil {
+	if err != nil || table == nil || table.ID < 1 {
 		logx.Errorf("根据out_trade_no获取订单失败, err = %v", err.Error())
+		return nil, err
 	}
 
 	unSign := alipay2.AgreementUnsign{
@@ -54,7 +55,7 @@ func (l *AlipayPageUnSignLogic) AlipayPageUnSign(in *pb.AlipayPageUnSignReq) (*p
 
 	result, err := payClient.AgreementUnsign(unSign)
 	if err != nil {
-		logx.Errorf(err.Error())
+		logx.Error(err.Error())
 	}
 
 	if result.Content.Code == alipay2.CodeSuccess {

@@ -43,7 +43,6 @@ func NewHandleRefundLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Hand
 }
 
 func (l *HandleRefundLogic) HandleRefund(req *types.RefundReq) (resp *types.ResultResp, err error) {
-	// todo: add your logic here and delete this line
 	if req.Reviewer == "" {
 		res := response.MakeResult(code.CODE_ERROR, "审核人员必填", nil)
 		return &res, nil

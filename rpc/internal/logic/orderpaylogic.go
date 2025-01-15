@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"gitee.com/zhuyunkj/alipay/v3"
 	"gitee.com/zhuyunkj/pay-gateway/common/client"
@@ -116,6 +117,9 @@ func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (out *pb.OrderPayResp, err 
 			return
 		}
 	} else {
+		// 其实到这里 应该是出错了 订单号不能重复
+		l.Errorf("下单创建了重复订单 orderSn:%s, appId:%s", in.OrderSn, payAppId)
+
 		if orderInfo.PayStatus != model.PmPayOrderTablePayStatusNo {
 			err = fmt.Errorf("订单不是未支付状态, orderSn:%s, appId:%s", in.OrderSn, payAppId)
 			util.Error(l.ctx, err.Error())
@@ -133,7 +137,8 @@ func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (out *pb.OrderPayResp, err 
 	}
 
 	switch out.PayType {
-	case pb.PayType_AlipayWap: //小程序未用到
+	case pb.PayType_AlipayWap:
+		//小程序未用到
 		payCfg, cfgErr := l.payConfigAlipayModel.GetOneByAppID(pkgCfg.AlipayAppID)
 		if cfgErr != nil {
 			err = fmt.Errorf("pkgName= %s, 读取支付宝配置失败，err:=%v", in.AppPkgName, cfgErr)
@@ -141,7 +146,8 @@ func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (out *pb.OrderPayResp, err 
 			return
 		}
 		out.AlipayWap, err = l.createAlipayWapOrder(in, payCfg.TransClientConfig())
-	case pb.PayType_AlipayWeb: //小程序未用到
+	case pb.PayType_AlipayWeb:
+		//小程序未用到
 		payCfg, cfgErr := l.payConfigAlipayModel.GetOneByAppID(pkgCfg.AlipayAppID)
 		if cfgErr != nil {
 			err = fmt.Errorf("pkgName= %s, 读取支付宝配置失败，err:=%v", in.AppPkgName, cfgErr)
@@ -156,8 +162,18 @@ func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (out *pb.OrderPayResp, err 
 			util.Error(l.ctx, err.Error())
 			return
 		}
+
+		l.Sloww("payCfg", logx.Field("payCfg", payCfg))
+
+		// todo djw
+		if pkgCfg.WechatPayAppID == "wxd556462fcad66ebd" {
+			// 临时修改
+			payCfg.PublicKeyId = "PUB_KEY_ID_0116991134412024111200648800000208"
+		}
+
 		out.WxUniApp, err = l.createWeChatUniOrder(in, payOrder, payCfg.TransClientConfig())
-	case pb.PayType_WxWeb: //未用
+	case pb.PayType_WxWeb:
+		//未用
 		payCfg, cfgErr := l.payConfigWechatModel.GetOneByAppID(pkgCfg.WechatPayAppID)
 		if cfgErr != nil {
 			err = fmt.Errorf("pkgName= %s, 读取微信支付配置失败，err:=%v", in.AppPkgName, cfgErr)
@@ -165,7 +181,8 @@ func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (out *pb.OrderPayResp, err 
 			return
 		}
 		out.WxNative, err = l.createWeChatNativeOrder(in, payOrder, payCfg.TransClientConfig())
-	case pb.PayType_TiktokEc: //未用到
+	case pb.PayType_TiktokEc:
+		//未用到
 		payCfg, cfgErr := model.NewPmPayConfigTiktokModel(define.DbPayGateway).GetOneByAppID(pkgCfg.TiktokPayAppID)
 		if cfgErr != nil {
 			err = fmt.Errorf("pkgName= %s, 读取字节支付配置失败，err:=%v", in.AppPkgName, cfgErr)
@@ -173,14 +190,20 @@ func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (out *pb.OrderPayResp, err 
 			return
 		}
 		out.TikTokEc, err = l.createTikTokEcOrder(in, payOrder, payCfg.TransClientConfig())
-	case pb.PayType_KsUniApp: //未用到
+	case pb.PayType_KsUniApp:
+		// 快手小程序
 		payCfg, cfgErr := l.payConfigKsModel.GetOneByAppID(pkgCfg.KsPayAppID)
 		if cfgErr != nil {
 			err = fmt.Errorf("pkgName= %s, 读取快手支付配置失败，err:=%v", in.AppPkgName, cfgErr)
 			util.Error(l.ctx, err.Error())
 			return
 		}
-		payOrder.KsTypeId = 1273
+
+		// 经营类目 虚拟/服务 虚拟卡/会员/游戏 在线影视/音乐/阅读/社交软件会员
+		// 经营类目编号 1273
+		// 状态 已通过
+		// 快手的微信和支付宝账号 已经在快手开发平台绑定好了, 路径: 交易管理-支付管理
+		payOrder.KsTypeId = 1273 // 固定值
 		out.KsUniApp, err = l.createKsOrder(in, payOrder, payCfg.TransClientConfig())
 	case pb.PayType_WxUnified: //未用到
 		payCfg, cfgErr := l.payConfigWechatModel.GetOneByAppID(pkgCfg.WechatPayAppID)
@@ -279,6 +302,7 @@ func (l *OrderPayLogic) createWeChatUniOrder(in *pb.OrderPayReq, info *client.Pa
 		util.Error(l.ctx, "pkgName= %s, wechatUniPay，err:=%v", in.AppPkgName, err)
 		return
 	}
+
 	reply = &pb.WxUniAppPayReply{
 		OrderInfo: res.OrderInfo,
 		TimeStamp: res.TimeStamp,
@@ -321,11 +345,12 @@ func (l *OrderPayLogic) createWeChatNativeOrder(in *pb.OrderPayReq, info *client
 func (l *OrderPayLogic) createWeChatUnifiedOrder(in *pb.OrderPayReq, info *client.PayOrder, payConf *client.WechatPayConfig) (reply *pb.WxUnifiedPayReply, err error) {
 	payClient := client.NewWeChatCommPay(*payConf)
 	res, err := payClient.WechatPayUnified(info, payConf)
-	if err != nil {
+	if err != nil || res == nil {
 		wechatNativePayFailNum.CounterInc()
-		util.Error(l.ctx, "pkgName= %s, wechatUniPay，err:=%v", in.AppPkgName, err)
+		util.Error(l.ctx, "WechatPayUnified pkgName: %s, err: %v", in.AppPkgName, err)
 		return
 	}
+
 	reply = &pb.WxUnifiedPayReply{
 		Prepayid: res.PrepayID,
 		MwebUrl:  res.MwebURL,
@@ -343,9 +368,10 @@ func (l *OrderPayLogic) createTikTokEcOrder(in *pb.OrderPayReq, info *client.Pay
 	res, err := payClient.CreateEcPayOrder(info)
 	if err != nil {
 		tiktokEcPayFailNum.CounterInc()
-		util.Error(l.ctx, "pkgName= %s, tiktokEcPay，err:=%v", in.AppPkgName, err)
+		util.Error(l.ctx, "CreateEcPayOrder pkgName: %s, err: %v ", in.AppPkgName, err)
 		return
 	}
+
 	reply = &pb.TiktokEcPayReply{
 		OrderId:    res.Data.OrderId,
 		OrderToken: res.Data.OrderToken,
@@ -355,13 +381,37 @@ func (l *OrderPayLogic) createTikTokEcOrder(in *pb.OrderPayReq, info *client.Pay
 
 // 快手小程序支付
 func (l *OrderPayLogic) createKsOrder(in *pb.OrderPayReq, info *client.PayOrder, payConf *client.KsPayConfig) (reply *pb.KsUniAppReply, err error) {
-	payClient := client.NewKsPay(*payConf)
-	res, err := payClient.CreateOrder(info, in.WxOpenID)
+	ksAccessToken, err := l.svcCtx.BaseAppConfigServerApi.GetKsAppidToken(l.ctx, payConf.AppId)
 	if err != nil {
-		ksPayFailNum.CounterInc()
-		util.Error(l.ctx, "pkgName= %s, ksPay，err:=%v", in.AppPkgName, err)
+		util.Error(l.ctx, "快手获取access token失败 pkgName:%s, appId:%v, err:%v", in.AppPkgName, payConf.AppId, err)
 		return
 	}
+
+	payClient := client.NewKsPay(*payConf)
+
+	var res *client.KsCreateOrderWithChannelResp
+
+	// in.WxOpenID 实际上是快手open id, 名称相同而已
+	if strings.ToLower(in.Os) == "ios" {
+		// ios订单
+		res, err = payClient.CreateOrderIos(info, in.WxOpenID, ksAccessToken)
+		if err != nil || res == nil {
+			ksPayFailNum.CounterInc()
+			util.Error(l.ctx, "CreateOrderIos failed pkgName: %s, err: %v", in.AppPkgName, err)
+			err = errors.New("创建IOS订单失败: " + err.Error())
+			return
+		}
+	} else {
+		// 默认安卓订单
+		res, err = payClient.CreateOrder(info, in.WxOpenID, ksAccessToken)
+		if err != nil || res == nil {
+			ksPayFailNum.CounterInc()
+			util.Error(l.ctx, "CreateOrder failed pkgName: %s, err: %v", in.AppPkgName, err)
+			err = errors.New("创建安卓订单失败: " + err.Error())
+			return
+		}
+	}
+
 	reply = &pb.KsUniAppReply{
 		OrderNo:        res.OrderNo,
 		OrderInfoToken: res.OrderInfoToken,

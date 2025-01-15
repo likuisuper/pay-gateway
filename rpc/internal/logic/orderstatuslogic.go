@@ -3,6 +3,7 @@ package logic
 import (
 	"context"
 	"fmt"
+
 	"gitee.com/zhuyunkj/pay-gateway/common/client"
 	douyin "gitee.com/zhuyunkj/pay-gateway/common/client/douyinGeneralTrade"
 	"gitee.com/zhuyunkj/pay-gateway/common/define"
@@ -83,6 +84,7 @@ func (l *OrderStatusLogic) OrderStatus(in *pb.OrderStatusReq) (resp *pb.OrderSta
 			util.CheckError(err.Error())
 			return
 		}
+
 		orderInfo, err := l.tiktokOrderStatus(in, payCfg.TransClientConfig())
 		if err != nil {
 			err = fmt.Errorf("查询字节订单失败, orderSn=%s, err=%v", in.OrderSn, err)
@@ -96,19 +98,29 @@ func (l *OrderStatusLogic) OrderStatus(in *pb.OrderStatusReq) (resp *pb.OrderSta
 			resp.PayAmount = int64(orderInfo.TotalFee)
 		}
 	case pb.PayType_KsUniApp:
+		ksAccessToken, err2 := l.svcCtx.BaseAppConfigServerApi.GetKsAppidToken(l.ctx, pkgCfg.KsPayAppID)
+		if err2 != nil {
+			err = fmt.Errorf("获取快手access token失败 pkgName:%s appId:%s err:%v", in.AppPkgName, pkgCfg.KsPayAppID, err2)
+			util.CheckError(err.Error())
+			return resp, err2
+		}
+
+		// 快手
 		payCfg, cfgErr := l.payConfigKsModel.GetOneByAppID(pkgCfg.KsPayAppID)
 		if cfgErr != nil {
-			err = fmt.Errorf("pkgName= %s, 读取快手支付配置失败，err:=%v", in.AppPkgName, cfgErr)
+			err = fmt.Errorf("pkgName=%s, 读取快手支付配置失败 err=%v", in.AppPkgName, cfgErr)
 			util.CheckError(err.Error())
 			return
 		}
+
 		payClient := client.NewKsPay(*payCfg.TransClientConfig())
-		orderInfo, err := payClient.QueryOrder(in.OrderSn)
+		orderInfo, err := payClient.QueryOrder(in.OrderSn, ksAccessToken)
 		if err != nil {
 			err = fmt.Errorf("查询快手订单失败, orderSn=%s, err=%v", in.OrderSn, err)
 			util.CheckError(err.Error())
 			return nil, err
 		}
+
 		if orderInfo.PayStatus == "SUCCESS" {
 			resp.Status = 1
 			resp.PayAmount = int64(orderInfo.TotalAmount)

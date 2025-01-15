@@ -103,12 +103,10 @@ func (l *NotifyBytedanceLogic) NotifyPayment(req *types.ByteDanceReq) (resp *typ
 		return
 	}
 
-	//获取订单信息
-	//orderInfo, err := l.payOrderModel.GetOneByCode(order.CpOrderno)
 	//升级为根据订单号和appid查询
 	orderInfo, err := l.payOrderModel.GetOneByOrderSnAndAppId(order.CpOrderno, msgData.Appid)
-	if err != nil {
-		err = fmt.Errorf("获取订单失败！err=%v,order_code = %s", err, order.CpOrderno)
+	if err != nil || orderInfo == nil || orderInfo.ID < 1 {
+		err = fmt.Errorf("获取订单失败 err:%v, order_code:%s, appId:%s", err, order.CpOrderno, msgData.Appid)
 		util.CheckError(err.Error())
 		return
 	}

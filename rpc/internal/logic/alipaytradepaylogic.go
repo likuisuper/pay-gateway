@@ -46,14 +46,12 @@ func NewAlipayTradePayLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Al
 
 // 支付宝：订阅扣款
 func (l *AlipayTradePayLogic) AlipayTradePay(in *pb.AlipayTradePayReq) (*pb.AlipayCommonResp, error) {
-	// todo: add your logic here and delete this line
-
 	if in.OutTradeNo == "" || in.ExternalAgreementNo == "" {
 		return nil, errors.New("参数异常")
 	}
 
 	tb, err := l.OrderModel.GetOneByOutTradeNo(in.OutTradeNo)
-	if err != nil {
+	if err != nil || tb == nil || tb.ID < 1 {
 		logx.Errorf("订阅扣款： 获取订单失败 outTradeNo=%s err=%s", in.OutTradeNo, err.Error())
 		return nil, errors.New("获取订单异常")
 	}
