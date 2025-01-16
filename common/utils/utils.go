@@ -65,7 +65,11 @@ func GenerateOrderCode(machineNo, workerNo int64) (orderCode string) {
 	}
 
 	// 加个随机数后缀
-	orderCode = orderCode + strconv.Itoa(rand.Intn(9999))
+	randId := rand.Intn(9999)
+	if randId <= 1000 {
+		randId += 1000
+	}
+	orderCode = orderCode + strconv.Itoa(randId)
 
 	return
 }
