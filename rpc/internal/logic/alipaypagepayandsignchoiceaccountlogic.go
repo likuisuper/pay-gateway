@@ -28,6 +28,7 @@ type AlipayPagePayAndSignChoiceAccountLogic struct {
 	appConfigModel       *model.PmAppConfigModel
 	payConfigAlipayModel *model.PmPayConfigAlipayModel
 	orderModel           *model.OrderModel
+	huaweiOrderModel     *model.HuaweiOrderModel
 }
 
 func NewAlipayPagePayAndSignChoiceAccountLogic(ctx context.Context, svcCtx *svc.ServiceContext) *AlipayPagePayAndSignChoiceAccountLogic {
@@ -39,11 +40,17 @@ func NewAlipayPagePayAndSignChoiceAccountLogic(ctx context.Context, svcCtx *svc.
 		appConfigModel:       model.NewPmAppConfigModel(define.DbPayGateway),
 		payConfigAlipayModel: model.NewPmPayConfigAlipayModel(define.DbPayGateway),
 		orderModel:           model.NewOrderModel(define.DbPayGateway),
+		huaweiOrderModel:     model.NewHuaweiOrderModel(define.DbPayGateway),
 	}
 }
 
 // 支付宝新的充值订阅 可以选择不同的支付宝账号：支付并签约
 func (l *AlipayPagePayAndSignChoiceAccountLogic) AlipayPagePayAndSignChoiceAccount(in *pb.AlipayPageSignReq) (*pb.AlipayPageSignResp, error) {
+	if in.GetIsHwPayProduct() {
+		// 华为订阅商品 华为应用内购买 只创建订单
+		return l.pureCreateHuaweiOrder(in)
+	}
+
 	// 选择不同的支付宝号
 	payClient, payAppId, notifyUrl, merchantNo, _, err := clientMgr.GetAlipayClienMerchantInfo(in.AppPkgName)
 	if err != nil {
@@ -194,5 +201,40 @@ func (l *AlipayPagePayAndSignChoiceAccountLogic) AlipayPagePayAndSignChoiceAccou
 		URL:                 result,
 		OutTradeNo:          orderInfo.OutTradeNo,
 		ExternalAgreementNo: externalAgreementNo,
+	}, nil
+}
+
+// 华为订阅商品 华为应用内购买 只创建订单
+func (l *AlipayPagePayAndSignChoiceAccountLogic) pureCreateHuaweiOrder(in *pb.AlipayPageSignReq) (*pb.AlipayPageSignResp, error) {
+	productType := int(in.ProductType)
+	orderInfo := model.HuaweiOrderTable{
+		AppPkg:              in.GetAppPkgName(),
+		AppId:               in.GetAppId(),
+		UserId:              int(in.GetUserId()),
+		Status:              0,
+		Environment:         in.GetPurchaseEnv(),
+		OutTradeNo:          utils.GenerateOrderCode(l.svcCtx.Config.SnowFlake.MachineNo, l.svcCtx.Config.SnowFlake.WorkerNo),
+		PayType:             model.PmPayOrderTablePayTypeAlipay,
+		Amount:              int(in.GetAmount()),
+		ProductId:           strconv.Itoa(int(in.GetProductId())),
+		ProductType:         productType,
+		AppNotifyUrl:        in.GetNotifyURL(),
+		PayAppId:            "",
+		ProductDesc:         in.GetProductDesc(),
+		DeviceId:            in.GetDeviceId(), // 在回调的时候 需要带到app_alipay_order表
+		ExternalAgreementNo: utils.GenerateOrderCode(l.svcCtx.Config.SnowFlake.MachineNo, l.svcCtx.Config.SnowFlake.WorkerNo),
+	}
+
+	err := l.huaweiOrderModel.Create(&orderInfo)
+	if err != nil {
+		payAndSignCreateOrderErr.CounterInc()
+		logx.Errorf("创建订单异常,创建订单表失败 err:%s, orderInfo: %+v", err.Error(), orderInfo)
+		return nil, errors.New("创建订单异常,创建订单表失败")
+	}
+
+	return &pb.AlipayPageSignResp{
+		URL:                 "",
+		OutTradeNo:          orderInfo.OutTradeNo,
+		ExternalAgreementNo: orderInfo.ExternalAgreementNo,
 	}, nil
 }

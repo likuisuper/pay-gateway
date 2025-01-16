@@ -25,7 +25,7 @@ type OrderTable struct {
 	UserID              int       `gorm:"column:user_id;default:0;NOT NULL"`                       // 业务程序中的用户编号
 	OutTradeNo          string    `gorm:"column:out_trade_no;NOT NULL"`                            // 内部订单号
 	PlatformTradeNo     string    `gorm:"column:platform_trade_no;NOT NULL"`                       // 支付宝/微信等平台的订单号
-	Amount              int       `gorm:"column:amount;default:0;NOT NULL"`                        // 支付金额
+	Amount              int       `gorm:"column:amount;default:0;NOT NULL"`                        // 支付金额 单位分
 	Status              int       `gorm:"column:status;default:0;NOT NULL"`                        // -1:关闭，0:未支付，1:已支付，2:支付失败，3:已退款
 	PayType             int       `gorm:"column:pay_type;default:0;NOT NULL"`                      // 支付类型（1微信，3支付宝）
 	PayTime             time.Time `gorm:"column:pay_time;default:0000-00-00 00:00:00;NOT NULL"`    // 支付时间

@@ -75,6 +75,7 @@ message WxUnifiedPayReply {
   string OutTradeNo = 3;
   string WapUrl = 4;
   string WapName = 5;
+  string ExternalAgreementNo = 6;
 }
 
 message WxH5PayReplay{
@@ -181,6 +182,10 @@ message AlipayPageSignReq {
   string Ip = 9;            //客户端ip地址
   string RedirectUrl = 10;  // 支付成功后重定向地址
   string DeviceId = 11;  // 用户设备号
+  bool IsHwPayProduct = 12;  // 是否是华为订阅商品
+  string AppId = 13;  // app id 跟AppPkgName相对应
+  string PurchaseEnv = 14;  // 订阅购买环境 prod：正式环境, sandbox：沙盒测试
+  int64 Amount = 15;  //商品金额 单位分
 }
 
 message AlipayTradeReq {

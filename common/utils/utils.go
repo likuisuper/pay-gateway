@@ -2,8 +2,10 @@ package utils
 
 import (
 	"fmt"
+	"math/rand"
 	"net"
 	"net/url"
+	"strconv"
 	"time"
 
 	"gitee.com/zhuyunkj/zhuyun-core/util"
@@ -61,6 +63,9 @@ func GenerateOrderCode(machineNo, workerNo int64) (orderCode string) {
 			orderCode = uuid.NewString()
 		}
 	}
+
+	// 加个随机数后缀
+	orderCode = orderCode + strconv.Itoa(rand.Intn(9999))
 
 	return
 }
