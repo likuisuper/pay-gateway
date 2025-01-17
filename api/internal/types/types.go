@@ -31,58 +31,6 @@ type ResultResp struct {
 type EmptyReq struct {
 }
 
-type SupplementaryOrdersReq struct {
-	Type        string `form:"type"`
-	StartMinute string `form:"startMinute""`
-	EndMinute   string `form:"endMinute"`
-	IsNotice    string `form:"isNotice"`
-}
-
-type SupplementaryOrdersResp struct {
-	ErrNo   int    `json:"err_no"`
-	ErrTips string `json:"err_tips"`
-}
-
-type CrtUploadReq struct {
-	AlipayAppCertPublicKeyPath string `form:"alipayAppCertPublicKeyPath,optional"`
-	AlipayPublicKeyPath        string `form:"alipayPublicKeyPath,optional"`
-	AlipayPayRootCertPath      string `form:"alipayPayRootCertPath,optional"`
-	WeChatPayPrivateKey        string `form:"weChatPayPrivateKey, optional"`
-}
-
-type AlipayFundTransUniTransferReq struct {
-	OrderNo     string `json:"order_no"`     //商户唯一订单号
-	OrderTitle  string `json:"order_title"`  //转账标题
-	TransAmount string `json:"trans_amount"` //订单总金额 [0.1,100]
-	PayAccount  string `json:"pay_account"`  //收款方账户
-	PayName     string `json:"pay_name"`     //收款方真实姓名
-	Remark      string `json:"remark"`       //转账备注
-	PkgName     string `json:"pkg_name"`     //包名
-}
-
-type AlipayPageSignReq struct {
-	PkgName     string `json:"pkg_name"`     //包名
-	OrderNo     string `json:"order_no"`     //商户唯一订单号
-	OrderTitle  string `json:"order_title"`  //转账标题
-	TransAmount string `json:"trans_amount"` //订单总金额 [0.1,100]
-	PayAccount  string `json:"pay_account"`  //收款方账户
-	PayName     string `json:"pay_name"`     //收款方真实姓名
-	PeriodType  string `json:"period_type"`  //周期类型
-}
-
-type RefundReq struct {
-	OutTradeRefundNo string `json:"order_title"`      //
-	Status           int    `json:"status"`           // 操作，1通过，2拒绝
-	Reviewer         string `json:"reviewer"`         // 操作者
-	ReviewerComment  string `json:"reviewer_comment"` // 操作者备注
-}
-
-type ComplainReq struct {
-	AppId     string `json:"app_id"`
-	StartTime string `json:"start_time"`
-	EndTime   string `json:"end_time"`
-}
-
 type ByteDanceReq struct {
 	Timestamp    string `json:"timestamp,optional"`
 	Nonce        string `json:"nonce,optional"`
@@ -179,4 +127,56 @@ type SubNotification struct {
 }
 
 type HuaweiResp struct {
+}
+
+type CrtUploadReq struct {
+	AlipayAppCertPublicKeyPath string `form:"alipayAppCertPublicKeyPath,optional"`
+	AlipayPublicKeyPath        string `form:"alipayPublicKeyPath,optional"`
+	AlipayPayRootCertPath      string `form:"alipayPayRootCertPath,optional"`
+	WeChatPayPrivateKey        string `form:"weChatPayPrivateKey, optional"`
+}
+
+type AlipayFundTransUniTransferReq struct {
+	OrderNo     string `json:"order_no"`     //商户唯一订单号
+	OrderTitle  string `json:"order_title"`  //转账标题
+	TransAmount string `json:"trans_amount"` //订单总金额 [0.1,100]
+	PayAccount  string `json:"pay_account"`  //收款方账户
+	PayName     string `json:"pay_name"`     //收款方真实姓名
+	Remark      string `json:"remark"`       //转账备注
+	PkgName     string `json:"pkg_name"`     //包名
+}
+
+type AlipayPageSignReq struct {
+	PkgName     string `json:"pkg_name"`     //包名
+	OrderNo     string `json:"order_no"`     //商户唯一订单号
+	OrderTitle  string `json:"order_title"`  //转账标题
+	TransAmount string `json:"trans_amount"` //订单总金额 [0.1,100]
+	PayAccount  string `json:"pay_account"`  //收款方账户
+	PayName     string `json:"pay_name"`     //收款方真实姓名
+	PeriodType  string `json:"period_type"`  //周期类型
+}
+
+type RefundReq struct {
+	OutTradeRefundNo string `json:"order_title"`      //
+	Status           int    `json:"status"`           // 操作，1通过，2拒绝
+	Reviewer         string `json:"reviewer"`         // 操作者
+	ReviewerComment  string `json:"reviewer_comment"` // 操作者备注
+}
+
+type ComplainReq struct {
+	AppId     string `json:"app_id"`
+	StartTime string `json:"start_time"`
+	EndTime   string `json:"end_time"`
+}
+
+type SupplementaryOrdersReq struct {
+	Type        string `form:"type"`
+	StartMinute string `form:"startMinute""`
+	EndMinute   string `form:"endMinute"`
+	IsNotice    string `form:"isNotice"`
+}
+
+type SupplementaryOrdersResp struct {
+	ErrNo   int    `json:"err_no"`
+	ErrTips string `json:"err_tips"`
 }
