@@ -10,8 +10,12 @@ import (
 	"gitee.com/zhuyunkj/pay-gateway/common/define"
 	"gitee.com/zhuyunkj/pay-gateway/common/huawei"
 	"gitee.com/zhuyunkj/pay-gateway/db/mysql/model"
+	"gitee.com/zhuyunkj/zhuyun-core/util"
+	"go.opentelemetry.io/otel"
+	oteltrace "go.opentelemetry.io/otel/trace"
 
 	"github.com/zeromicro/go-zero/core/logx"
+	"github.com/zeromicro/go-zero/core/trace"
 )
 
 type NotifyHuaweiLogic struct {
@@ -36,7 +40,10 @@ func NewNotifyHuaweiLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Noti
 	}
 }
 
-// 华为参考文档: https://developer.huawei.com/consumer/cn/doc/HMSCore-Guides/notifications-about-subscription-events-0000001050035037
+// 华为参考文档:
+// https://developer.huawei.com/consumer/cn/doc/HMSCore-Guides/notifications-about-subscription-events-0000001050035037
+//
+// https://developer.huawei.com/consumer/cn/doc/HMSCore-References/api-notifications-about-subscription-events-v2-0000001385268541
 //
 // 测试环境回调地址: https://test.api.pay-gateway.yunxiacn.com/notify/huawei
 //
@@ -56,39 +63,50 @@ func (l *NotifyHuaweiLogic) NotifyHuawei(req *types.HuaweiReq) {
 		return
 	}
 
-	// 查询包应用信息
-	hwApp, _ := l.huaweiAppModel.GetInfo(req.ApplicationId)
-	if hwApp.ID < 1 {
-		l.Errorw("huaweiAppModel not found", logx.Field("appId", req.ApplicationId))
-		return
-	}
+	go util.SafeRun(func() {
+		// 将一些逻辑写成异步执行
+		// 重写ctx,防止超时
+		ctx := context.Background()
+		tracer := otel.GetTracerProvider().Tracer(trace.TraceName)
+		ctx, span := tracer.Start(ctx, "NotifyHuawei", oteltrace.WithSpanKind(oteltrace.SpanKindServer))
+		defer span.End()
+		l.ctx = ctx
+		l.Logger = logx.WithContext(ctx)
 
-	// 获取一下华为token请求头信息
-	huaweiAtClient := huawei.NewClient(l.ctx, define.DbPayGateway, hwApp.ClientId, hwApp.ClientSecret, hwApp.AppSecret)
-	tmpHeaderStr, err := huaweiAtClient.BuildAuthorization()
-	if err != nil {
-		l.Errorf("huaweiAtClient.BuildAuthorization err:%v", err)
-		return
-	}
-	l.authHeaderString = tmpHeaderStr
+		// 查询包应用信息
+		hwApp, _ := l.huaweiAppModel.GetInfo(req.ApplicationId)
+		if hwApp.ID < 1 {
+			l.Errorw("huaweiAppModel not found", logx.Field("appId", req.ApplicationId))
+			return
+		}
 
-	logx.Infow("NotifyHuawei", logx.Field("authHeaderString", tmpHeaderStr))
+		// 获取一下华为token请求头信息
+		huaweiAtClient := huawei.NewClient(l.ctx, define.DbPayGateway, hwApp.ClientId, hwApp.ClientSecret, hwApp.AppSecret)
+		tmpHeaderStr, err := huaweiAtClient.BuildAuthorization()
+		if err != nil {
+			l.Errorf("huaweiAtClient.BuildAuthorization err:%v", err)
+			return
+		}
+		l.authHeaderString = tmpHeaderStr
 
-	// 记录日志
-	logModel := &model.NotifyHuaweiLogTable{
-		AppId:  req.ApplicationId,
-		AppPkg: hwApp.AppPkg,
-		Data:   string(jsonByte),
-	}
-	l.notifyHuaweiLogModel.Create(logModel)
+		logx.Infow("NotifyHuawei", logx.Field("authHeaderString", tmpHeaderStr))
 
-	// if req.EventType == huawei.HUAWEI_EVENT_TYPE_SUBSCRIPTION {
-	// 	// 处理订阅
-	// 	l.handleHuaweiSub(req, logModel.Id, hwApp.IapPublicKey)
-	// } else if req.EventType == huawei.HUAWEI_EVENT_TYPE_ORDER {
-	// 	// 处理订单
-	// 	l.handleHuaweiOrder(req, logModel.Id, hwApp.IapPublicKey)
-	// }
+		// 记录日志
+		logModel := &model.NotifyHuaweiLogTable{
+			AppId:  req.ApplicationId,
+			AppPkg: hwApp.AppPkg,
+			Data:   string(jsonByte),
+		}
+		l.notifyHuaweiLogModel.Create(logModel)
+
+		// if req.EventType == huawei.HUAWEI_EVENT_TYPE_SUBSCRIPTION {
+		// 	// 处理订阅
+		// 	l.handleHuaweiSub(req, logModel.Id, hwApp.IapPublicKey)
+		// } else if req.EventType == huawei.HUAWEI_EVENT_TYPE_ORDER {
+		// 	// 处理订单
+		// 	l.handleHuaweiOrder(req, logModel.Id, hwApp.IapPublicKey)
+		// }
+	})
 }
 
 // 处理订阅流程: https://developer.huawei.com/consumer/cn/doc/HMSCore-Guides/notifications-about-subscription-events-0000001050035037
