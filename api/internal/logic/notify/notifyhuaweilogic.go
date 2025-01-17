@@ -82,17 +82,13 @@ func (l *NotifyHuaweiLogic) NotifyHuawei(req *types.HuaweiReq) {
 	}
 	l.notifyHuaweiLogModel.Create(logModel)
 
-	if req.EventType == huawei.HUAWEI_EVENT_TYPE_SUBSCRIPTION {
-		// 处理订阅
-		l.handleHuaweiSub(req, logModel.Id, hwApp.IapPublicKey)
-		return
-	}
-
-	if req.EventType == huawei.HUAWEI_EVENT_TYPE_ORDER {
-		// 处理订单
-		l.handleHuaweiOrder(req, logModel.Id, hwApp.IapPublicKey)
-		return
-	}
+	// if req.EventType == huawei.HUAWEI_EVENT_TYPE_SUBSCRIPTION {
+	// 	// 处理订阅
+	// 	l.handleHuaweiSub(req, logModel.Id, hwApp.IapPublicKey)
+	// } else if req.EventType == huawei.HUAWEI_EVENT_TYPE_ORDER {
+	// 	// 处理订单
+	// 	l.handleHuaweiOrder(req, logModel.Id, hwApp.IapPublicKey)
+	// }
 }
 
 // 处理订阅流程: https://developer.huawei.com/consumer/cn/doc/HMSCore-Guides/notifications-about-subscription-events-0000001050035037
