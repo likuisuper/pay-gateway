@@ -46,6 +46,8 @@ func NewAlipayPagePayAndSignChoiceAccountLogic(ctx context.Context, svcCtx *svc.
 
 // 支付宝新的充值订阅 可以选择不同的支付宝账号：支付并签约
 func (l *AlipayPagePayAndSignChoiceAccountLogic) AlipayPagePayAndSignChoiceAccount(in *pb.AlipayPageSignReq) (*pb.AlipayPageSignResp, error) {
+	l.Sloww("AlipayPagePayAndSignChoiceAccount params", logx.Field("in", in))
+
 	if in.GetIsHwPayProduct() {
 		// 华为订阅商品 华为应用内购买 只创建订单
 		return l.pureCreateHuaweiOrder(in)

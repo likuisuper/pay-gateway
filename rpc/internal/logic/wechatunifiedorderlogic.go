@@ -46,6 +46,8 @@ func NewWechatUnifiedOrderLogic(ctx context.Context, svcCtx *svc.ServiceContext)
 
 // 微信统一下单接口
 func (l *WechatUnifiedOrderLogic) WechatUnifiedOrder(in *pb.AlipayPageSignReq) (*pb.WxUnifiedPayReply, error) {
+	l.Sloww("WechatUnifiedOrder param", logx.Field("in", in))
+
 	if in.GetIsHwPayProduct() {
 		// 华为订阅商品 华为应用内购买 只创建订单
 		return l.pureCreateHuaweiOrder(in)
