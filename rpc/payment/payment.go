@@ -25,6 +25,8 @@ type (
 	AlipayRefundReq               = pb.AlipayRefundReq
 	AlipayTradePayReq             = pb.AlipayTradePayReq
 	AlipayTradeReq                = pb.AlipayTradeReq
+	BindHuaweiPayDataReq          = pb.BindHuaweiPayDataReq
+	BindHuaweiPayDataResp         = pb.BindHuaweiPayDataResp
 	ClosePayOrderReq              = pb.ClosePayOrderReq
 	CreateDouyinRefundReq         = pb.CreateDouyinRefundReq
 	CreateDouyinRefundResp        = pb.CreateDouyinRefundResp
@@ -85,6 +87,8 @@ type (
 		WechatRefundOrder(ctx context.Context, in *WechatRefundOrderReq, opts ...grpc.CallOption) (*CreateRefundResp, error)
 		// 微信h5支付，对接文档：https://pay.weixin.qq.com/docs/merchant/apis/h5-payment/direct-jsons/h5-prepay.html
 		WechatPayH5Order(ctx context.Context, in *AlipayPageSignReq, opts ...grpc.CallOption) (*WxH5PayReplay, error)
+		// 绑定订单号和华为购买token
+		BindHuaweiPayData(ctx context.Context, in *BindHuaweiPayDataReq, opts ...grpc.CallOption) (*BindHuaweiPayDataResp, error)
 	}
 
 	defaultPayment struct {
@@ -204,4 +208,10 @@ func (m *defaultPayment) WechatRefundOrder(ctx context.Context, in *WechatRefund
 func (m *defaultPayment) WechatPayH5Order(ctx context.Context, in *AlipayPageSignReq, opts ...grpc.CallOption) (*WxH5PayReplay, error) {
 	client := pb.NewPaymentClient(m.cli.Conn())
 	return client.WechatPayH5Order(ctx, in, opts...)
+}
+
+// 绑定订单号和华为购买token
+func (m *defaultPayment) BindHuaweiPayData(ctx context.Context, in *BindHuaweiPayDataReq, opts ...grpc.CallOption) (*BindHuaweiPayDataResp, error) {
+	client := pb.NewPaymentClient(m.cli.Conn())
+	return client.BindHuaweiPayData(ctx, in, opts...)
 }

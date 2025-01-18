@@ -129,3 +129,9 @@ func (s *PaymentServer) WechatPayH5Order(ctx context.Context, in *pb.AlipayPageS
 	l := logic.NewWechatPayH5OrderLogic(ctx, s.svcCtx)
 	return l.WechatPayH5Order(in)
 }
+
+// 绑定订单号和华为购买token
+func (s *PaymentServer) BindHuaweiPayData(ctx context.Context, in *pb.BindHuaweiPayDataReq) (*pb.BindHuaweiPayDataResp, error) {
+	l := logic.NewBindHuaweiPayDataLogic(ctx, s.svcCtx)
+	return l.BindHuaweiPayData(in)
+}

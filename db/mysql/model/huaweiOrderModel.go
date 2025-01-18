@@ -68,3 +68,12 @@ func (o *HuaweiOrderModel) Create(info *HuaweiOrderTable) error {
 	}
 	return err
 }
+
+// 绑定token
+func (o *HuaweiOrderModel) BindToken(purchaseToken string, userId int, outTradeNo string) error {
+	err := o.DB.Table("huawei_order").Where("user_id", userId).Where("out_trade_no", outTradeNo).Update("purchase_token", purchaseToken).Error
+	if err != nil {
+		logx.Errorf("更新失败 err:%v", err)
+	}
+	return err
+}

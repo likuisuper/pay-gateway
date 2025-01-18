@@ -317,6 +317,17 @@ message CreateDouyinRefundResp {
   int64 refundAuditDeadline = 2; // 退款截止期限
 }
 
+message BindHuaweiPayDataReq {
+  int64 UserId = 1;  // 用户id
+  string OutOrderNo = 2; // 订单号
+  string HwpayToken = 3; // 华为购买token
+}
+
+message BindHuaweiPayDataResp {
+  int32 Code = 1; // 返回状态
+  string Msg = 2; // 返回消息
+}
+
 //============== service ==============================================================================
 
 service Payment {
@@ -372,5 +383,8 @@ service Payment {
 
   // 微信h5支付，对接文档：https://pay.weixin.qq.com/docs/merchant/apis/h5-payment/direct-jsons/h5-prepay.html
   rpc WechatPayH5Order(AlipayPageSignReq) returns (WxH5PayReplay);
+
+  // 绑定订单号和华为购买token
+  rpc BindHuaweiPayData(BindHuaweiPayDataReq) returns (BindHuaweiPayDataResp);
 
 }
