@@ -29,6 +29,8 @@ func NewBindHuaweiPayDataLogic(ctx context.Context, svcCtx *svc.ServiceContext) 
 
 // 绑定订单号和华为购买token
 func (l *BindHuaweiPayDataLogic) BindHuaweiPayData(in *pb.BindHuaweiPayDataReq) (*pb.BindHuaweiPayDataResp, error) {
+	l.Sloww("BindHuaweiPayData", logx.Field("purchase token", in.GetHwpayToken()), logx.Field("userId", in.GetUserId()), logx.Field("outOrderNo", in.GetOutOrderNo()))
+
 	// 更新订单号和华为购买token
 	err := l.huaweiOrderModel.BindToken(in.GetHwpayToken(), int(in.GetUserId()), in.GetOutOrderNo())
 	if err != nil {
