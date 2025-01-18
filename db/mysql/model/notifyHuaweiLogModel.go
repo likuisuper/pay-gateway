@@ -10,7 +10,7 @@ import (
 
 // NotifyHuaweiLogTable represents a notify_huawei_log struct data.
 type NotifyHuaweiLogTable struct {
-	Id        uint64    `gorm:"column:id;primaryKey;autoIncrement" json:"id"`
+	Id        int       `gorm:"column:id;primaryKey;autoIncrement" json:"id"`
 	AppId     string    `gorm:"column:app_id" json:"appId"`         // 华为应用app_id
 	AppPkg    string    `gorm:"column:app_pkg" json:"appPkg"`       // 华为应用包名
 	Data      string    `gorm:"column:data" json:"data"`            // 华为通知回调内容原始内容

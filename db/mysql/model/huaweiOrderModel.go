@@ -10,11 +10,11 @@ import (
 
 // HuaweiOrderTable represents a huawei_order struct data.
 type HuaweiOrderTable struct {
-	Id                  uint64    `gorm:"column:id;primaryKey;autoIncrement" json:"id"`
-	LogId               uint64    `gorm:"column:log_id" json:"logId"`                              // notify_huawei_log id
+	Id                  int       `gorm:"column:id;primaryKey;autoIncrement" json:"id"`
+	LogId               int       `gorm:"column:log_id" json:"logId"`                              // notify_huawei_log id
 	Version             string    `gorm:"column:version" json:"version"`                           // 通知版本
 	EventType           string    `gorm:"column:event_type" json:"eventType"`                      // 通知类型，取值如下：ORDER：订单 SUBSCRIPTION：订阅
-	NotifyTime          uint64    `gorm:"column:notify_time" json:"notifyTime"`                    // 通知时间毫秒
+	NotifyTime          int       `gorm:"column:notify_time" json:"notifyTime"`                    // 通知时间毫秒
 	AppId               string    `gorm:"column:app_id" json:"appId"`                              // 华为应用ID
 	AppPkg              string    `gorm:"column:app_pkg" json:"appPkg"`                            // 华为应用包名
 	UserId              int       `gorm:"column:user_id" json:"userId"`                            // 应用用户id
@@ -22,7 +22,7 @@ type HuaweiOrderTable struct {
 	PurchaseToken       string    `gorm:"column:purchase_token" json:"purchaseToken"`              // 购买token
 	Environment         string    `gorm:"column:environment" json:"environment"`                   // 订阅购买环境 prod：正式环境, sandbox：沙盒测试
 	SubscriptionId      string    `gorm:"column:subscription_id" json:"subscriptionId"`            // 订阅id
-	CancellationDate    uint64    `gorm:"column:cancellation_date" json:"cancellationDate"`        // 撤销订阅时间或退款时间，UTC时间戳，以毫秒为单位，仅在notificationType取值为CANCEL的场景下会传入。
+	CancellationDate    int       `gorm:"column:cancellation_date" json:"cancellationDate"`        // 撤销订阅时间或退款时间，UTC时间戳，以毫秒为单位，仅在notificationType取值为CANCEL的场景下会传入。
 	PayOrderId          string    `gorm:"column:pay_order_id" json:"payOrderId"`                   // 订单ID，唯一标识一笔需要收费的收据，由华为应用内支付服务器在创建订单以及订阅型商品续费时生成。每一笔新的收据都会使用不同的orderId。通知类型为NEW_RENEWAL_PREF时不存在。
 	RefundPayOrderId    string    `gorm:"column:refund_pay_order_id" json:"refundPayOrderId"`      // 退款交易号，在notificationType取值为CANCEL时有值
 	AutoRenewStatus     int       `gorm:"column:auto_renew_status" json:"autoRenewStatus"`         // 续期状态。取值说明：1：当前周期到期后正常续期 0：用户已终止续期
@@ -39,6 +39,7 @@ type HuaweiOrderTable struct {
 	AppNotifyUrl        string    `gorm:"column:app_notify_url" json:"appNotifyUrl"`               // 业务回调通知
 	AgreementNo         string    `gorm:"column:agreement_no" json:"agreementNo"`                  // 支付宝/微信平台订阅协议号
 	ExternalAgreementNo string    `gorm:"column:external_agreement_no" json:"externalAgreementNo"` // 内部协议号
+	ExpirationDate      int       `gorm:"column:expiration_date" json:"expirationDate"`            // 订阅商品过期时间
 	PayAppId            string    `gorm:"column:pay_app_id" json:"payAppId"`                       // 第三方支付的appid
 	DeviceId            string    `gorm:"column:device_id" json:"deviceId"`                        // 用户设备号
 	DeductTime          time.Time `gorm:"column:deduct_time" json:"deductTime"`                    // 可开始扣款时间(默认是0,不需要关注,只是为了满足产品延迟扣款的需求)
@@ -72,6 +73,24 @@ func (o *HuaweiOrderModel) Create(info *HuaweiOrderTable) error {
 // 绑定token
 func (o *HuaweiOrderModel) BindToken(purchaseToken string, userId int, outTradeNo string) error {
 	err := o.DB.Table("huawei_order").Where("user_id", userId).Where("out_trade_no", outTradeNo).Update("purchase_token", purchaseToken).Error
+	if err != nil {
+		logx.Errorf("更新失败 err:%v", err)
+	}
+	return err
+}
+
+// 根据购买token获取记录
+func (o *HuaweiOrderModel) GetOneByToken(purchaseToken string) (*HuaweiOrderTable, error) {
+	tbl := new(HuaweiOrderTable)
+	err := o.DB.Table("huawei_order").Where("purchase_token", purchaseToken).First(tbl).Error
+	if err != nil {
+		logx.Errorf("GetOneByToken err: %v, token: %s", err, purchaseToken)
+	}
+	return tbl, err
+}
+
+func (o *HuaweiOrderModel) UpdateData(id int, data map[string]interface{}) error {
+	err := o.DB.Table("huawei_order").Where("id", id).Updates(data).Error
 	if err != nil {
 		logx.Errorf("更新失败 err:%v", err)
 	}

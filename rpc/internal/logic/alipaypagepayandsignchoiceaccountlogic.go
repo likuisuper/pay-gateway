@@ -218,7 +218,7 @@ func (l *AlipayPagePayAndSignChoiceAccountLogic) pureCreateHuaweiOrder(in *pb.Al
 		OutTradeNo:          utils.GenerateOrderCode(l.svcCtx.Config.SnowFlake.MachineNo, l.svcCtx.Config.SnowFlake.WorkerNo),
 		PayType:             model.PmPayOrderTablePayTypeAlipay,
 		Amount:              int(in.GetAmount()),
-		ProductId:           strconv.Itoa(int(in.GetProductId())),
+		ProductId:           in.GetProductIdStr(),
 		ProductType:         productType,
 		AppNotifyUrl:        in.GetNotifyURL(),
 		PayAppId:            "",

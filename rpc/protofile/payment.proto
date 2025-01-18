@@ -176,7 +176,7 @@ message AlipayPageSignReq {
   string NotifyURL = 3; //通知回调
   string AppPkgName = 4; //应用包名
   int64 ProductType = 5; //商品类型
-  int64 ProductId = 6;  //商品id
+  int64 ProductId = 6;  //商品id 数据库主键
   string ProductDesc = 7; //商品详情
   string BelongSignOrder = 8; //对应的签约订单单号（订阅续费时需要）
   string Ip = 9;            //客户端ip地址
@@ -186,6 +186,7 @@ message AlipayPageSignReq {
   string AppId = 13;  // app id 跟AppPkgName相对应
   string PurchaseEnv = 14;  // 订阅购买环境 prod：正式环境, sandbox：沙盒测试
   int64 Amount = 15;  //商品金额 单位分
+  string ProductIdStr = 16;  //商品id 唯一字符串表示
 }
 
 message AlipayTradeReq {
