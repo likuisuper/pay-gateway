@@ -15,11 +15,13 @@ const (
 )
 
 const (
-	APP_NOTIFY_TYPE_PAY             = "pay"
-	APP_NOTIFY_TYPE_REFUND          = "refund"
-	APP_NOTIFY_TYPE_SIGN            = "sign"
-	APP_NOTIFY_TYPE_UNSIGN          = "unsign"
-	APP_NOTIFY_TYPE_SIGN_FEE_FAILED = "sign_fee_failed"
+	APP_NOTIFY_TYPE_PAY                 = "pay"
+	APP_NOTIFY_TYPE_REFUND              = "refund"
+	APP_NOTIFY_TYPE_SIGN                = "sign"
+	APP_NOTIFY_TYPE_UNSIGN              = "unsign"
+	APP_NOTIFY_TYPE_SIGN_FEE_FAILED     = "sign_fee_failed"
+	APP_NOTIFY_HUAWEI_PRODUCT_SUBSCIRBE = "huawei_product_subscirbe" // 华为商品订阅
+	APP_NOTIFY_HUAWEI_PRODUCT_BUY       = "huawei_product_buy"       // 华为商品购买
 )
 
 // 订单状态  1:关闭，0:未支付，1:已支付，2:支付失败，3:已退款 4：退款中

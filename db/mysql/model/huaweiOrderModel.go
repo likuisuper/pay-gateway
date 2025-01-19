@@ -79,13 +79,30 @@ func (o *HuaweiOrderModel) BindToken(purchaseToken string, userId int, outTradeN
 	return err
 }
 
-// 根据购买token获取记录
-func (o *HuaweiOrderModel) GetOneByToken(purchaseToken string) (*HuaweiOrderTable, error) {
+// 根据购买token、订阅id或者原订阅id获取记录
+func (o *HuaweiOrderModel) GetOneByTokenAndSubId(purchaseToken, subscriptionId, oriSubscriptionId, orderId string) (*HuaweiOrderTable, error) {
 	tbl := new(HuaweiOrderTable)
-	err := o.DB.Table("huawei_order").Where("purchase_token", purchaseToken).First(tbl).Error
+	err := o.DB.Table("huawei_order").Where("`purchase_token`", purchaseToken).First(tbl).Error
 	if err != nil {
-		logx.Errorf("GetOneByToken err: %v, token: %s", err, purchaseToken)
+		if subscriptionId != "" || oriSubscriptionId != "" {
+			// 给个不存在的值占位
+			if subscriptionId == "" {
+				subscriptionId = "-100"
+			}
+			if oriSubscriptionId == "" {
+				oriSubscriptionId = "-100"
+			}
+
+			// 再根据订阅id获取
+			err = o.DB.Table("huawei_order").Where("`subscription_id` = ? or `subscription_id` = ? or `pay_order_id` = ?", subscriptionId, oriSubscriptionId, orderId).First(tbl).Error
+			if err != nil {
+				logx.Errorf("GetOneByTokenAndSubId err: %v, token: %s, subscriptionId: %s, oriSubscriptionId: %s", err, purchaseToken, subscriptionId, oriSubscriptionId)
+			}
+		} else {
+			logx.Errorf("GetOneByTokenAndSubId err: %v, token: %s,", err, purchaseToken)
+		}
 	}
+
 	return tbl, err
 }
 
