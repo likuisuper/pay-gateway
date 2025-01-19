@@ -201,7 +201,13 @@ func (l *NotifyHuaweiLogic) handleHuaweiSub(req *types.HuaweiReq, hwApp *model.H
 	}
 
 	// 购买时间
-	purchaseTime := time.Unix(int64(purchaseData.PurchaseTime/1000), 0)
+	var purchaseTime string
+	if purchaseData.OriPurchaseTime > 1000 {
+		// OriPurchaseTime 原购买时间，UTC时间戳，以毫秒为单位
+		purchaseTime = time.Unix(int64(purchaseData.OriPurchaseTime/1000), 0).Format("2006-01-02 15:04:05")
+	} else {
+		purchaseTime = time.Unix(int64(purchaseData.PurchaseTime/1000), 0).Format("2006-01-02 15:04:05")
+	}
 
 	// 更新数据
 	updateData := map[string]interface{}{
@@ -216,7 +222,7 @@ func (l *NotifyHuaweiLogic) handleHuaweiSub(req *types.HuaweiReq, hwApp *model.H
 		"subscription_id":   purchaseData.SubscriptionId,
 		"auto_renew_status": info.AutoRenewStatus,
 		"status":            1, // TODO: 还有退款等其他
-		"pay_time":          purchaseTime.Format("2006-01-02 15:04:05"),
+		"pay_time":          purchaseTime,
 		"expiration_date":   int(purchaseData.ExpirationDate / 1000),
 	}
 	err = l.huaweiOrderModel.UpdateData(hworder.Id, updateData)
