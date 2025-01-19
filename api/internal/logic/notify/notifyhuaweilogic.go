@@ -76,32 +76,43 @@ func (l *NotifyHuaweiLogic) NotifyHuawei(req *types.HuaweiReq) *huawei.Notificat
 
 	if req.EventType == huawei.HUAWEI_EVENT_TYPE_SUBSCRIPTION {
 		// 处理订阅
-		res, err := l.handleHuaweiSub(req, hwApp, logModel.Id)
+		err := l.handleHuaweiSub(req, hwApp, logModel.Id)
 		if err == nil {
-			return res
+			// 处理成功
+			return &huawei.NotificationResponse{
+				ErrorCode: "0",
+			}
 		}
 		l.Errorf("handleHuaweiSub error: %v", err)
 	} else if req.EventType == huawei.HUAWEI_EVENT_TYPE_ORDER {
 		// 处理订单
-		res, err := l.handleHuaweiOrder(req, hwApp, logModel.Id)
+		err := l.handleHuaweiOrder(req, hwApp, logModel.Id)
 		if err == nil {
-			return res
+			// 处理成功
+			return &huawei.NotificationResponse{
+				ErrorCode: "0",
+			}
 		}
 
 		l.Errorf("handleHuaweiOrder error: %v", err)
 	}
 
-	return nil
+	// 处理失败 重试
+	response := huawei.NotificationResponse{
+		ErrorCode: "1",
+		ErrorMsg:  "handle failed",
+	}
+	return &response
 }
 
 // 处理订阅流程: https://developer.huawei.com/consumer/cn/doc/HMSCore-Guides/notifications-about-subscription-events-0000001050035037
 // 5.校验订阅状态提供商品服务。请根据Subscription服务验证购买Token接口响应中InAppPurchaseData的subIsvalid字段决定是否发货。若subIsvalid为true，则执行发货操作。
-func (l *NotifyHuaweiLogic) handleHuaweiSub(req *types.HuaweiReq, hwApp *model.HuaweiAppTable, logId int) (*huawei.NotificationResponse, error) {
+func (l *NotifyHuaweiLogic) handleHuaweiSub(req *types.HuaweiReq, hwApp *model.HuaweiAppTable, logId int) error {
 	// 验证签名数据
 	err := huawei.VerifyRsaSign(req.SubNotification.StatusUpdateNotification, req.SubNotification.NotificationSignature, hwApp.IapPublicKey)
 	if err != nil {
 		l.Errorf("handleHuaweiSub huawei.VerifyRsaSign error: %v, hwApp : %v", err, hwApp)
-		return nil, err
+		return err
 	}
 
 	// 解析数据
@@ -109,12 +120,43 @@ func (l *NotifyHuaweiLogic) handleHuaweiSub(req *types.HuaweiReq, hwApp *model.H
 	err = json.Unmarshal([]byte(req.SubNotification.StatusUpdateNotification), &info)
 	if err != nil {
 		l.Errorf("json.Unmarshal error: %v, raw string: %s", err, req.SubNotification.StatusUpdateNotification)
-		return nil, err
+		return err
 	}
 
 	if info.SubscriptionId == "" || info.PurchaseToken == "" || info.LatestReceiptInfo == "" {
 		l.Errorf("subscription some data is empty, raw data:%v", req.SubNotification.StatusUpdateNotification)
-		return nil, errors.New("subscription some data is empty")
+		return errors.New("subscription some data is empty")
+	}
+
+	// 根据购买token查找订单数据
+	hworder, err := l.huaweiOrderModel.GetOneByToken(info.PurchaseToken)
+	if err != nil {
+		l.Errorf("GetOneByToken error: %v, token: %s", err, info.PurchaseToken)
+		return err
+	}
+
+	if hworder == nil || hworder.Id < 1 {
+		err = errors.New("获取订单失败")
+		l.Error(err.Error() + " 订单为空, token: " + info.PurchaseToken)
+		return err
+	}
+
+	if hworder.Status != 0 {
+		// 订单已处理
+		l.Slowf("订单已处理 purchase_token: %s, order id: %d", info.PurchaseToken, hworder.Id)
+		return nil
+	}
+
+	if hworder.ProductId != info.ProductId {
+		err = errors.New("商品id不一致")
+		l.Errorf(err.Error()+" 数据库商品id: %s, 回传商品id: %s", hworder.ProductId, info.ProductId)
+		return err
+	}
+
+	if hworder.AppId != info.ApplicationId {
+		err = errors.New("应用id不一致")
+		l.Errorf(err.Error()+" 数据库app id: %s, 回传app id: %s", hworder.AppId, info.ApplicationId)
+		return err
 	}
 
 	// 将latestReceiptInfo解析成具体InAppPurchaseData数据
@@ -122,47 +164,20 @@ func (l *NotifyHuaweiLogic) handleHuaweiSub(req *types.HuaweiReq, hwApp *model.H
 	err = json.Unmarshal([]byte(info.LatestReceiptInfo), &purchaseData)
 	if err != nil {
 		l.Errorf("json.Unmarshal error: %v, raw string: %s", err, info.LatestReceiptInfo)
-		return nil, err
+		return err
 	}
 
 	// 未完成购买或者已经过期，或者购买后已经退款
 	if !purchaseData.SubIsvalid {
 		// 订阅失效
 		l.Sloww("purchaseData is not valid", logx.Field("purchaseData", purchaseData))
-		response := huawei.NotificationResponse{ErrorCode: "0"}
-		return &response, nil
+		return nil
 	}
 
 	// 未购买成功
 	if purchaseData.PurchaseState != 0 || purchaseData.PurchaseTime < 10000 {
 		l.Sloww("purchaseData is not success", logx.Field("purchaseData", purchaseData))
-		response := huawei.NotificationResponse{ErrorCode: "0"}
-		return &response, nil
-	}
-
-	// 根据购买token查找订单数据
-	hworder, err := l.huaweiOrderModel.GetOneByToken(info.PurchaseToken)
-	if err != nil {
-		l.Errorf("GetOneByToken error: %v, token: %s", err, info.PurchaseToken)
-		return nil, err
-	}
-
-	if hworder == nil {
-		err = errors.New("获取订单失败")
-		l.Error(err.Error() + " 订单为空, token: " + info.PurchaseToken)
-		return nil, err
-	}
-
-	if hworder.ProductId != info.ProductId {
-		err = errors.New("商品id不一致")
-		l.Errorf(err.Error()+" 数据库商品id: %s, 回传商品id: %s", hworder.ProductId, info.ProductId)
-		return nil, err
-	}
-
-	if hworder.AppId != info.ApplicationId {
-		err = errors.New("应用id不一致")
-		l.Errorf(err.Error()+" 数据库app id: %s, 回传app id: %s", hworder.AppId, info.ApplicationId)
-		return nil, err
+		return nil
 	}
 
 	// 提供服务
@@ -206,21 +221,19 @@ func (l *NotifyHuaweiLogic) handleHuaweiSub(req *types.HuaweiReq, hwApp *model.H
 	}
 	err = l.huaweiOrderModel.UpdateData(hworder.Id, updateData)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// 续费的时候需要回调
 	// TODO:
 
-	response := huawei.NotificationResponse{ErrorCode: "0"}
-	return &response, nil
+	return nil
 }
 
 // 处理订单流程: https://developer.huawei.com/consumer/cn/doc/HMSCore-Guides/notifications-about-subscription-events-0000001050035037
 // 5.验证结果成功，处理发货，并记录购买商品的Token。请根据Order服务验证购买Token接口响应中InAppPurchaseData的purchaseState字段决定是否发货。若purchaseState为0，则执行发货操作。
 // 6.调用华为IAP服务器提供的Order服务确认购买接口确认购买（即消耗）。
 // 7.IAP服务器返回确认购买结果。
-func (l *NotifyHuaweiLogic) handleHuaweiOrder(req *types.HuaweiReq, hwApp *model.HuaweiAppTable, logId int) (*huawei.NotificationResponse, error) {
-	response := huawei.NotificationResponse{ErrorCode: "0"}
-	return &response, nil
+func (l *NotifyHuaweiLogic) handleHuaweiOrder(req *types.HuaweiReq, hwApp *model.HuaweiAppTable, logId int) error {
+	return nil
 }

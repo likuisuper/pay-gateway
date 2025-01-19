@@ -115,7 +115,7 @@ func (l *WechatUnifiedOrderLogic) pureCreateHuaweiOrder(in *pb.AlipayPageSignReq
 		Status:              0,
 		Environment:         in.GetPurchaseEnv(),
 		OutTradeNo:          utils.GenerateOrderCode(l.svcCtx.Config.SnowFlake.MachineNo, l.svcCtx.Config.SnowFlake.WorkerNo),
-		PayType:             model.PmPayOrderTablePayTypeAlipay,
+		PayType:             model.PmPayOrderTablePayTypeWechatPayUni,
 		Amount:              int(in.GetAmount()),
 		ProductId:           in.GetProductIdStr(),
 		ProductType:         productType,
