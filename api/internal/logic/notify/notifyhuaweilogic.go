@@ -190,12 +190,6 @@ func (l *NotifyHuaweiLogic) handleHuaweiSub(req *types.HuaweiReq, hwApp *model.H
 		return err
 	}
 
-	if hworder.Status != 0 && hworder.NotificationType == info.NotificationType {
-		// 订单处理过了
-		l.Slowf("订单已处理且通知类型没有变更 purchase_token: %s, order id: %d", info.PurchaseToken, hworder.Id)
-		return nil
-	}
-
 	if hworder.AppId != info.ApplicationId {
 		err = errors.New("应用id不一致")
 		l.Errorf(err.Error()+" 数据库app id: %s, 回传app id: %s", hworder.AppId, info.ApplicationId)
@@ -290,11 +284,13 @@ func (l *NotifyHuaweiLogic) handleHuaweiSub(req *types.HuaweiReq, hwApp *model.H
 		newProductId = info.ProductId
 	}
 
+	if cancellationTime < 1 && purchaseData.CancellationTime > 1000 {
+		cancellationTime = int(purchaseData.CancellationTime / 1000)
+	}
 	if cancellationTime > 0 {
 		updateData["cancellation_date"] = cancellationTime
-	} else if purchaseData.CancellationTime > 1000 {
-		cancellationTime = int(purchaseData.CancellationTime / 1000)
-		updateData["cancellation_date"] = cancellationTime
+	} else {
+		updateData["cancellation_date"] = 0
 	}
 
 	err = l.huaweiOrderModel.UpdateData(hworder.Id, updateData)
