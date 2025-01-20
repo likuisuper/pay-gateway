@@ -63,3 +63,9 @@ func (o *HuaweiAppModel) GetInfo(appId string) (*HuaweiAppTable, error) {
 
 	return &info, err
 }
+
+func (o *HuaweiAppModel) GetInfoByPkg(pkg string) (HuaweiAppTable, error) {
+	var info HuaweiAppTable
+	err := o.DB.Where("`app_pkg` = ? ", pkg).First(&info).Error
+	return info, err
+}

@@ -135,3 +135,9 @@ func (s *PaymentServer) BindHuaweiPayData(ctx context.Context, in *pb.BindHuawei
 	l := logic.NewBindHuaweiPayDataLogic(ctx, s.svcCtx)
 	return l.BindHuaweiPayData(in)
 }
+
+// 用户主动解除华为订阅
+func (s *PaymentServer) UnsubscribeHuawei(ctx context.Context, in *pb.UnsubscribeHuaweiReq) (*pb.UnsubscribeHuaweiResp, error) {
+	l := logic.NewUnsubscribeHuaweiLogic(ctx, s.svcCtx)
+	return l.UnsubscribeHuawei(in)
+}

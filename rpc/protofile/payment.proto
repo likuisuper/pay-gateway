@@ -324,7 +324,18 @@ message BindHuaweiPayDataReq {
   string HwpayToken = 3; // 华为购买token
 }
 
+message UnsubscribeHuaweiReq {
+  string Pkg = 1;  // 客户端包名
+  string SubscriptionId = 2; // 华为订阅id
+  string PurchaseToken = 3; // 华为购买token
+}
+
 message BindHuaweiPayDataResp {
+  int32 Code = 1; // 返回状态
+  string Msg = 2; // 返回消息
+}
+
+message UnsubscribeHuaweiResp {
   int32 Code = 1; // 返回状态
   string Msg = 2; // 返回消息
 }
@@ -387,5 +398,8 @@ service Payment {
 
   // 绑定订单号和华为购买token
   rpc BindHuaweiPayData(BindHuaweiPayDataReq) returns (BindHuaweiPayDataResp);
+
+  // 用户主动解除华为订阅
+  rpc UnsubscribeHuawei(UnsubscribeHuaweiReq) returns (UnsubscribeHuaweiResp);
 
 }

@@ -44,6 +44,8 @@ type (
 	PayeeInfo                     = pb.PayeeInfo
 	Schema                        = pb.Schema
 	TiktokEcPayReply              = pb.TiktokEcPayReply
+	UnsubscribeHuaweiReq          = pb.UnsubscribeHuaweiReq
+	UnsubscribeHuaweiResp         = pb.UnsubscribeHuaweiResp
 	WechatRefundOrderReq          = pb.WechatRefundOrderReq
 	WxH5PayReplay                 = pb.WxH5PayReplay
 	WxNativePayReply              = pb.WxNativePayReply
@@ -89,6 +91,8 @@ type (
 		WechatPayH5Order(ctx context.Context, in *AlipayPageSignReq, opts ...grpc.CallOption) (*WxH5PayReplay, error)
 		// 绑定订单号和华为购买token
 		BindHuaweiPayData(ctx context.Context, in *BindHuaweiPayDataReq, opts ...grpc.CallOption) (*BindHuaweiPayDataResp, error)
+		// 用户主动解除华为订阅
+		UnsubscribeHuawei(ctx context.Context, in *UnsubscribeHuaweiReq, opts ...grpc.CallOption) (*UnsubscribeHuaweiResp, error)
 	}
 
 	defaultPayment struct {
@@ -214,4 +218,10 @@ func (m *defaultPayment) WechatPayH5Order(ctx context.Context, in *AlipayPageSig
 func (m *defaultPayment) BindHuaweiPayData(ctx context.Context, in *BindHuaweiPayDataReq, opts ...grpc.CallOption) (*BindHuaweiPayDataResp, error) {
 	client := pb.NewPaymentClient(m.cli.Conn())
 	return client.BindHuaweiPayData(ctx, in, opts...)
+}
+
+// 用户主动解除华为订阅
+func (m *defaultPayment) UnsubscribeHuawei(ctx context.Context, in *UnsubscribeHuaweiReq, opts ...grpc.CallOption) (*UnsubscribeHuaweiResp, error) {
+	client := pb.NewPaymentClient(m.cli.Conn())
+	return client.UnsubscribeHuawei(ctx, in, opts...)
 }
