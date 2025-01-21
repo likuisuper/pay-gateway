@@ -548,7 +548,7 @@ func (l *OrderPayLogic) createDouyinGeneralTradeOrder(in *pb.OrderPayReq, payCon
 	dataStr, byteAuthorization, err := payClient.RequestOrder(data)
 	if err != nil {
 		tiktokEcPayFailNum.CounterInc()
-		msg := fmt.Sprintf("douyinGeneralTradePay pkgName=%s, err:=%v", in.AppPkgName, err)
+		msg := fmt.Sprintf("douyin RequestOrder failed pkgName=%s, err:=%v", in.AppPkgName, err)
 		l.Error(msg)
 		return
 	}
@@ -588,10 +588,10 @@ func (l *OrderPayLogic) createDouyinPeriodOrder(in *pb.OrderPayReq, payConf *dou
 	}
 
 	// 生成签名
-	dataStr, byteAuthorization, err := douyin.NewDouyinPay(payConf).RequestOrder(data)
+	dataStr, byteAuthorization, err := douyin.NewDouyinPay(payConf).CreateSignOrder(data)
 	if err != nil {
 		tiktokEcPayFailNum.CounterInc()
-		msg := fmt.Sprintf("createDouyinPeriodOrder pkgName: %s, err: %v ", in.AppPkgName, err)
+		msg := fmt.Sprintf("douyin CreateSignOrder failed pkgName: %s, err: %v ", in.AppPkgName, err)
 		l.Error(msg)
 		return
 	}

@@ -109,15 +109,32 @@ func NewDouyinPay(config *PayConfig) *PayClient {
 	return client
 }
 
+// 生成普通商品订单签名
 func (c *PayClient) RequestOrder(data interface{}) (string, string, error) {
 	dataStr, err := sonic.MarshalString(data)
 	if err != nil {
+		logx.Errorf("RequestOrder error: %v", err)
 		return "", "", err
 	}
 
 	logx.Sloww("RequestOrder", logx.Field("dataStr", dataStr))
 
 	byteAuthorization, err := c.GetByteAuthorization("/requestOrder", "POST", dataStr, c.randStr(10), strconv.FormatInt(time.Now().Unix(), 10))
+	return dataStr, byteAuthorization, err
+}
+
+// https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/api/industry/credit-products/createSignOrder
+// 生成周期代扣签约下单接口签名
+func (c *PayClient) CreateSignOrder(data interface{}) (string, string, error) {
+	dataStr, err := sonic.MarshalString(data)
+	if err != nil {
+		logx.Errorf("CreateSignOrder error: %v", err)
+		return "", "", err
+	}
+
+	logx.Sloww("CreateSignOrder", logx.Field("dataStr", dataStr))
+
+	byteAuthorization, err := c.GetByteAuthorization("/createSignOrder", "POST", dataStr, c.randStr(10), strconv.FormatInt(time.Now().Unix(), 10))
 	return dataStr, byteAuthorization, err
 }
 
@@ -181,6 +198,7 @@ func (c *PayClient) getSignature(method, url, timestamp, nonce, data string, pri
 		return "", err
 	}
 	sign := base64.StdEncoding.EncodeToString(signBytes)
+
 	return sign, nil
 }
 
@@ -188,7 +206,11 @@ func (c *PayClient) randStr(length int) string {
 	b := make([]byte, length)
 	_, err := rand.Read(b)
 	if err != nil {
-		panic(err)
+		tmpStr := ""
+		for i := 0; i < length; i++ {
+			tmpStr += "a"
+		}
+		return tmpStr
 	}
 	return base64.StdEncoding.EncodeToString(b)
 }
