@@ -116,27 +116,12 @@ func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (out *pb.OrderPayResp, err 
 		// }
 	}
 
-	orderInfo = &model.PmPayOrderTable{
-		OrderSn:    in.OrderSn,
-		AppPkgName: in.AppPkgName,
-		Amount:     int(in.Amount),
-		Subject:    in.Subject,
-		NotifyUrl:  in.NotifyURL,
-		PayAppId:   payAppId,        //创建订单时，直接指定PayAppid，减少一次DB操作
-		PayType:    int(in.PayType), // 创建订单时，传入支付类型，补偿机制依赖
-		PayStatus:  model.PmPayOrderTablePayStatusNo,
-		Currency:   in.Currency.String(),
-	}
-	err = l.payOrderModel.Create(orderInfo)
-	if err != nil {
-		err = fmt.Errorf("创建支付订单失败 %w", err)
-		l.Errorw("创建支付订单失败", logx.Field("err", err), logx.Field("orderInfo", orderInfo))
-		orderTableIOFailNum.CounterInc()
-		return
-	}
+	tmpOrderSn := ""
+	tmpOrderAmount := 0
+	tmpOrderSubject := ""
 
 	if in.IsPeriodProduct {
-		// 周期签约订单
+		// 周期签约订单 (目前只有抖音有)
 		orderInfo2 := &model.PmDyPeriodOrderTable{
 			OrderSn:    in.OrderSn + dy_sign_order_suffix, // 周期签约订单后面固定添加
 			UserId:     int(in.InnerUserId),
@@ -157,15 +142,42 @@ func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (out *pb.OrderPayResp, err 
 			orderTableIOFailNum.CounterInc()
 			return
 		}
+
+		tmpOrderSn = orderInfo2.OrderSn
+		tmpOrderAmount = orderInfo2.Amount
+		tmpOrderSubject = orderInfo2.Subject
+	} else {
+		orderInfo = &model.PmPayOrderTable{
+			OrderSn:    in.OrderSn,
+			AppPkgName: in.AppPkgName,
+			Amount:     int(in.Amount),
+			Subject:    in.Subject,
+			NotifyUrl:  in.NotifyURL,
+			PayAppId:   payAppId,        //创建订单时，直接指定PayAppid，减少一次DB操作
+			PayType:    int(in.PayType), // 创建订单时，传入支付类型，补偿机制依赖
+			PayStatus:  model.PmPayOrderTablePayStatusNo,
+			Currency:   in.Currency.String(),
+		}
+		err = l.payOrderModel.Create(orderInfo)
+		if err != nil {
+			err = fmt.Errorf("创建支付订单失败 %w", err)
+			l.Errorw("创建支付订单失败", logx.Field("err", err), logx.Field("orderInfo", orderInfo))
+			orderTableIOFailNum.CounterInc()
+			return
+		}
+
+		tmpOrderSn = orderInfo.OrderSn
+		tmpOrderAmount = orderInfo.Amount
+		tmpOrderSubject = orderInfo.Subject
 	}
 
 	out = new(pb.OrderPayResp)
 	out.PayType = in.PayType
 
 	payOrder := &client.PayOrder{
-		OrderSn: orderInfo.OrderSn,
-		Amount:  orderInfo.Amount,
-		Subject: orderInfo.Subject,
+		OrderSn: tmpOrderSn,
+		Amount:  tmpOrderAmount,
+		Subject: tmpOrderSubject,
 	}
 
 	switch out.PayType {
@@ -246,11 +258,15 @@ func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (out *pb.OrderPayResp, err 
 		}
 		out.WxUnified, err = l.createWeChatUnifiedOrder(in, payOrder, payCfg.TransClientConfig())
 	case pb.PayType_DouyinGeneralTrade:
-		checkParamErr := l.checkDouyinGeneralTradeParam(in)
-		if checkParamErr != nil {
-			err = checkParamErr
-			util.CheckError("checkDouyinGeneralTradeParam fail pkgName: %s, err: %v ", in.AppPkgName, checkParamErr)
-			return
+		if !in.IsPeriodProduct {
+			// 周期代扣没有商品信息 不需要检查
+			// 非周期代扣才需要检查
+			checkParamErr := l.checkDouyinGeneralTradeParam(in)
+			if checkParamErr != nil {
+				err = checkParamErr
+				util.CheckError("checkDouyinGeneralTradeParam fail pkgName: %s, err: %v ", in.AppPkgName, checkParamErr)
+				return
+			}
 		}
 
 		payCfg, cfgErr := model.NewPmPayConfigTiktokModel(define.DbPayGateway).GetOneByAppID(pkgCfg.TiktokPayAppID)
@@ -458,6 +474,10 @@ func (l *OrderPayLogic) checkDouyinGeneralTradeParam(in *pb.OrderPayReq) error {
 	}
 
 	req := in.DouyinGeneralTradeReq
+	if req == nil {
+		return errors.New("invalid DouyinGeneralTradeReq")
+	}
+
 	if req.Type == pb.DouyinGeneralTradeReq_Unknown || pb.DouyinGeneralTradeReq_SkuType_name[int32(req.Type)] == "" {
 		return errors.New("invalid sku type")
 	}
