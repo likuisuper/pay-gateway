@@ -98,8 +98,35 @@ type DouyinReq struct {
 }
 
 type DouyinResp struct {
-	ErrNo   int    `json:"err_no"`
-	ErrTips string `json:"err_tips"`
+	ErrNo   int         `json:"err_no"`
+	ErrTips string      `json:"err_tips"`
+	Data    interface{} `json:"data,omitempty"`
+}
+
+type HuaweiReq struct {
+	Version           string            `json:"version,optional"`       // 通知版本。
+	NotifyTime        int64             `json:"notifyTime,optional"`    // 通知时间，UTC时间戳，即自1970年1月1日0时起到商户通知的毫秒数。
+	EventType         string            `json:"eventType,optional"`     // 通知类型，取值如下：ORDER：订单 SUBSCRIPTION：订阅
+	ApplicationId     string            `json:"applicationId,optional"` // 应用ID
+	OrderNotification OrderNotification `json:"orderNotification"`      // 订单通知内容，eventType为ORDER时返回
+	SubNotification   SubNotification   `json:"subNotification"`        // 订阅通知内容，eventType为SUBSCRIPTION时返回。
+}
+
+type OrderNotification struct {
+	Version          string `json:"version,optional"`          // 通知版本
+	NotificationType int    `json:"notificationType,optional"` // 通知事件的类型，取值如下：1：支付成功 2：退款成功
+	PurchaseToken    string `json:"purchaseToken,optional"`    // 待下发商品的购买Token, 支付后拿到的最新的purchaseToken，表示该商品和该用户的对应关系
+	ProductId        string `json:"productId,optional"`        // 商品ID
+}
+
+type SubNotification struct {
+	Version                  string `json:"version,optional"`                  // 通知版本
+	StatusUpdateNotification string `json:"statusUpdateNotification,optional"` // 通知消息，格式为JSON字符串，请参见statusUpdateNotification。
+	NotificationSignature    string `json:"notificationSignature,optional"`    // 对statusUpdateNotification字段的签名字符串，签名算法为signatureAlgorithm表示的签名算法。您的服务器在收到签名字符串后，需要参见对返回结果验签使用IAP公钥对statusUpdateNotification的JSON字符串进行验签。公钥获取请参见查询支付服务信息。
+	SignatureAlgorithm       string `json:"signatureAlgorithm,optional"`       // 签名算法
+}
+
+type HuaweiResp struct {
 }
 
 type CrtUploadReq struct {

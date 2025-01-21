@@ -37,6 +37,8 @@ const (
 	Payment_WechatUnifiedOrder_FullMethodName                = "/payment.Payment/WechatUnifiedOrder"
 	Payment_WechatRefundOrder_FullMethodName                 = "/payment.Payment/WechatRefundOrder"
 	Payment_WechatPayH5Order_FullMethodName                  = "/payment.Payment/WechatPayH5Order"
+	Payment_BindHuaweiPayData_FullMethodName                 = "/payment.Payment/BindHuaweiPayData"
+	Payment_UnsubscribeHuawei_FullMethodName                 = "/payment.Payment/UnsubscribeHuawei"
 )
 
 // PaymentClient is the client API for Payment service.
@@ -79,6 +81,10 @@ type PaymentClient interface {
 	WechatRefundOrder(ctx context.Context, in *WechatRefundOrderReq, opts ...grpc.CallOption) (*CreateRefundResp, error)
 	// 微信h5支付，对接文档：https://pay.weixin.qq.com/docs/merchant/apis/h5-payment/direct-jsons/h5-prepay.html
 	WechatPayH5Order(ctx context.Context, in *AlipayPageSignReq, opts ...grpc.CallOption) (*WxH5PayReplay, error)
+	// 绑定订单号和华为购买token
+	BindHuaweiPayData(ctx context.Context, in *BindHuaweiPayDataReq, opts ...grpc.CallOption) (*BindHuaweiPayDataResp, error)
+	// 用户主动解除华为订阅
+	UnsubscribeHuawei(ctx context.Context, in *UnsubscribeHuaweiReq, opts ...grpc.CallOption) (*UnsubscribeHuaweiResp, error)
 }
 
 type paymentClient struct {
@@ -251,6 +257,24 @@ func (c *paymentClient) WechatPayH5Order(ctx context.Context, in *AlipayPageSign
 	return out, nil
 }
 
+func (c *paymentClient) BindHuaweiPayData(ctx context.Context, in *BindHuaweiPayDataReq, opts ...grpc.CallOption) (*BindHuaweiPayDataResp, error) {
+	out := new(BindHuaweiPayDataResp)
+	err := c.cc.Invoke(ctx, Payment_BindHuaweiPayData_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *paymentClient) UnsubscribeHuawei(ctx context.Context, in *UnsubscribeHuaweiReq, opts ...grpc.CallOption) (*UnsubscribeHuaweiResp, error) {
+	out := new(UnsubscribeHuaweiResp)
+	err := c.cc.Invoke(ctx, Payment_UnsubscribeHuawei_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PaymentServer is the server API for Payment service.
 // All implementations must embed UnimplementedPaymentServer
 // for forward compatibility
@@ -291,6 +315,10 @@ type PaymentServer interface {
 	WechatRefundOrder(context.Context, *WechatRefundOrderReq) (*CreateRefundResp, error)
 	// 微信h5支付，对接文档：https://pay.weixin.qq.com/docs/merchant/apis/h5-payment/direct-jsons/h5-prepay.html
 	WechatPayH5Order(context.Context, *AlipayPageSignReq) (*WxH5PayReplay, error)
+	// 绑定订单号和华为购买token
+	BindHuaweiPayData(context.Context, *BindHuaweiPayDataReq) (*BindHuaweiPayDataResp, error)
+	// 用户主动解除华为订阅
+	UnsubscribeHuawei(context.Context, *UnsubscribeHuaweiReq) (*UnsubscribeHuaweiResp, error)
 	mustEmbedUnimplementedPaymentServer()
 }
 
@@ -351,6 +379,12 @@ func (UnimplementedPaymentServer) WechatRefundOrder(context.Context, *WechatRefu
 }
 func (UnimplementedPaymentServer) WechatPayH5Order(context.Context, *AlipayPageSignReq) (*WxH5PayReplay, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method WechatPayH5Order not implemented")
+}
+func (UnimplementedPaymentServer) BindHuaweiPayData(context.Context, *BindHuaweiPayDataReq) (*BindHuaweiPayDataResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method BindHuaweiPayData not implemented")
+}
+func (UnimplementedPaymentServer) UnsubscribeHuawei(context.Context, *UnsubscribeHuaweiReq) (*UnsubscribeHuaweiResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UnsubscribeHuawei not implemented")
 }
 func (UnimplementedPaymentServer) mustEmbedUnimplementedPaymentServer() {}
 
@@ -689,6 +723,42 @@ func _Payment_WechatPayH5Order_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Payment_BindHuaweiPayData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BindHuaweiPayDataReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PaymentServer).BindHuaweiPayData(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Payment_BindHuaweiPayData_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PaymentServer).BindHuaweiPayData(ctx, req.(*BindHuaweiPayDataReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Payment_UnsubscribeHuawei_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UnsubscribeHuaweiReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PaymentServer).UnsubscribeHuawei(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Payment_UnsubscribeHuawei_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PaymentServer).UnsubscribeHuawei(ctx, req.(*UnsubscribeHuaweiReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Payment_ServiceDesc is the grpc.ServiceDesc for Payment service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -767,6 +837,14 @@ var Payment_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "WechatPayH5Order",
 			Handler:    _Payment_WechatPayH5Order_Handler,
+		},
+		{
+			MethodName: "BindHuaweiPayData",
+			Handler:    _Payment_BindHuaweiPayData_Handler,
+		},
+		{
+			MethodName: "UnsubscribeHuawei",
+			Handler:    _Payment_UnsubscribeHuawei_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

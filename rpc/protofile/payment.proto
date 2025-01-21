@@ -80,6 +80,7 @@ message WxUnifiedPayReply {
   string OutTradeNo = 3;
   string WapUrl = 4;
   string WapName = 5;
+  string ExternalAgreementNo = 6;
 }
 
 message WxH5PayReplay{
@@ -180,12 +181,17 @@ message AlipayPageSignReq {
   string NotifyURL = 3; //通知回调
   string AppPkgName = 4; //应用包名
   int64 ProductType = 5; //商品类型
-  int64 ProductId = 6;  //商品id
+  int64 ProductId = 6;  //商品id 数据库主键
   string ProductDesc = 7; //商品详情
   string BelongSignOrder = 8; //对应的签约订单单号（订阅续费时需要）
   string Ip = 9;            //客户端ip地址
   string RedirectUrl = 10;  // 支付成功后重定向地址
   string DeviceId = 11;  // 用户设备号
+  bool IsHwPayProduct = 12;  // 是否是华为订阅商品
+  string AppId = 13;  // app id 跟AppPkgName相对应
+  string PurchaseEnv = 14;  // 订阅购买环境 prod：正式环境, sandbox：沙盒测试
+  int64 Amount = 15;  //商品金额 单位分
+  string ProductIdStr = 16;  //商品id 唯一字符串表示
 }
 
 message AlipayTradeReq {
@@ -317,6 +323,28 @@ message CreateDouyinRefundResp {
   int64 refundAuditDeadline = 2; // 退款截止期限
 }
 
+message BindHuaweiPayDataReq {
+  int64 UserId = 1;  // 用户id
+  string OutOrderNo = 2; // 订单号
+  string HwpayToken = 3; // 华为购买token
+}
+
+message UnsubscribeHuaweiReq {
+  string Pkg = 1;  // 客户端包名
+  string SubscriptionId = 2; // 华为订阅id
+  string PurchaseToken = 3; // 华为购买token
+}
+
+message BindHuaweiPayDataResp {
+  int32 Code = 1; // 返回状态
+  string Msg = 2; // 返回消息
+}
+
+message UnsubscribeHuaweiResp {
+  int32 Code = 1; // 返回状态
+  string Msg = 2; // 返回消息
+}
+
 //============== service ==============================================================================
 
 service Payment {
@@ -372,5 +400,11 @@ service Payment {
 
   // 微信h5支付，对接文档：https://pay.weixin.qq.com/docs/merchant/apis/h5-payment/direct-jsons/h5-prepay.html
   rpc WechatPayH5Order(AlipayPageSignReq) returns (WxH5PayReplay);
+
+  // 绑定订单号和华为购买token
+  rpc BindHuaweiPayData(BindHuaweiPayDataReq) returns (BindHuaweiPayDataResp);
+
+  // 用户主动解除华为订阅
+  rpc UnsubscribeHuawei(UnsubscribeHuaweiReq) returns (UnsubscribeHuaweiResp);
 
 }

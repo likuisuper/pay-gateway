@@ -41,6 +41,7 @@ var (
 )
 
 const (
+	// https://pay.weixin.qq.com/doc/v2/partner/4011936644
 	WeChatRequestUri = "https://api.mch.weixin.qq.com/pay/unifiedorder"
 	WechatTradeType  = "MWEB"
 	WechatSignType   = "MD5"

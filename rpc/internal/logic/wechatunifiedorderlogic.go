@@ -22,33 +22,44 @@ import (
 type WechatUnifiedOrderLogic struct {
 	ctx    context.Context
 	svcCtx *svc.ServiceContext
+
 	logx.Logger
 	appConfigModel       *model.PmAppConfigModel
 	payConfigWechatModel *model.PmPayConfigWechatModel
 	orderModel           *model.OrderModel
+	huaweiOrderModel     *model.HuaweiOrderModel
 }
 
 func NewWechatUnifiedOrderLogic(ctx context.Context, svcCtx *svc.ServiceContext) *WechatUnifiedOrderLogic {
 	return &WechatUnifiedOrderLogic{
-		ctx:                  ctx,
-		svcCtx:               svcCtx,
+		ctx:    ctx,
+		svcCtx: svcCtx,
+
 		Logger:               logx.WithContext(ctx),
 		appConfigModel:       model.NewPmAppConfigModel(define.DbPayGateway),
 		payConfigWechatModel: model.NewPmPayConfigWechatModel(define.DbPayGateway),
 		orderModel:           model.NewOrderModel(define.DbPayGateway),
+		huaweiOrderModel:     model.NewHuaweiOrderModel(define.DbPayGateway),
 	}
 }
 
 // 微信统一下单接口
 func (l *WechatUnifiedOrderLogic) WechatUnifiedOrder(in *pb.AlipayPageSignReq) (*pb.WxUnifiedPayReply, error) {
+	l.Sloww("WechatUnifiedOrder param", logx.Field("in", in))
+
+	if in.GetIsHwPayProduct() {
+		// 华为订阅商品 华为应用内购买 只创建订单
+		return l.pureCreateHuaweiOrder(in)
+	}
+
 	//读取应用配置
 	pkgCfg, err := l.appConfigModel.GetOneByPkgName(in.AppPkgName)
 	if err != nil {
-		//util.CheckError("pkgName= %s, 读取应用配置失败，err:=%v", in.AppPkgName, err)
-		err = fmt.Errorf("pkgName= %s, 读取应用配置失败，err:=%v", in.AppPkgName, err)
+		err = fmt.Errorf("pkgName= %s, 读取应用配置失败 err: %v ", in.AppPkgName, err)
 		util.CheckError(err.Error())
 		return nil, err
 	}
+
 	product := types.Product{}
 	var productType, intAmount int
 
@@ -92,6 +103,42 @@ func (l *WechatUnifiedOrderLogic) WechatUnifiedOrder(in *pb.AlipayPageSignReq) (
 	}
 
 	return data, nil
+}
+
+// 华为订阅商品 华为应用内购买 只创建订单
+func (l *WechatUnifiedOrderLogic) pureCreateHuaweiOrder(in *pb.AlipayPageSignReq) (*pb.WxUnifiedPayReply, error) {
+	productType := int(in.ProductType)
+	orderInfo := model.HuaweiOrderTable{
+		AppPkg:              in.GetAppPkgName(),
+		AppId:               in.GetAppId(),
+		UserId:              int(in.GetUserId()),
+		Status:              0,
+		Environment:         in.GetPurchaseEnv(),
+		OutTradeNo:          utils.GenerateOrderCode(l.svcCtx.Config.SnowFlake.MachineNo, l.svcCtx.Config.SnowFlake.WorkerNo),
+		PayType:             model.PmPayOrderTablePayTypeWechatPayUni,
+		Amount:              int(in.GetAmount()),
+		ProductId:           in.GetProductIdStr(),
+		ProductType:         productType,
+		AppNotifyUrl:        in.GetNotifyURL(),
+		PayAppId:            "",
+		ProductDesc:         in.GetProductDesc(),
+		DeviceId:            in.GetDeviceId(), // 在回调的时候 需要带到app_alipay_order表
+		ExternalAgreementNo: utils.GenerateOrderCode(l.svcCtx.Config.SnowFlake.MachineNo, l.svcCtx.Config.SnowFlake.WorkerNo),
+	}
+
+	err := l.huaweiOrderModel.Create(&orderInfo)
+	if err != nil {
+		payAndSignCreateOrderErr.CounterInc()
+		logx.Errorf("创建订单异常,创建订单表失败 err:%s, orderInfo: %+v", err.Error(), orderInfo)
+		return nil, errors.New("创建订单异常,创建订单表失败")
+	}
+
+	return &pb.WxUnifiedPayReply{
+		Prepayid:            "",
+		MwebUrl:             "",
+		OutTradeNo:          orderInfo.OutTradeNo,
+		ExternalAgreementNo: orderInfo.ExternalAgreementNo,
+	}, nil
 }
 
 // 微信统一支付
