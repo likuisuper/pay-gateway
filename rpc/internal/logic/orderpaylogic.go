@@ -587,6 +587,8 @@ func (l *OrderPayLogic) createDouyinPeriodOrder(in *pb.OrderPayReq, payConf *dou
 		AuthPayOrder:   authPayOrder,
 	}
 
+	l.Sloww("createDouyinPeriodOrder", logx.Field("data", data))
+
 	// 生成签名
 	dataStr, byteAuthorization, err := douyin.NewDouyinPay(payConf).CreateSignOrder(data)
 	if err != nil {
