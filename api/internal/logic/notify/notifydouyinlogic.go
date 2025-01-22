@@ -478,6 +478,11 @@ func (l *NotifyDouyinLogic) handleSignPayCallback(msg string, originData interfa
 		return fmt.Errorf("扣款成功 查询记录出错 error: %s", err.Error())
 	}
 
+	if orderInfo.PayStatus == 1 {
+		l.Slowf("扣款成功 订单已经处理过了 不需要再次数据 raw msg: %s , orderInfo id: %d ", msg, orderInfo.ID)
+		return nil
+	}
+
 	updateData := map[string]interface{}{
 		"pay_status":          1,
 		"third_sign_order_no": signResult.AuthOrderId,                                                                 // 抖音侧签约单的单号，长度<=64byte
