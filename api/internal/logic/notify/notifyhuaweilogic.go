@@ -80,32 +80,21 @@ func (l *NotifyHuaweiLogic) NotifyHuawei(req *types.HuaweiReq) *huawei.Notificat
 	if req.EventType == huawei.HUAWEI_EVENT_TYPE_SUBSCRIPTION {
 		// 处理订阅
 		err := l.handleHuaweiSub(req, hwApp, logModel.Id)
-		if err == nil {
-			// 处理成功
-			return &huawei.NotificationResponse{
-				ErrorCode: "0",
-			}
+		if err != nil {
+			l.Errorf("handleHuaweiSub error: %v", err)
 		}
-		l.Errorf("handleHuaweiSub error: %v", err)
 	} else if req.EventType == huawei.HUAWEI_EVENT_TYPE_ORDER {
 		// 处理订单
 		err := l.handleHuaweiOrder(req, logModel.Id)
-		if err == nil {
-			// 处理成功
-			return &huawei.NotificationResponse{
-				ErrorCode: "0",
-			}
+		if err != nil {
+			l.Errorf("handleHuaweiOrder error: %v", err)
 		}
-
-		l.Errorf("handleHuaweiOrder error: %v", err)
 	}
 
-	// 处理失败 重试
-	response := huawei.NotificationResponse{
-		ErrorCode: "1",
-		ErrorMsg:  "handle failed",
+	// 统一返回处理成功 避免华为重试
+	return &huawei.NotificationResponse{
+		ErrorCode: "0",
 	}
-	return &response
 }
 
 // 处理订阅流程: https://developer.huawei.com/consumer/cn/doc/HMSCore-Guides/notifications-about-subscription-events-0000001050035037
