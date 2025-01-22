@@ -106,13 +106,26 @@ func (l *NotifyDouyinLogic) NotifyDouyin(req *http.Request) (resp *types.DouyinR
 		return l.notifyPreCreateRefund(req, body, data.Msg, data)
 	case douyin.EventSignCallback:
 		// 抖音周期代扣签约回调
-		l.handleSignCallback(data.Msg)
-		resp := &types.DouyinResp{
-			ErrNo:   0,
-			ErrTips: "success",
-			Data:    nil,
+		err = l.handleSignCallback(data.Msg)
+		if err == nil {
+			resp := &types.DouyinResp{
+				ErrNo:   0,
+				ErrTips: "success",
+				Data:    nil,
+			}
+			return resp, nil
 		}
-		return resp, nil
+	case douyin.EventSignPayCallback:
+		// 音周期代扣结果回调通知
+		err = l.handleSignPayCallback(data.Msg)
+		if err == nil {
+			resp := &types.DouyinResp{
+				ErrNo:   0,
+				ErrTips: "success",
+				Data:    nil,
+			}
+			return resp, nil
+		}
 	}
 
 	l.Errorf("NotifyDouyin invalid msg type:%s, data:%v, raw body", data.Type, data, string(body))
@@ -191,10 +204,11 @@ func (l *NotifyDouyinLogic) notifyPayment(req *http.Request, body []byte, msgJso
 		l.Slowf("douyin支付回调异常: %s", msgJson)
 		return nil, nil
 	}
+
 	orderInfo.ThirdOrderNo = msg.OrderId
 	err = l.payOrderModel.UpdateNotify(orderInfo)
 	if err != nil {
-		err = fmt.Errorf("orderSn = %s, UpdateNotify，err:=%v", orderInfo.OrderSn, err)
+		err = fmt.Errorf("UpdateNotify orderSn: %s err: %v", orderInfo.OrderSn, err)
 		util.CheckError(err.Error())
 		return nil, err
 	}
@@ -403,25 +417,89 @@ func (l *NotifyDouyinLogic) notifyPreCreateRefund(req *http.Request, body []byte
 	return resp, nil
 }
 
-// 抖音签约回调结构体
-type DySignCallbackNotify struct {
-	AppId          string `json:"app_id"`            // 小程序 app_id
-	Status         string `json:"status"`            // 签约结果状态，目前有四种状态： "SUCCESS" （用户签约成功 ） •"TIME_OUT" （用户未签约，订单超时关单） •"CANCEL" (解约成功)	•"DONE" （服务完成，已到期）
-	AuthOrderId    string `json:"auth_order_id"`     // 平台侧签约单的单号，长度<=64byte
-	OutAuthOrderNo string `json:"out_auth_order_no"` // 开发者侧签约单的单号，长度<=64byte
-	EventTime      int64  `json:"event_time"`        // 用户签约成功/签约取消/解约成功的时间戳，单位为毫秒
-}
+// 抖音周期代扣结果回调通知
+// https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/server/payment/management-capacity/periodic-deduction/pay/sign-pay-callback
+func (l *NotifyDouyinLogic) handleSignPayCallback(msg string) error {
+	//扣款成功回调示例
+	// {
+	//     "app_id": "tt312312313123",
+	//     "status": "SUCCESS",
+	//     "auth_order_id": "ad7123123123123",
+	//     "pay_order_id": "ad712312662434",
+	//     "out_pay_order_no": "out_pay_order_no_1",
+	//     "total_amount": 100,
+	//     "pay_channel": 10,
+	//     "channel_pay_id": "TPeqw123123213",
+	//     "merchant_uid": "713123123132",
+	//     "event_time": 1698128528000,
+	//     "user_bill_pay_id": "2001022411190100375919192312"
+	// }
 
-const (
-	Dy_Sign_Status_SUCCESS  = "SUCCESS"  // 用户签约成功
-	Dy_Sign_Status_TIME_OUT = "TIME_OUT" // 用户未签约，订单超时关单
-	Dy_Sign_Status_CANCEL   = "CANCEL"   // 解约成功
-	Dy_Sign_Status_DONE     = "DONE"     // 服务完成，已到期(按照解约处理 ?? 这个状态需要观察数据)
-)
+	//超时未支付 ｜ 超时未扣款成功
+	// {
+	//     "app_id": "tt312312313123",
+	//     "status": "TIME_OUT",
+	//     "auth_order_id": "ad7123123123123",
+	//     "pay_order_id": "ad712312662434",
+	//     "out_pay_order_no": "out_pay_order_no_1",
+	//     "total_amount": 100,
+	//     "merchant_uid": "713123123132",
+	//     "event_time": 1698128528000
+	// }
+
+	//扣款失败
+	// {
+	//     "app_id": "tt312312313123",
+	//     "status": "FAIL",
+	//     "auth_order_id": "ad7123123123123",
+	//     "pay_order_id": "ad712312662434",
+	//     "out_pay_order_no": "out_pay_order_no_1",
+	//     "total_amount": 100,
+	//     "merchant_uid": "713123123132",
+	//     "event_time": 1698128528000,
+	//     "user_bill_pay_id": "2001022411190100375919192312"
+	// }
+
+	var signPayResult douyin.DySignPayCallbackNotify
+	err := json.Unmarshal([]byte(msg), &signPayResult)
+	if err != nil {
+		l.Errorf("json.Unmarshal error: %v, msg: %s", err, msg)
+		return err
+	}
+
+	if signPayResult.Status != douyin.Dy_Sign_Pay_Status_SUCCESS {
+		l.Slowf("扣款非成功 raw msg: %s ", msg)
+		return nil
+	}
+
+	// tbl, err := l.payDyPeriodOrderModel.GetOneByOrderSnAndAppId(signResult.OutAuthOrderNo, signResult.AppId)
+	// 	if err != nil || tbl == nil || tbl.ID < 1 {
+	// 		l.Errorf("签约成功 查询记录出错 err: %s , orderNo: %s , appId: %s , eventTime: %d ", err.Error(), signResult.OutAuthOrderNo, signResult.AppId, signResult.EventTime)
+	// 		return fmt.Errorf("签约成功 查询记录出错 error: %s", err.Error())
+	// 	}
+
+	// 	if tbl.SignStatus == 1 {
+	// 		// 已签约过了
+	// 		return nil
+	// 	}
+
+	// 	// 修改状态为签约成功
+	// 	updateData := map[string]interface{}{
+	// 		"sign_status":         1,
+	// 		"sign_date":           time.Unix(signResult.EventTime/1000, 0).Format("2006-01-02 15:04:05"),
+	// 		"third_sign_order_no": signResult.AuthOrderId, // 抖音的签约单号
+	// 	}
+	// 	err = l.payDyPeriodOrderModel.UpdateSomeData(tbl.ID, updateData)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+
+	return nil
+}
 
 // 抖音周期代扣签约回调处理
 // https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/server/payment/management-capacity/periodic-deduction/sign/sign-callback
-func (l *NotifyDouyinLogic) handleSignCallback(msg string) {
+func (l *NotifyDouyinLogic) handleSignCallback(msg string) error {
 	// msg 字段内容示例
 	//签约成功回调示例
 	// {
@@ -460,25 +538,30 @@ func (l *NotifyDouyinLogic) handleSignCallback(msg string) {
 	// 	"event_time": 1698128528000
 	// }
 
-	var signResult DySignCallbackNotify
+	var signResult douyin.DySignCallbackNotify
 	err := json.Unmarshal([]byte(msg), &signResult)
 	if err != nil {
-		l.Errorf("json.Unmarshal error: %v", err)
-		return
+		l.Errorf("json.Unmarshal error: %v, msg: %s", err, msg)
+		return err
 	}
 
-	if signResult.Status == Dy_Sign_Status_DONE {
+	if signResult.Status == douyin.Dy_Sign_Status_DONE {
 		// 记录一下日志 这个怎么处理 暂时还不知道
 		l.Slowf("服务完成已到期 orderNo: %s , appId: %s , eventTime: %d ", signResult.OutAuthOrderNo, signResult.AppId, signResult.EventTime)
-	} else if signResult.Status == Dy_Sign_Status_TIME_OUT {
+	} else if signResult.Status == douyin.Dy_Sign_Status_TIME_OUT {
 		// 记录一下日志
 		l.Slowf("签约单超时 orderNo: %s , appId: %s , eventTime: %d ", signResult.OutAuthOrderNo, signResult.AppId, signResult.EventTime)
-	} else if signResult.Status == Dy_Sign_Status_SUCCESS {
+	} else if signResult.Status == douyin.Dy_Sign_Status_SUCCESS {
 		// 签约成功 查询记录是否存在
 		tbl, err := l.payDyPeriodOrderModel.GetOneByOrderSnAndAppId(signResult.OutAuthOrderNo, signResult.AppId)
 		if err != nil || tbl == nil || tbl.ID < 1 {
 			l.Errorf("签约成功 查询记录出错 err: %s , orderNo: %s , appId: %s , eventTime: %d ", err.Error(), signResult.OutAuthOrderNo, signResult.AppId, signResult.EventTime)
-			return
+			return fmt.Errorf("签约成功 查询记录出错 error: %s", err.Error())
+		}
+
+		if tbl.SignStatus == 1 {
+			// 已签约过了
+			return nil
 		}
 
 		// 修改状态为签约成功
@@ -487,13 +570,21 @@ func (l *NotifyDouyinLogic) handleSignCallback(msg string) {
 			"sign_date":           time.Unix(signResult.EventTime/1000, 0).Format("2006-01-02 15:04:05"),
 			"third_sign_order_no": signResult.AuthOrderId, // 抖音的签约单号
 		}
-		l.payDyPeriodOrderModel.UpdateSomeData(tbl.ID, updateData)
-	} else if signResult.Status == Dy_Sign_Status_CANCEL {
+		err = l.payDyPeriodOrderModel.UpdateSomeData(tbl.ID, updateData)
+		if err != nil {
+			return err
+		}
+	} else if signResult.Status == douyin.Dy_Sign_Status_CANCEL {
 		// 解约成功 查询记录是否存在
 		tbl, err := l.payDyPeriodOrderModel.GetOneByOrderSnAndAppId(signResult.OutAuthOrderNo, signResult.AppId)
 		if err != nil || tbl == nil || tbl.ID < 1 {
 			l.Errorf("解约成功 查询记录出错 err: %s , orderNo: %s , appId: %s , eventTime: %d ", err.Error(), signResult.OutAuthOrderNo, signResult.AppId, signResult.EventTime)
-			return
+			return fmt.Errorf("解约成功 查询记录出错 error: %s", err.Error())
+		}
+
+		if tbl.SignStatus == 2 {
+			// 已解约过了
+			return nil
 		}
 
 		// 修改状态为解约成功
@@ -502,6 +593,11 @@ func (l *NotifyDouyinLogic) handleSignCallback(msg string) {
 			"unsign_date":           time.Unix(signResult.EventTime/1000, 0).Format("2006-01-02 15:04:05"),
 			"third_unsign_order_no": signResult.AuthOrderId, // 抖音的签约单号
 		}
-		l.payDyPeriodOrderModel.UpdateSomeData(tbl.ID, updateData)
+		err = l.payDyPeriodOrderModel.UpdateSomeData(tbl.ID, updateData)
+		if err != nil {
+			return err
+		}
 	}
+
+	return nil
 }

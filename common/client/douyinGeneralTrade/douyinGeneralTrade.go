@@ -51,7 +51,7 @@ type RequestOrderData struct {
 // 抖音签约周期代扣商品请求体
 // https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/api/industry/credit-products/createSignOrder
 type RequestPeriodOrderData struct {
-	OutAuthOrderNo     string           `json:"outAuthOrderNo"`               // 开发者侧签约单的单号，长度<=64byte
+	OutAuthOrderNo     string           `json:"outAuthOrderNo"`               // 开发者侧签约单号，长度<=64byte
 	ServiceId          string           `json:"serviceId"`                    // 签约模板ID
 	OpenId             string           `json:"openId"`                       // 用户 openId
 	ExpireSeconds      int64            `json:"expireSeconds"`                // 签约或签约支付超时时间，单位[秒]，不传默认5分钟，最少30秒，不能超过48小时。建议开发者不要将超时时间设置太短
@@ -100,6 +100,46 @@ const (
 type Schema struct {
 	Path   string `json:"path,omitempty"`   // 小程序xxx详情页跳转路径，没有前导的“/”，路径后不可携带query参数，路径中不可携带『？: & *』等特殊字符，路径只可以是『英文字符、数字、_、/ 』等组成，长度<=512byte
 	Params string `json:"params,omitempty"` // xx情页路径参数，自定义的json结构，内部为k-v结构，序列化成字符串存入该字段，平台不限制，但是写入的内容需要能够保证生成访问xx详情的schema能正确跳转到小程序内部的xx详情页，长度须<=512byte，params内key不可重复。
+}
+
+// 抖音签约回调结构体
+type DySignCallbackNotify struct {
+	AppId          string `json:"app_id"`            // 小程序 app_id
+	Status         string `json:"status"`            // 签约结果状态，目前有四种状态： "SUCCESS" （用户签约成功 ） •"TIME_OUT" （用户未签约，订单超时关单） •"CANCEL" (解约成功)	•"DONE" （服务完成，已到期）
+	AuthOrderId    string `json:"auth_order_id"`     // 平台侧签约单的单号，长度<=64byte
+	OutAuthOrderNo string `json:"out_auth_order_no"` // 开发者侧签约单的单号，长度<=64byte
+	EventTime      int64  `json:"event_time"`        // 用户签约成功/签约取消/解约成功的时间戳，单位为毫秒
+}
+
+const (
+	Dy_Sign_Status_SUCCESS  = "SUCCESS"  // 用户签约成功
+	Dy_Sign_Status_TIME_OUT = "TIME_OUT" // 用户未签约，订单超时关单
+	Dy_Sign_Status_CANCEL   = "CANCEL"   // 解约成功
+	Dy_Sign_Status_DONE     = "DONE"     // 服务完成，已到期(按照解约处理 ?? 这个状态需要观察数据)
+)
+const (
+	Dy_Sign_Pay_Status_SUCCESS  = "SUCCESS"  // 成功
+	Dy_Sign_Pay_Status_TIME_OUT = "TIME_OUT" // 超时未支付 ｜超时未扣款成功
+	Dy_Sign_Pay_Status_FAIL     = "FAIL"     // （扣款失败，原因基本都是用户无支付方式（解绑了付款卡）或用户的扣款卡余额不足，建议失败后不要立即重试，隔日再进行重试，若一个月内连续多次扣款均不成功，考虑和用户进行解约）
+)
+
+// 抖音签约支付回调结构体
+type DySignPayCallbackNotify struct {
+	AppId string `json:"app_id"` // 小程序 app_id
+	// 扣款结果状态状态枚举：
+	// "SUCCESS" （扣款成功）
+	// "TIMEOUT" （超时未支付 ｜超时未扣款成功）
+	// "FAIL" （扣款失败，原因基本都是用户无支付方式（解绑了付款卡）或用户的扣款卡余额不足，建议失败后不要立即重试，隔日再进行重试，若一个月内连续多次扣款均不成功，考虑和用户进行解约）
+	Status        string `json:"status"`           // 扣款结果状态
+	AuthOrderId   string `json:"auth_order_id"`    // 平台侧签约单的单号，长度<=64byte
+	PayOrderId    string `json:"pay_order_id"`     // 平台侧代扣单的单号，长度<=64byte
+	OutPayOrderNo string `json:"out_pay_order_no"` // 开发者侧代扣单的单号，长度<=64byte
+	TotalAmount   int64  `json:"total_amount"`     // 扣款金额，单位[分]
+	PayChannel    int32  `json:"pay_channel"`      // 支付渠道枚举（扣款成功时才有）10：抖音支付
+	ChannelPayId  string `json:"channel_pay_id"`   // 渠道支付单
+	MerchantUid   string `json:"merchant_uid"`     // 该笔交易卖家商户号
+	UserBillPayId string `json:"user_bill_pay_id"` // 用户抖音交易单号（账单号），和用户抖音钱包-账单中所展示的交易单号相同
+	EventTime     int64  `json:"event_time"`       // 用户签约成功/签约取消/解约成功的时间戳，单位为毫秒
 }
 
 func NewDouyinPay(config *PayConfig) *PayClient {
@@ -230,6 +270,7 @@ const (
 	EventPreCreateRefund EventType = "pre_create_refund" // 客服预退款订单
 	EventSettle          EventType = "settle"            //
 	EventSignCallback    EventType = "sign_callback"     // 抖音周期代扣签约回调
+	EventSignPayCallback EventType = "sign_pay_callback" // 抖音周期代扣结果回调通知
 )
 
 type GeneralTradeMsg struct {

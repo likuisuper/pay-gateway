@@ -13,7 +13,8 @@ import (
 // 抖音周期签约订单表
 type PmDyPeriodOrderTable struct {
 	ID                 int       `gorm:"column:id;primary_key;AUTO_INCREMENT" json:"id"`
-	OrderSn            string    `gorm:"column:order_sn;NOT NULL" json:"order_sn"`                            // 订单唯一标识(内部的订单号)
+	OrderSn            string    `gorm:"column:order_sn;NOT NULL" json:"order_sn"`                            // 内部 订单唯一标识 (也是代扣单单号)
+	SignNo             string    `gorm:"column:sign_no;NOT NULL" json:"sign_no"`                              // 内部 签约单号
 	AppPkgName         string    `gorm:"column:app_pkg_name;NOT NULL" json:"app_pkg_name"`                    // 来源包名
 	UserId             int       `gorm:"column:user_id;NOT NULL" json:"user_id"`                              // 内部用户id
 	Amount             int       `gorm:"column:amount;default:0;NOT NULL" json:"amount"`                      // 订单金额（分）
@@ -28,6 +29,7 @@ type PmDyPeriodOrderTable struct {
 	ThirdSignOrderNo   string    `gorm:"column:third_sign_order_no;NULL" json:"third_sign_order_no"`          // 抖音平台返回的签约单号
 	ThirdUnsignOrderNo string    `gorm:"column:third_unsign_order_no;NULL" json:"third_unsign_order_no"`      // 抖音平台返回的解约单号
 	Currency           string    `gorm:"column:currency;type:varchar(16);NOT NULL"`                           // 支付币种
+	UserBillPayId      string    `gorm:"column:user_bill_pay_id;NULL" json:"user_bill_pay_id"`                // 用户抖音交易单号（账单号），和用户抖音钱包-账单中所展示的交易单号相同
 	SignDate           time.Time `gorm:"column:sign_date;type:datetime" json:"sign_date"`                     // 签约时间 默认值2000-01-01 00:00:01
 	UnsignDate         time.Time `gorm:"column:unsign_date;type:datetime" json:"unsign_date"`                 // 解约时间 默认值2000-01-01 00:00:01
 	ExpireDate         time.Time `gorm:"column:expire_date;type:datetime" json:"expire_date"`                 // 签约到期时间 默认值2000-01-01 00:00:01

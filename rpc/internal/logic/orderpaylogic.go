@@ -61,9 +61,6 @@ func NewOrderPayLogic(ctx context.Context, svcCtx *svc.ServiceContext) *OrderPay
 	}
 }
 
-// 抖音签约单后缀
-const dy_sign_order_suffix = "00"
-
 // OrderPay 创建支付订单
 func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (out *pb.OrderPayResp, err error) {
 	//读取应用配置
@@ -92,38 +89,15 @@ func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (out *pb.OrderPayResp, err 
 		payAppId = pkgCfg.WechatPayAppID
 	}
 
-	//获取订单信息
-	//创建订单时订单号对包隔离 规避业务方订单号重复case
-	orderInfo, err := l.payOrderModel.GetOneByOrderSnAndAppId(in.OrderSn, payAppId)
-	if err != nil {
-		err = fmt.Errorf("GetOneByOrderSnAndAppId err:%v, orderSn:%s, appId:%s ", err, in.OrderSn, payAppId)
-		l.Error(err)
-		orderTableIOFailNum.CounterInc()
-		return
-	}
-
-	if orderInfo != nil && orderInfo.ID > 0 {
-		// 其实到这里 应该是出错了 订单号不能重复
-		err = fmt.Errorf("订单号不能重复 orderSn:%s, appId:%s ", in.OrderSn, payAppId)
-		l.Error(err.Error())
-		orderTableIOFailNum.CounterInc()
-		return
-
-		// if orderInfo.PayStatus != model.PmPayOrderTablePayStatusNo {
-		// 	err = fmt.Errorf("订单不是未支付状态, orderSn:%s, appId:%s", in.OrderSn, payAppId)
-		// 	util.Error(l.ctx, err.Error())
-		// 	return
-		// }
-	}
-
 	tmpOrderSn := ""
 	tmpOrderAmount := 0
 	tmpOrderSubject := ""
 
 	if in.IsPeriodProduct {
 		// 周期签约订单 (目前只有抖音有)
-		orderInfo2 := &model.PmDyPeriodOrderTable{
-			OrderSn:    in.OrderSn + dy_sign_order_suffix, // 周期签约订单后面固定添加
+		orderInfo := &model.PmDyPeriodOrderTable{
+			OrderSn:    in.GetOrderSn(),                        // 内部 订单唯一标识
+			SignNo:     in.GetOrderSn() + dy_sign_order_suffix, // 内部 签约单号
 			UserId:     int(in.InnerUserId),
 			AppPkgName: in.AppPkgName,
 			Amount:     int(in.Amount),
@@ -134,19 +108,37 @@ func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (out *pb.OrderPayResp, err 
 			PayStatus:  model.PmPayOrderTablePayStatusNo,
 			Currency:   in.Currency.String(),
 		}
-
-		err = l.payDyPeriodOrderModel.Create(orderInfo2)
+		// 数据库有唯一约束 如果重复 创建的时候会报错
+		err = l.payDyPeriodOrderModel.Create(orderInfo)
 		if err != nil {
 			err = fmt.Errorf("创建周期签约订单失败 %w", err)
-			l.Errorw("创建周期签约订单失败", logx.Field("err", err), logx.Field("orderInfo2", orderInfo2))
+			l.Errorw("创建周期签约订单失败", logx.Field("err", err), logx.Field("orderInfo", orderInfo))
 			orderTableIOFailNum.CounterInc()
 			return
 		}
 
-		tmpOrderSn = orderInfo2.OrderSn
-		tmpOrderAmount = orderInfo2.Amount
-		tmpOrderSubject = orderInfo2.Subject
+		tmpOrderSn = orderInfo.OrderSn
+		tmpOrderAmount = orderInfo.Amount
+		tmpOrderSubject = orderInfo.Subject
 	} else {
+		//创建订单时订单号对包隔离 规避业务方订单号重复case
+		var orderInfo *model.PmPayOrderTable
+		orderInfo, err = l.payOrderModel.GetOneByOrderSnAndAppId(in.OrderSn, payAppId)
+		if err != nil {
+			err = fmt.Errorf("GetOneByOrderSnAndAppId err:%v, orderSn:%s, appId:%s ", err, in.OrderSn, payAppId)
+			l.Error(err)
+			orderTableIOFailNum.CounterInc()
+			return
+		}
+
+		if orderInfo != nil && orderInfo.ID > 0 {
+			// 其实到这里 应该是出错了 订单号不能重复
+			err = fmt.Errorf("订单号不能重复 orderSn:%s, appId:%s ", in.OrderSn, payAppId)
+			l.Error(err.Error())
+			orderTableIOFailNum.CounterInc()
+			return
+		}
+
 		orderInfo = &model.PmPayOrderTable{
 			OrderSn:    in.OrderSn,
 			AppPkgName: in.AppPkgName,
@@ -561,13 +553,16 @@ func (l *OrderPayLogic) createDouyinGeneralTradeOrder(in *pb.OrderPayReq, payCon
 	return
 }
 
+// 抖音签约单后缀
+const dy_sign_order_suffix = "0"
+
 // 抖音小程序生成周期代扣签名等
 // https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/api/industry/credit-products/createSignOrder
 func (l *OrderPayLogic) createDouyinPeriodOrder(in *pb.OrderPayReq, payConf *douyin.PayConfig) (reply *pb.DouyinGeneralTradeReply, err error) {
 	douyinReq := in.DouyinGeneralTradeReq
 
 	authPayOrder := &douyin.AuthPayOrderObj{
-		OutPayOrderNo: in.GetOrderSn(), // 代扣单单号 订单号后面增加00
+		OutPayOrderNo: in.GetOrderSn(), // 代扣单单号
 		MerchantUid:   in.GetMerchantUid(),
 		NotifyUrl:     payConf.NotifyUrl,
 	}
@@ -578,7 +573,7 @@ func (l *OrderPayLogic) createDouyinPeriodOrder(in *pb.OrderPayReq, payConf *dou
 	}
 
 	data := &douyin.RequestPeriodOrderData{
-		OutAuthOrderNo: in.GetOrderSn() + dy_sign_order_suffix, // 周期签约订单后面固定添加
+		OutAuthOrderNo: in.GetOrderSn() + dy_sign_order_suffix, // 周期签约订单后面固定添加后缀
 		ServiceId:      douyinReq.GetSkuId(),
 		OpenId:         in.GetInnerUserOpen(),
 		ExpireSeconds:  code.DouyinPayExpireSeconds, // 默认是半个小时
