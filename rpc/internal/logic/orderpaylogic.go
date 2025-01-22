@@ -96,17 +96,21 @@ func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (out *pb.OrderPayResp, err 
 	if in.IsPeriodProduct {
 		// 周期签约订单 (目前只有抖音有)
 		orderInfo := &model.PmDyPeriodOrderTable{
-			OrderSn:    in.GetOrderSn(),                        // 内部 订单唯一标识
-			SignNo:     in.GetOrderSn() + dy_sign_order_suffix, // 内部 签约单号
-			UserId:     int(in.InnerUserId),
-			AppPkgName: in.AppPkgName,
-			Amount:     int(in.Amount),
-			Subject:    in.Subject,
-			NotifyUrl:  in.NotifyURL,
-			PayAppId:   payAppId,        //创建订单时，直接指定PayAppid，减少一次DB操作
-			PayType:    int(in.PayType), // 创建订单时，传入支付类型，补偿机制依赖
-			PayStatus:  model.PmPayOrderTablePayStatusNo,
-			Currency:   in.Currency.String(),
+			OrderSn:           in.GetOrderSn(),                        // 内部 订单唯一标识
+			SignNo:            in.GetOrderSn() + dy_sign_order_suffix, // 内部 签约单号
+			UserId:            int(in.InnerUserId),
+			AppPkgName:        in.AppPkgName,
+			Amount:            int(in.Amount),
+			Subject:           in.Subject,
+			NotifyUrl:         in.NotifyURL,
+			PayAppId:          payAppId,        //创建订单时，直接指定PayAppid，减少一次DB操作
+			PayType:           int(in.PayType), // 创建订单时，传入支付类型，补偿机制依赖
+			PayStatus:         model.PmPayOrderTablePayStatusNo,
+			Currency:          in.Currency.String(),
+			SignDate:          model.Default2000Date, // 默认时间
+			UnsignDate:        model.Default2000Date,
+			ExpireDate:        model.Default2000Date,
+			NextDecuctionTime: model.Default2000Date,
 		}
 		// 数据库有唯一约束 如果重复 创建的时候会报错
 		err = l.payDyPeriodOrderModel.Create(orderInfo)

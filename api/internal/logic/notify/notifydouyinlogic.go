@@ -479,6 +479,7 @@ func (l *NotifyDouyinLogic) handleSignPayCallback(msg string, originData interfa
 	}
 
 	updateData := map[string]interface{}{
+		"pay_status":          1,
 		"third_sign_order_no": signResult.AuthOrderId,                                                                 // 抖音侧签约单的单号，长度<=64byte
 		"third_order_no":      signResult.PayOrderId,                                                                  // 回调扣款金额（分）
 		"next_decuction_time": time.Unix(signResult.EventTime/1000, 0).AddDate(0, 1, 0).Format("2006-01-02 15:04:05"), // 下次扣款时间

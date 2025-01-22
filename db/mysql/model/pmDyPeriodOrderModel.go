@@ -38,6 +38,9 @@ type PmDyPeriodOrderTable struct {
 	// UpdatedAt    time.Time `gorm:"column:updated_at;type:datetime" json:"updated_at"`
 }
 
+// 2000-01-01 00:00:01 对应的时间戳就是946656001
+var Default2000Date = time.Unix(946656001, 0)
+
 // 表名
 const PmDyPeriodOrderTableName = "pm_dy_period_order"
 
