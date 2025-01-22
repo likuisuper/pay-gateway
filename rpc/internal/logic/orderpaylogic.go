@@ -567,6 +567,7 @@ func (l *OrderPayLogic) createDouyinPeriodOrder(in *pb.OrderPayReq, payConf *dou
 		NotifyUrl:     payConf.NotifyUrl,
 	}
 
+	// 首期代扣金额
 	initialAmount := in.GetFirstDeductionAmount()
 	if initialAmount > 0 {
 		authPayOrder.InitialAmount = &initialAmount

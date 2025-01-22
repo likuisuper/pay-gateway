@@ -25,7 +25,7 @@ type PmDyPeriodOrderTable struct {
 	PayStatus          int       `gorm:"column:pay_status;NOT NULL" json:"pay_status"`                        // 支付状态 0未支付 1已支付
 	SignStatus         int       `gorm:"column:sign_status;NOT NULL" json:"sign_status"`                      // 签约状态, 0 待签约 , 1已签约 , 2取消签约
 	PayAppId           string    `gorm:"column:pay_app_id;NOT NULL" json:"pay_app_id"`                        // 第三方支付的appid
-	ThirdOrderNo       string    `gorm:"column:third_order_no;NULL" json:"third_order_no"`                    // 抖音平台返回的订单号
+	ThirdOrderNo       string    `gorm:"column:third_order_no;NULL" json:"third_order_no"`                    // 抖音平台返回的代扣单的单号
 	ThirdSignOrderNo   string    `gorm:"column:third_sign_order_no;NULL" json:"third_sign_order_no"`          // 抖音平台返回的签约单号
 	ThirdUnsignOrderNo string    `gorm:"column:third_unsign_order_no;NULL" json:"third_unsign_order_no"`      // 抖音平台返回的解约单号
 	Currency           string    `gorm:"column:currency;type:varchar(16);NOT NULL"`                           // 支付币种
@@ -75,7 +75,7 @@ func (o *PmDyPeriodOrderModel) GetOneByOrderSnAndPkg(orderSn, pkg string) (*PmDy
 	return orderInfo, err
 }
 
-// 根据订单号和appid获取订单信息
+// 根据内部订单号(也是代扣单单号)和appid获取订单信息
 func (o *PmDyPeriodOrderModel) GetOneByOrderSnAndAppId(orderSn, appId string) (*PmDyPeriodOrderTable, error) {
 	orderInfo := new(PmDyPeriodOrderTable)
 	err := o.DB.Table(PmDyPeriodOrderTableName).Where("`order_sn` = ? and `pay_app_id` = ?", orderSn, appId).First(orderInfo).Error

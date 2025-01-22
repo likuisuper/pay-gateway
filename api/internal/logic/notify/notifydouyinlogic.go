@@ -116,8 +116,8 @@ func (l *NotifyDouyinLogic) NotifyDouyin(req *http.Request) (resp *types.DouyinR
 			return resp, nil
 		}
 	case douyin.EventSignPayCallback:
-		// 音周期代扣结果回调通知
-		err = l.handleSignPayCallback(data.Msg)
+		// 抖音周期代扣结果回调通知
+		err = l.handleSignPayCallback(data.Msg, data)
 		if err == nil {
 			resp := &types.DouyinResp{
 				ErrNo:   0,
@@ -419,7 +419,7 @@ func (l *NotifyDouyinLogic) notifyPreCreateRefund(req *http.Request, body []byte
 
 // 抖音周期代扣结果回调通知
 // https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/server/payment/management-capacity/periodic-deduction/pay/sign-pay-callback
-func (l *NotifyDouyinLogic) handleSignPayCallback(msg string) error {
+func (l *NotifyDouyinLogic) handleSignPayCallback(msg string, originData interface{}) error {
 	//扣款成功回调示例
 	// {
 	//     "app_id": "tt312312313123",
@@ -460,39 +460,48 @@ func (l *NotifyDouyinLogic) handleSignPayCallback(msg string) error {
 	//     "user_bill_pay_id": "2001022411190100375919192312"
 	// }
 
-	var signPayResult douyin.DySignPayCallbackNotify
-	err := json.Unmarshal([]byte(msg), &signPayResult)
+	var signResult douyin.DySignPayCallbackNotify
+	err := json.Unmarshal([]byte(msg), &signResult)
 	if err != nil {
 		l.Errorf("json.Unmarshal error: %v, msg: %s", err, msg)
 		return err
 	}
 
-	if signPayResult.Status != douyin.Dy_Sign_Pay_Status_SUCCESS {
+	if signResult.Status != douyin.Dy_Sign_Pay_Status_SUCCESS {
 		l.Slowf("扣款非成功 raw msg: %s ", msg)
 		return nil
 	}
 
-	// tbl, err := l.payDyPeriodOrderModel.GetOneByOrderSnAndAppId(signResult.OutAuthOrderNo, signResult.AppId)
-	// 	if err != nil || tbl == nil || tbl.ID < 1 {
-	// 		l.Errorf("签约成功 查询记录出错 err: %s , orderNo: %s , appId: %s , eventTime: %d ", err.Error(), signResult.OutAuthOrderNo, signResult.AppId, signResult.EventTime)
-	// 		return fmt.Errorf("签约成功 查询记录出错 error: %s", err.Error())
-	// 	}
+	orderInfo, err := l.payDyPeriodOrderModel.GetOneByOrderSnAndAppId(signResult.OutPayOrderNo, signResult.AppId)
+	if err != nil || orderInfo == nil || orderInfo.ID < 1 {
+		l.Errorf("扣款成功 查询记录出错 err: %s , orderNo: %s , appId: %s , eventTime: %d ", err.Error(), signResult.OutPayOrderNo, signResult.AppId, signResult.EventTime)
+		return fmt.Errorf("扣款成功 查询记录出错 error: %s", err.Error())
+	}
 
-	// 	if tbl.SignStatus == 1 {
-	// 		// 已签约过了
-	// 		return nil
-	// 	}
+	updateData := map[string]interface{}{
+		"third_sign_order_no": signResult.AuthOrderId,                                                                 // 抖音侧签约单的单号，长度<=64byte
+		"third_order_no":      signResult.PayOrderId,                                                                  // 回调扣款金额（分）
+		"next_decuction_time": time.Unix(signResult.EventTime/1000, 0).AddDate(0, 1, 0).Format("2006-01-02 15:04:05"), // 下次扣款时间
+		"user_bill_pay_id":    signResult.UserBillPayId,                                                               // 用户抖音交易单号（账单号）
+		"notify_amount":       signResult.TotalAmount,                                                                 // 回调扣款金额（分）
+	}
+	err = l.payDyPeriodOrderModel.UpdateSomeData(orderInfo.ID, updateData)
+	if err != nil {
+		return err
+	}
 
-	// 	// 修改状态为签约成功
-	// 	updateData := map[string]interface{}{
-	// 		"sign_status":         1,
-	// 		"sign_date":           time.Unix(signResult.EventTime/1000, 0).Format("2006-01-02 15:04:05"),
-	// 		"third_sign_order_no": signResult.AuthOrderId, // 抖音的签约单号
-	// 	}
-	// 	err = l.payDyPeriodOrderModel.UpdateSomeData(tbl.ID, updateData)
-	// 	if err != nil {
-	// 		return err
-	// 	}
+	// 回调
+	go util.SafeRun(func() {
+		headMap := map[string]string{
+			"App-Origin": orderInfo.AppPkgName,
+		}
+		respData, requestErr := util.HttpPostWithHeader(orderInfo.NotifyUrl, originData, headMap, 5*time.Second)
+		if requestErr != nil {
+			l.Errorf("handleSignPayCallback failed req: %+v, err: %v", originData, requestErr)
+		} else {
+			l.Slowf("handleSignPayCallback success req: %+v, err: %v, respData: %v", originData, requestErr, respData)
+		}
+	})
 
 	return nil
 }
