@@ -33,9 +33,10 @@ type NotifyDouyinLogic struct {
 	ctx    context.Context
 	svcCtx *svc.ServiceContext
 
-	payOrderModel        *model.PmPayOrderModel
-	payConfigTiktokModel *model.PmPayConfigTiktokModel
-	refundOrderModel     *model.PmRefundOrderModel
+	payOrderModel         *model.PmPayOrderModel
+	payConfigTiktokModel  *model.PmPayConfigTiktokModel
+	refundOrderModel      *model.PmRefundOrderModel
+	payDyPeriodOrderModel *model.PmDyPeriodOrderModel
 
 	Rdb *cache.RedisInstance
 }
@@ -46,10 +47,11 @@ func NewNotifyDouyinLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Noti
 		ctx:    ctx,
 		svcCtx: svcCtx,
 
-		payOrderModel:        model.NewPmPayOrderModel(define.DbPayGateway),
-		payConfigTiktokModel: model.NewPmPayConfigTiktokModel(define.DbPayGateway),
-		refundOrderModel:     model.NewPmRefundOrderModel(define.DbPayGateway),
-		Rdb:                  db.WithRedisDBContext(define.DbPayGateway),
+		payOrderModel:         model.NewPmPayOrderModel(define.DbPayGateway),
+		payConfigTiktokModel:  model.NewPmPayConfigTiktokModel(define.DbPayGateway),
+		refundOrderModel:      model.NewPmRefundOrderModel(define.DbPayGateway),
+		payDyPeriodOrderModel: model.NewPmDyPeriodOrderModel(define.DbPayGateway),
+		Rdb:                   db.WithRedisDBContext(define.DbPayGateway),
 	}
 }
 
@@ -104,7 +106,7 @@ func (l *NotifyDouyinLogic) NotifyDouyin(req *http.Request) (resp *types.DouyinR
 		return l.notifyPreCreateRefund(req, body, data.Msg, data)
 	case douyin.EventSignCallback:
 		// 抖音周期代扣签约回调
-		l.handleSignCallback(req, data.Msg)
+		l.handleSignCallback(data.Msg)
 		resp := &types.DouyinResp{
 			ErrNo:   0,
 			ErrTips: "success",
@@ -414,12 +416,12 @@ const (
 	Dy_Sign_Status_SUCCESS  = "SUCCESS"  // 用户签约成功
 	Dy_Sign_Status_TIME_OUT = "TIME_OUT" // 用户未签约，订单超时关单
 	Dy_Sign_Status_CANCEL   = "CANCEL"   // 解约成功
-	Dy_Sign_Status_DONE     = "DONE"     // 服务完成，已到期(按照解约处理)
+	Dy_Sign_Status_DONE     = "DONE"     // 服务完成，已到期(按照解约处理 ?? 这个状态需要观察数据)
 )
 
 // 抖音周期代扣签约回调处理
 // https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/server/payment/management-capacity/periodic-deduction/sign/sign-callback
-func (l *NotifyDouyinLogic) handleSignCallback(req *http.Request, msg string) {
+func (l *NotifyDouyinLogic) handleSignCallback(msg string) {
 	// msg 字段内容示例
 	//签约成功回调示例
 	// {
@@ -463,5 +465,43 @@ func (l *NotifyDouyinLogic) handleSignCallback(req *http.Request, msg string) {
 	if err != nil {
 		l.Errorf("json.Unmarshal error: %v", err)
 		return
+	}
+
+	if signResult.Status == Dy_Sign_Status_DONE {
+		// 记录一下日志 这个怎么处理 暂时还不知道
+		l.Slowf("服务完成已到期 orderNo: %s , appId: %s , eventTime: %d ", signResult.OutAuthOrderNo, signResult.AppId, signResult.EventTime)
+	} else if signResult.Status == Dy_Sign_Status_TIME_OUT {
+		// 记录一下日志
+		l.Slowf("签约单超时 orderNo: %s , appId: %s , eventTime: %d ", signResult.OutAuthOrderNo, signResult.AppId, signResult.EventTime)
+	} else if signResult.Status == Dy_Sign_Status_SUCCESS {
+		// 签约成功 查询记录是否存在
+		tbl, err := l.payDyPeriodOrderModel.GetOneByOrderSnAndAppId(signResult.OutAuthOrderNo, signResult.AppId)
+		if err != nil || tbl == nil || tbl.ID < 1 {
+			l.Errorf("签约成功 查询记录出错 err: %s , orderNo: %s , appId: %s , eventTime: %d ", err.Error(), signResult.OutAuthOrderNo, signResult.AppId, signResult.EventTime)
+			return
+		}
+
+		// 修改状态为签约成功
+		updateData := map[string]interface{}{
+			"sign_status":         1,
+			"sign_date":           time.Unix(signResult.EventTime/1000, 0).Format("2006-01-02 15:04:05"),
+			"third_sign_order_no": signResult.AuthOrderId, // 抖音的签约单号
+		}
+		l.payDyPeriodOrderModel.UpdateSomeData(tbl.ID, updateData)
+	} else if signResult.Status == Dy_Sign_Status_CANCEL {
+		// 解约成功 查询记录是否存在
+		tbl, err := l.payDyPeriodOrderModel.GetOneByOrderSnAndAppId(signResult.OutAuthOrderNo, signResult.AppId)
+		if err != nil || tbl == nil || tbl.ID < 1 {
+			l.Errorf("解约成功 查询记录出错 err: %s , orderNo: %s , appId: %s , eventTime: %d ", err.Error(), signResult.OutAuthOrderNo, signResult.AppId, signResult.EventTime)
+			return
+		}
+
+		// 修改状态为解约成功
+		updateData := map[string]interface{}{
+			"sign_status":           2,
+			"unsign_date":           time.Unix(signResult.EventTime/1000, 0).Format("2006-01-02 15:04:05"),
+			"third_unsign_order_no": signResult.AuthOrderId, // 抖音的签约单号
+		}
+		l.payDyPeriodOrderModel.UpdateSomeData(tbl.ID, updateData)
 	}
 }
