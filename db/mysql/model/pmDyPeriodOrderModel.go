@@ -56,7 +56,7 @@ func (o *PmDyPeriodOrderModel) Create(info *PmDyPeriodOrderTable) error {
 // GetOneByOrderSnAndAppId 根据订单号和包名获取订单信息
 func (o *PmDyPeriodOrderModel) GetOneByOrderSnAndAppId(orderSn, appId string) (info *PmDyPeriodOrderTable, err error) {
 	var orderInfo PmDyPeriodOrderTable
-	err = o.DB.Where("`order_sn` = ? and `pay_app_id` = ?", orderSn, appId).First(&orderInfo).Error
+	err = o.DB.Table("pm_dy_period_order").Where("`order_sn` = ? and `pay_app_id` = ?", orderSn, appId).First(&orderInfo).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}
@@ -73,7 +73,7 @@ func (o *PmDyPeriodOrderModel) GetOneByOrderSnAndAppId(orderSn, appId string) (i
 func (o *PmDyPeriodOrderModel) QueryAfterUpdate(orderSn, appId, thirdOrderNo string, totalAmount int) (bool, error) {
 	var orderInfo PmDyPeriodOrderTable
 	tx := o.DB.Begin()
-	err := o.DB.Where("`order_sn` = ? and pay_app_id = ? ", orderSn, appId).First(&orderInfo).Error
+	err := o.DB.Table("pm_dy_period_order").Where("`order_sn` = ? and pay_app_id = ? ", orderSn, appId).First(&orderInfo).Error
 	if err != nil {
 		tx.Rollback()
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
@@ -112,7 +112,7 @@ func (o *PmDyPeriodOrderModel) UpdateNotify(info *PmDyPeriodOrderTable) error {
 }
 
 func (o *PmDyPeriodOrderModel) UpdatePayAppID(orderSn string, payAppId string) (err error) {
-	err = o.DB.Model(&PmDyPeriodOrderTable{}).Where("order_sn = ?", orderSn).Update("pay_app_id", payAppId).Error
+	err = o.DB.Table("pm_dy_period_order").Where("order_sn = ?", orderSn).Update("pay_app_id", payAppId).Error
 	if err != nil {
 		err = fmt.Errorf("UpdatePayAppID Err: %v", err)
 		util.CheckError(err.Error())
@@ -122,7 +122,7 @@ func (o *PmDyPeriodOrderModel) UpdatePayAppID(orderSn string, payAppId string) (
 
 func (o *PmDyPeriodOrderModel) GetOneByThirdOrderNoAndAppId(orderSn, appId string) (info *PmDyPeriodOrderTable, err error) {
 	var orderInfo PmDyPeriodOrderTable
-	err = o.DB.Where("`third_order_no` = ? and pay_app_id = ?", orderSn, appId).First(&orderInfo).Error
+	err = o.DB.Table("pm_dy_period_order").Where("`third_order_no` = ? and pay_app_id = ?", orderSn, appId).First(&orderInfo).Error
 	if err != nil {
 		logx.Errorf("GetOneByThirdOrderNoAndAppId 获取订单信息失败 err:%v, order_sn:%s", err, orderSn)
 		return nil, err
