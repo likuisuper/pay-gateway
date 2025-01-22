@@ -52,6 +52,7 @@ func (l *DouyinPeriodOrderLogic) DouyinPeriodOrder(in *pb.DouyinPeriodOrderReq) 
 		resp.Msg = "已签约"
 		resp.ExpireDate = periodModel.ExpireDate.Format("2006-01-02 15:04:05")
 		resp.NextDecuctionTime = periodModel.NextDecuctionTime.Format("2006-01-02 15:04:05")
+		resp.DeductionAmount = int64(periodModel.Amount) // 单位分
 	}
 
 	return &resp, nil

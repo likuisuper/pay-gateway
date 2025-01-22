@@ -360,9 +360,10 @@ message DouyinPeriodOrderReq {
 message DouyinPeriodOrderResp {
   int64 UserId = 1; // 用户id
   int32 IsSign = 2; // 是否签约, 0未签约, 1已签约
-  string ExpireDate = 3;  // 已签约到期时间 年-月-日 时:分:秒
-  string NextDecuctionTime = 4;  // 下次扣款时间 年-月-日 时:分:秒
-  string Msg = 5;  // 描述信息
+  int64 DeductionAmount = 3; // 扣款金额 单位分
+  string ExpireDate = 4;  // 已签约到期时间 年-月-日 时:分:秒
+  string NextDecuctionTime = 5;  // 下次扣款时间 年-月-日 时:分:秒
+  string Msg = 6;  // 描述信息
 }
 
 //============== service ==============================================================================
