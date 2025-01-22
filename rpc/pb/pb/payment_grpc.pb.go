@@ -39,6 +39,7 @@ const (
 	Payment_WechatPayH5Order_FullMethodName                  = "/payment.Payment/WechatPayH5Order"
 	Payment_BindHuaweiPayData_FullMethodName                 = "/payment.Payment/BindHuaweiPayData"
 	Payment_UnsubscribeHuawei_FullMethodName                 = "/payment.Payment/UnsubscribeHuawei"
+	Payment_DouyinPeriodOrder_FullMethodName                 = "/payment.Payment/DouyinPeriodOrder"
 )
 
 // PaymentClient is the client API for Payment service.
@@ -85,6 +86,8 @@ type PaymentClient interface {
 	BindHuaweiPayData(ctx context.Context, in *BindHuaweiPayDataReq, opts ...grpc.CallOption) (*BindHuaweiPayDataResp, error)
 	// 用户主动解除华为订阅
 	UnsubscribeHuawei(ctx context.Context, in *UnsubscribeHuaweiReq, opts ...grpc.CallOption) (*UnsubscribeHuaweiResp, error)
+	// 抖音周期代扣相关查询和修改
+	DouyinPeriodOrder(ctx context.Context, in *DouyinPeriodOrderReq, opts ...grpc.CallOption) (*DouyinPeriodOrderResp, error)
 }
 
 type paymentClient struct {
@@ -275,6 +278,15 @@ func (c *paymentClient) UnsubscribeHuawei(ctx context.Context, in *UnsubscribeHu
 	return out, nil
 }
 
+func (c *paymentClient) DouyinPeriodOrder(ctx context.Context, in *DouyinPeriodOrderReq, opts ...grpc.CallOption) (*DouyinPeriodOrderResp, error) {
+	out := new(DouyinPeriodOrderResp)
+	err := c.cc.Invoke(ctx, Payment_DouyinPeriodOrder_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PaymentServer is the server API for Payment service.
 // All implementations must embed UnimplementedPaymentServer
 // for forward compatibility
@@ -319,6 +331,8 @@ type PaymentServer interface {
 	BindHuaweiPayData(context.Context, *BindHuaweiPayDataReq) (*BindHuaweiPayDataResp, error)
 	// 用户主动解除华为订阅
 	UnsubscribeHuawei(context.Context, *UnsubscribeHuaweiReq) (*UnsubscribeHuaweiResp, error)
+	// 抖音周期代扣相关查询和修改
+	DouyinPeriodOrder(context.Context, *DouyinPeriodOrderReq) (*DouyinPeriodOrderResp, error)
 	mustEmbedUnimplementedPaymentServer()
 }
 
@@ -385,6 +399,9 @@ func (UnimplementedPaymentServer) BindHuaweiPayData(context.Context, *BindHuawei
 }
 func (UnimplementedPaymentServer) UnsubscribeHuawei(context.Context, *UnsubscribeHuaweiReq) (*UnsubscribeHuaweiResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UnsubscribeHuawei not implemented")
+}
+func (UnimplementedPaymentServer) DouyinPeriodOrder(context.Context, *DouyinPeriodOrderReq) (*DouyinPeriodOrderResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DouyinPeriodOrder not implemented")
 }
 func (UnimplementedPaymentServer) mustEmbedUnimplementedPaymentServer() {}
 
@@ -759,6 +776,24 @@ func _Payment_UnsubscribeHuawei_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Payment_DouyinPeriodOrder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DouyinPeriodOrderReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PaymentServer).DouyinPeriodOrder(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Payment_DouyinPeriodOrder_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PaymentServer).DouyinPeriodOrder(ctx, req.(*DouyinPeriodOrderReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Payment_ServiceDesc is the grpc.ServiceDesc for Payment service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -845,6 +880,10 @@ var Payment_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UnsubscribeHuawei",
 			Handler:    _Payment_UnsubscribeHuawei_Handler,
+		},
+		{
+			MethodName: "DouyinPeriodOrder",
+			Handler:    _Payment_DouyinPeriodOrder_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

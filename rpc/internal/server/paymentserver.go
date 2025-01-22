@@ -141,3 +141,9 @@ func (s *PaymentServer) UnsubscribeHuawei(ctx context.Context, in *pb.Unsubscrib
 	l := logic.NewUnsubscribeHuaweiLogic(ctx, s.svcCtx)
 	return l.UnsubscribeHuawei(in)
 }
+
+// 抖音周期代扣相关查询和修改
+func (s *PaymentServer) DouyinPeriodOrder(ctx context.Context, in *pb.DouyinPeriodOrderReq) (*pb.DouyinPeriodOrderResp, error) {
+	l := logic.NewDouyinPeriodOrderLogic(ctx, s.svcCtx)
+	return l.DouyinPeriodOrder(in)
+}

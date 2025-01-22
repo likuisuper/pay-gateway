@@ -53,7 +53,7 @@ func NewOrderPayLogic(ctx context.Context, svcCtx *svc.ServiceContext) *OrderPay
 		svcCtx:                svcCtx,
 		Logger:                logx.WithContext(ctx),
 		payOrderModel:         model.NewPmPayOrderModel(define.DbPayGateway),
-		payDyPeriodOrderModel: model.NewPmDyPeriodOrderModel(),
+		payDyPeriodOrderModel: model.NewPmDyPeriodOrderModel(define.DbPayGateway),
 		appConfigModel:        model.NewPmAppConfigModel(define.DbPayGateway),
 		payConfigAlipayModel:  model.NewPmPayConfigAlipayModel(define.DbPayGateway),
 		payConfigWechatModel:  model.NewPmPayConfigWechatModel(define.DbPayGateway),

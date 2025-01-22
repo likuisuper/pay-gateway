@@ -345,6 +345,26 @@ message UnsubscribeHuaweiResp {
   string Msg = 2; // 返回消息
 }
 
+// 动作
+enum DouyinPeriodOrderReqAction {
+  DyPeriodActionQuery = 0; // 查询
+  DyPeriodActionUpdate = 1; // 更新
+}
+
+message DouyinPeriodOrderReq {
+  DouyinPeriodOrderReqAction Action = 1; // 动作
+  string Pkg = 2;  // 客户端包名
+  int64 UserId = 3; // 用户id
+}
+
+message DouyinPeriodOrderResp {
+  int64 UserId = 1; // 用户id
+  int32 IsSign = 2; // 是否签约, 0未签约, 1已签约
+  string ExpireDate = 3;  // 已签约到期时间 年-月-日 时:分:秒
+  string NextDecuctionTime = 4;  // 下次扣款时间 年-月-日 时:分:秒
+  string Msg = 5;  // 描述信息
+}
+
 //============== service ==============================================================================
 
 service Payment {
@@ -406,5 +426,8 @@ service Payment {
 
   // 用户主动解除华为订阅
   rpc UnsubscribeHuawei(UnsubscribeHuaweiReq) returns (UnsubscribeHuaweiResp);
+
+  // 抖音周期代扣相关查询和修改
+  rpc DouyinPeriodOrder(DouyinPeriodOrderReq) returns (DouyinPeriodOrderResp);
 
 }
