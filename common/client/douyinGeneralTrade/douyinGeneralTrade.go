@@ -225,10 +225,11 @@ type GeneralTradeCallbackData struct {
 type EventType string
 
 const (
-	EventPayment         EventType = "payment"
-	EventRefund          EventType = "refund"
-	EventPreCreateRefund EventType = "pre_create_refund"
-	EventSettle          EventType = "settle"
+	EventPayment         EventType = "payment"           // 支付
+	EventRefund          EventType = "refund"            // 退款
+	EventPreCreateRefund EventType = "pre_create_refund" // 客服预退款订单
+	EventSettle          EventType = "settle"            //
+	EventSignCallback    EventType = "sign_callback"     // 抖音周期代扣签约回调
 )
 
 type GeneralTradeMsg struct {

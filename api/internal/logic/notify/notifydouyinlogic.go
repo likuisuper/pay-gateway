@@ -2,6 +2,7 @@ package notify
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -72,18 +73,20 @@ func (l *NotifyDouyinLogic) NotifyDouyin(req *http.Request) (resp *types.DouyinR
 			ErrTips: "read from body fail",
 		}, nil
 	}
-	_ = req.Body.Close()
+
+	defer req.Body.Close()
 
 	data := new(douyin.GeneralTradeCallbackData)
 	err = sonic.Unmarshal(body, data)
 	if err != nil {
-		l.Errorf("NotifyDouyin, unmarshal body fail, err:%s, body:%s", err.Error(), body)
+		l.Errorf("NotifyDouyin, unmarshal body fail, err:%s, body: %s", err.Error(), string(body))
 		return &types.DouyinResp{
 			ErrNo:   500,
 			ErrTips: "unmarshal body fail",
 		}, nil
 	}
-	l.Slowf("NotifyDouyin  body:%s", body)
+
+	l.Slowf("NotifyDouyin raw body: %s", string(body))
 
 	switch data.Type {
 	case douyin.EventPayment:
@@ -99,9 +102,18 @@ func (l *NotifyDouyinLogic) NotifyDouyin(req *http.Request) (resp *types.DouyinR
 	case douyin.EventPreCreateRefund:
 		// 退款申请回调
 		return l.notifyPreCreateRefund(req, body, data.Msg, data)
+	case douyin.EventSignCallback:
+		// 抖音周期代扣签约回调
+		l.handleSignCallback(req, data.Msg)
+		resp := &types.DouyinResp{
+			ErrNo:   0,
+			ErrTips: "success",
+			Data:    nil,
+		}
+		return resp, nil
 	}
 
-	l.Errorf("NotifyDouyin, invalid msg type:%s, data:%v", data.Type, data)
+	l.Errorf("NotifyDouyin invalid msg type:%s, data:%v, raw body", data.Type, data, string(body))
 	return &types.DouyinResp{
 		ErrNo:   500,
 		ErrTips: "invalid payment",
@@ -387,4 +399,69 @@ func (l *NotifyDouyinLogic) notifyPreCreateRefund(req *http.Request, body []byte
 		Data:    nil,
 	}
 	return resp, nil
+}
+
+// 抖音签约回调结构体
+type DySignCallbackNotify struct {
+	AppId          string `json:"app_id"`            // 小程序 app_id
+	Status         string `json:"status"`            // 签约结果状态，目前有四种状态： "SUCCESS" （用户签约成功 ） •"TIME_OUT" （用户未签约，订单超时关单） •"CANCEL" (解约成功)	•"DONE" （服务完成，已到期）
+	AuthOrderId    string `json:"auth_order_id"`     // 平台侧签约单的单号，长度<=64byte
+	OutAuthOrderNo string `json:"out_auth_order_no"` // 开发者侧签约单的单号，长度<=64byte
+	EventTime      int64  `json:"event_time"`        // 用户签约成功/签约取消/解约成功的时间戳，单位为毫秒
+}
+
+const (
+	Dy_Sign_Status_SUCCESS  = "SUCCESS"  // 用户签约成功
+	Dy_Sign_Status_TIME_OUT = "TIME_OUT" // 用户未签约，订单超时关单
+	Dy_Sign_Status_CANCEL   = "CANCEL"   // 解约成功
+	Dy_Sign_Status_DONE     = "DONE"     // 服务完成，已到期(按照解约处理)
+)
+
+// 抖音周期代扣签约回调处理
+// https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/server/payment/management-capacity/periodic-deduction/sign/sign-callback
+func (l *NotifyDouyinLogic) handleSignCallback(req *http.Request, msg string) {
+	// msg 字段内容示例
+	//签约成功回调示例
+	// {
+	// 	"app_id": "ttcfdbb96650e33350",
+	// 	"status": "SUCCESS",
+	// 	"auth_order_id": "ad72432423423",
+	// 	"out_auth_order_no": "out_order_no_1",
+	// 	"event_time": 1698128528000
+	// }
+
+	//超时取消回调示例
+	// {
+	// 	"app_id": "ttcfdbb96650e33350",
+	// 	"status": "TIME_OUT",
+	// 	"auth_order_id": "ad72432423423",
+	// 	"out_auth_order_no": "out_order_no_1",
+	// 	"event_time": 1698128528000
+	// }
+
+	//用户解约回调示例
+	// {
+	// 	"app_id": "ttcfdbb96650e33350",
+	// 	"status": "CANCEL",
+	// 	"auth_order_id": "ad72432423423",
+	// 	"out_auth_order_no": "out_order_no_1",
+	// 	"cancel_source": 1,
+	// 	"event_time": 1698128528000
+	// }
+
+	//服务完成回调示例
+	// {
+	// 	"app_id": "ttcfdbb96650e33350",
+	// 	"status": "DONE",
+	// 	"auth_order_id": "ad72432423423",
+	// 	"out_auth_order_no": "out_order_no_1",
+	// 	"event_time": 1698128528000
+	// }
+
+	var signResult DySignCallbackNotify
+	err := json.Unmarshal([]byte(msg), &signResult)
+	if err != nil {
+		l.Errorf("json.Unmarshal error: %v", err)
+		return
+	}
 }
