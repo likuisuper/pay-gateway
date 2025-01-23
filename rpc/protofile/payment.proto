@@ -359,11 +359,12 @@ message DouyinPeriodOrderReq {
 
 message DouyinPeriodOrderResp {
   int64 UserId = 1; // 用户id
-  int32 IsSign = 2; // 是否签约, 0未签约, 1已签约
-  int64 DeductionAmount = 3; // 扣款金额 单位分
-  string ExpireDate = 4;  // 已签约到期时间 年-月-日 时:分:秒
-  string NextDecuctionTime = 5;  // 下次扣款时间 年-月-日 时:分:秒
-  string Msg = 6;  // 描述信息
+  int32 IsSign = 2; // 是否签约, 0未签约, 1已签约, 2已解约
+  bool IsUnsignSuccess = 3; // 是否解约成功
+  int64 DeductionAmount = 4; // 扣款金额 单位分
+  string ExpireDate = 5;  // 已签约到期时间 年-月-日 时:分:秒
+  string NextDecuctionTime = 6;  // 下次扣款时间 年-月-日 时:分:秒
+  string Msg = 7;  // 描述信息
 }
 
 //============== service ==============================================================================

@@ -135,9 +135,9 @@ func (l *DouyinPeriodOrderLogic) querySignOrder(in *pb.DouyinPeriodOrderReq) (*p
 // 用户发起解约
 func (l *DouyinPeriodOrderLogic) terminateSign(in *pb.DouyinPeriodOrderReq) (*pb.DouyinPeriodOrderResp, error) {
 	resp := pb.DouyinPeriodOrderResp{
-		UserId: in.GetUserId(),
-		IsSign: 0,
-		Msg:    "你未签约",
+		UserId:          in.GetUserId(),
+		IsUnsignSuccess: false,
+		Msg:             "你未签约",
 	}
 
 	// 查询
@@ -192,7 +192,7 @@ func (l *DouyinPeriodOrderLogic) terminateSign(in *pb.DouyinPeriodOrderReq) (*pb
 	// 记录日志
 	l.Sloww("payDyPeriodOrderModel.UpdateSomeData", logx.Field("id", periodModel.ID), logx.Field("updateData", updateData), logx.Field("err", err))
 
-	resp.IsSign = 1
+	resp.IsUnsignSuccess = true
 	resp.Msg = "解约成功"
 
 	return &resp, nil
