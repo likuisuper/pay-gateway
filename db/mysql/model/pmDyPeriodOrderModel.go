@@ -23,8 +23,10 @@ type PmDyPeriodOrderTable struct {
 	PayType            int       `gorm:"column:pay_type;default:0;NOT NULL" json:"pay_type"`                  // 支付方式  1微信小程序支付 2头条小程序支付
 	NotifyUrl          string    `gorm:"column:notify_url;NOT NULL" json:"notify_url"`                        // 回调通知地址
 	PayStatus          int       `gorm:"column:pay_status;NOT NULL" json:"pay_status"`                        // 支付状态 0未支付 1已支付
+	PayChannel         int       `gorm:"column:pay_channel;NOT NULL" json:"pay_channel"`                      // 支付渠道 扣款成功时才有
 	SignStatus         int       `gorm:"column:sign_status;NOT NULL" json:"sign_status"`                      // 签约状态, 0 待签约 , 1已签约 , 2取消签约
 	PayAppId           string    `gorm:"column:pay_app_id;NOT NULL" json:"pay_app_id"`                        // 第三方支付的appid
+	ThirdOrderSn       string    `gorm:"column:third_order_sn;NULL" json:"third_order_sn"`                    // 抖音平台返回的渠道支付单号
 	ThirdOrderNo       string    `gorm:"column:third_order_no;NULL" json:"third_order_no"`                    // 抖音平台返回的代扣单的单号
 	ThirdSignOrderNo   string    `gorm:"column:third_sign_order_no;NULL" json:"third_sign_order_no"`          // 抖音平台返回的签约单号
 	ThirdUnsignOrderNo string    `gorm:"column:third_unsign_order_no;NULL" json:"third_unsign_order_no"`      // 抖音平台返回的解约单号
