@@ -102,7 +102,7 @@ type Schema struct {
 	Params string `json:"params,omitempty"` // xx情页路径参数，自定义的json结构，内部为k-v结构，序列化成字符串存入该字段，平台不限制，但是写入的内容需要能够保证生成访问xx详情的schema能正确跳转到小程序内部的xx详情页，长度须<=512byte，params内key不可重复。
 }
 
-// 抖音签约回调结构体
+// 抖音签约授权回调结构体
 type DySignCallbackNotify struct {
 	AppId          string `json:"app_id"`            // 小程序 app_id
 	Status         string `json:"status"`            // 签约结果状态，目前有四种状态： "SUCCESS" （用户签约成功 ） •"TIME_OUT" （用户未签约，订单超时关单） •"CANCEL" (解约成功)	•"DONE" （服务完成，已到期）

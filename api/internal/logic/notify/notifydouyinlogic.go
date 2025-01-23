@@ -494,6 +494,8 @@ func (l *NotifyDouyinLogic) handleSignPayCallback(msg string, originData interfa
 		"notify_amount":       signResult.TotalAmount,                                                                 // 回调扣款金额（分）
 	}
 	err = l.payDyPeriodOrderModel.UpdateSomeData(orderInfo.ID, updateData)
+	// 记录日志
+	l.Sloww("payDyPeriodOrderModel.UpdateSomeData", logx.Field("id", orderInfo.ID), logx.Field("updateData", updateData), logx.Field("err", err))
 	if err != nil {
 		return err
 	}
@@ -588,6 +590,8 @@ func (l *NotifyDouyinLogic) handleSignCallback(msg string) error {
 			"third_sign_order_no": signResult.AuthOrderId, // 抖音的签约单号
 		}
 		err = l.payDyPeriodOrderModel.UpdateSomeData(tbl.ID, updateData)
+		// 记录日志
+		l.Sloww("payDyPeriodOrderModel.UpdateSomeData", logx.Field("id", tbl.ID), logx.Field("updateData", updateData), logx.Field("err", err))
 		if err != nil {
 			return err
 		}
@@ -611,6 +615,8 @@ func (l *NotifyDouyinLogic) handleSignCallback(msg string) error {
 			"third_unsign_order_no": signResult.AuthOrderId, // 抖音的签约单号
 		}
 		err = l.payDyPeriodOrderModel.UpdateSomeData(tbl.ID, updateData)
+		// 记录日志
+		l.Sloww("payDyPeriodOrderModel.UpdateSomeData", logx.Field("id", tbl.ID), logx.Field("updateData", updateData), logx.Field("err", err))
 		if err != nil {
 			return err
 		}
