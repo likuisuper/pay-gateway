@@ -414,7 +414,7 @@ type QueryOrderItemOrder struct {
 }
 
 type ApiCommonResp struct {
-	ErrNo  int64  `json:"err_no,omitempty"`
+	ErrNo  int64  `json:"err_no,omitempty"` // 0是正常
 	ErrMsg string `json:"err_msg,omitempty"`
 	LogId  string `json:"log_id,omitempty"`
 }

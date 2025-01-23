@@ -91,11 +91,16 @@ func (l *DouyinPeriodOrderLogic) querySignOrder(in *pb.DouyinPeriodOrderReq) (*p
 		return &resp, nil
 	}
 
-	if signResult.ErrNo == 0 && signResult.UserSignData.Status == douyin.Dy_Sign_Status_Query_SERVING {
+	if signResult.ErrNo != 0 {
+		l.Errorw("dyClient.QuerySignOrder failed", logx.Field("signResult", signResult))
+		return &resp, nil
+	}
+
+	if signResult.UserSignData.Status == douyin.Dy_Sign_Status_Query_SERVING {
 		// 已签约
 		nextDecuctionTimeStr := time.Unix(signResult.UserSignData.SignTime/1000, 0).AddDate(0, 1, 0).Format("2006-01-02 15:04:05")
 		updateData := map[string]interface{}{
-			"pay_status":          model.Sign_Status_Success,
+			"sign_status":         model.Sign_Status_Success,
 			"sign_date":           time.Unix(signResult.UserSignData.SignTime/1000, 0).Format("2006-01-02 15:04:05"), // 签约时间
 			"next_decuction_time": nextDecuctionTimeStr,                                                              // 下次扣款时间
 			"third_sign_order_no": signResult.UserSignData.OutAuthOrderNo,                                            // 抖音平台返回的签约单号
@@ -109,6 +114,19 @@ func (l *DouyinPeriodOrderLogic) querySignOrder(in *pb.DouyinPeriodOrderReq) (*p
 		resp.Msg = "已签约"
 		resp.NextDecuctionTime = nextDecuctionTimeStr
 		resp.DeductionAmount = int64(periodModel.Amount) // 单位分
+	} else if signResult.UserSignData.Status == douyin.Dy_Sign_Status_Query_CANCEL || signResult.UserSignData.Status == douyin.Dy_Sign_Status_Query_DONE {
+		signStatus := model.Sign_Status_Cancel
+		if signResult.UserSignData.Status == douyin.Dy_Sign_Status_Query_DONE {
+			signStatus = model.Sign_Status_Done
+		}
+
+		// 修改数据库 更新签约状态
+		updateData := map[string]interface{}{
+			"sign_status": signStatus,
+		}
+		err = l.payDyPeriodOrderModel.UpdateSomeData(periodModel.ID, updateData)
+		// 记录日志
+		l.Sloww("payDyPeriodOrderModel.UpdateSomeData", logx.Field("id", periodModel.ID), logx.Field("updateData", updateData), logx.Field("err", err))
 	}
 
 	return &resp, nil
@@ -119,17 +137,60 @@ func (l *DouyinPeriodOrderLogic) terminateSign(in *pb.DouyinPeriodOrderReq) (*pb
 	resp := pb.DouyinPeriodOrderResp{
 		UserId: in.GetUserId(),
 		IsSign: 0,
-		Msg:    "解约失败",
+		Msg:    "你未签约",
 	}
 
 	// 查询
-	periodModel, err := l.payDyPeriodOrderModel.GetSignedByUserIdAndPkg(int(in.GetUserId()), in.GetPkg())
-	if err != nil || periodModel == nil || periodModel.ID < 1 {
-		l.Slowf("GetSignedByUserIdAndPkg error: %v, pkg: %s, userId :%d", err, in.GetPkg(), in.GetUserId())
-
-		resp.Msg = "获取签约订单失败, err: " + err.Error()
+	periodModel, _ := l.payDyPeriodOrderModel.GetSignedByUserIdAndPkg(int(in.GetUserId()), in.GetPkg(), model.Sign_Status_Success)
+	if periodModel == nil || periodModel.ID < 1 {
 		return &resp, nil
 	}
+
+	periodModel, err := l.payDyPeriodOrderModel.GetSignedByUserIdAndPkg(int(in.GetUserId()), in.GetPkg(), model.Sign_Status_Wait)
+	if err != nil && periodModel == nil || periodModel.ID < 1 {
+		// 查询失败
+		l.Errorf("querySignOrder failed: %v, userId: %d, pkg: %s ", err, in.GetUserId(), in.GetPkg())
+		return &resp, nil
+	}
+
+	clientToken, err := l.svcCtx.BaseAppConfigServerApi.GetDyClientToken(l.ctx, periodModel.PayAppId)
+	if err != nil || clientToken == "" {
+		l.Errorw("get douyin client token fail", logx.Field("err", err), logx.Field("appId", periodModel.PayAppId))
+		return &resp, nil
+	}
+
+	// 再查询一下抖音服务确认是否签约
+	signResult, err := l.dyClient.QuerySignOrder(clientToken, periodModel.ThirdSignOrderNo)
+	if err != nil || signResult == nil {
+		l.Errorw("QuerySignOrder fail", logx.Field("err", err), logx.Field("authOrderId", periodModel.ThirdSignOrderNo))
+		return &resp, nil
+	}
+
+	if signResult.ErrNo != 0 {
+		l.Errorw("dyClient.QuerySignOrder failed", logx.Field("signResult", signResult))
+		return &resp, nil
+	}
+
+	if signResult.UserSignData.Status != douyin.Dy_Sign_Status_Query_SERVING {
+		return &resp, nil
+	}
+
+	// 已签约 开始解约
+	unsignResult, err := l.dyClient.TerminateSign(clientToken, periodModel.ThirdSignOrderNo)
+	if err != nil || unsignResult == nil {
+		l.Errorw("TerminateSign fail", logx.Field("err", err), logx.Field("authOrderId", periodModel.ThirdSignOrderNo))
+		resp.Msg = "解约失败请稍后再试"
+		return &resp, nil
+	}
+
+	// 修改数据库
+	updateData := map[string]interface{}{
+		"sign_status": model.Sign_Status_Cancel,
+		"unsign_date": time.Now().Format("2006-01-02 15:04:05")
+	}
+	err = l.payDyPeriodOrderModel.UpdateSomeData(periodModel.ID, updateData)
+	// 记录日志
+	l.Sloww("payDyPeriodOrderModel.UpdateSomeData", logx.Field("id", periodModel.ID), logx.Field("updateData", updateData), logx.Field("err", err))
 
 	resp.IsSign = 1
 	resp.Msg = "解约成功"
