@@ -601,12 +601,6 @@ func (l *NotifyDouyinLogic) handleSignCallback(msg string) error {
 		// 记录一下日志
 		l.Slowf("签约单超时 orderNo: %s , appId: %s , eventTime: %d ", signResult.OutAuthOrderNo, signResult.AppId, signResult.EventTime)
 	} else if signResult.Status == douyin.Dy_Sign_Status_SUCCESS {
-		// 签约成功
-		if tbl.SignStatus == model.Sign_Status_Success {
-			// 已签约过了
-			return nil
-		}
-
 		// 修改状态为签约成功
 		updateData := map[string]interface{}{
 			"sign_status":         model.Sign_Status_Success,

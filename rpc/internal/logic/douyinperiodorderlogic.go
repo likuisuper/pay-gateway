@@ -36,7 +36,7 @@ func NewDouyinPeriodOrderLogic(ctx context.Context, svcCtx *svc.ServiceContext) 
 // 抖音周期代扣相关查询和修改
 func (l *DouyinPeriodOrderLogic) DouyinPeriodOrder(in *pb.DouyinPeriodOrderReq) (*pb.DouyinPeriodOrderResp, error) {
 	// 记录日志
-	l.Sloww("DouyinPeriodOrder", logx.Field("in", in))
+	l.Sloww("DouyinPeriodOrder", logx.Field("in", in), logx.Field("action", in.GetAction()))
 
 	if in.GetAction() == pb.DouyinPeriodOrderReqAction_DyPeriodActionQuery {
 		// 查询签约情况
