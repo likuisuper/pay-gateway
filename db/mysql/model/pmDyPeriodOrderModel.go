@@ -111,9 +111,9 @@ func (o *PmDyPeriodOrderModel) GetOneBySignNoAndAppId(signNo, appId string) (*Pm
 }
 
 // 根据用户id和包名获取已签约订单信息
-func (o *PmDyPeriodOrderModel) GetSignedByUserIdAndPkg(userId int, pkg string) (*PmDyPeriodOrderTable, error) {
+func (o *PmDyPeriodOrderModel) GetSignedByUserIdAndPkg(userId int, pkg string, signStatus int) (*PmDyPeriodOrderTable, error) {
 	orderInfo := new(PmDyPeriodOrderTable)
-	err := o.DB.Table(PmDyPeriodOrderTableName).Where("`user_id` = ? and `app_pkg_name` = ? and sign_status = 1", userId, pkg).Last(orderInfo).Error
+	err := o.DB.Table(PmDyPeriodOrderTableName).Where("`user_id` = ? and `app_pkg_name` = ? and sign_status = ?", userId, pkg, signStatus).Last(orderInfo).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		logx.Errorf("GetOneByUserIdAndPkg 获取订单信息失败 err:%v, pkg:%s, userId:%d", err, pkg, userId)
 	}
