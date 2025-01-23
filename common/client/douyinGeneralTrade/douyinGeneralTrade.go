@@ -472,19 +472,29 @@ type UserSignDataObj struct {
 //
 // clientToken appid的access token
 //
-// authOrderId 平台侧签约单的单号
-func (c *PayClient) QuerySignOrder(clientToken, authOrderId string) (*UserSignResp, error) {
+// outAuthOrderId 开发者侧签约单的单号
+func (c *PayClient) QuerySignOrder(clientToken, outAuthOrderId string) (*UserSignResp, error) {
 	header := map[string]string{
 		"access-token": clientToken,
 	}
 
+	// auth_order_idString
+	// 示例："ad712312312313213"
+	// 平台侧签约单的单号，长度<=64byte，auth_order_id 与 out_auth_order_no 二选一
+
+	// out_auth_order_noString
+	// 示例："out_order_1"
+	// 开发者侧签约单的单号，长度<=64byte，
+
+	// auth_order_id 与 out_auth_order_no 二选一
+
 	params := map[string]string{
-		"auth_order_id": authOrderId,
+		"out_auth_order_no": outAuthOrderId,
 	}
 	result, err := util.HttpPostWithHeader(query_sign_order_url, params, header, time.Second*5)
 
 	// 记录返回日志
-	logx.Sloww("QuerySignOrder", logx.Field("result", result), logx.Field("authOrderId", authOrderId), logx.Field("err", err))
+	logx.Sloww("QuerySignOrder", logx.Field("result", result), logx.Field("outAuthOrderId", outAuthOrderId), logx.Field("err", err))
 
 	if err != nil {
 		return nil, err

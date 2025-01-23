@@ -35,6 +35,9 @@ func NewDouyinPeriodOrderLogic(ctx context.Context, svcCtx *svc.ServiceContext) 
 
 // 抖音周期代扣相关查询和修改
 func (l *DouyinPeriodOrderLogic) DouyinPeriodOrder(in *pb.DouyinPeriodOrderReq) (*pb.DouyinPeriodOrderResp, error) {
+	// 记录日志
+	l.Sloww("DouyinPeriodOrder", logx.Field("in", in))
+
 	if in.GetAction() == pb.DouyinPeriodOrderReqAction_DyPeriodActionQuery {
 		// 查询签约情况
 		return l.querySignOrder(in)
@@ -85,9 +88,9 @@ func (l *DouyinPeriodOrderLogic) querySignOrder(in *pb.DouyinPeriodOrderReq) (*p
 	}
 
 	// 再查询一下抖音服务确认是否签约
-	signResult, err := l.dyClient.QuerySignOrder(clientToken, periodModel.ThirdSignOrderNo)
+	signResult, err := l.dyClient.QuerySignOrder(clientToken, periodModel.SignNo)
 	if err != nil || signResult == nil {
-		l.Errorw("QuerySignOrder fail", logx.Field("err", err), logx.Field("authOrderId", periodModel.ThirdSignOrderNo))
+		l.Errorw("QuerySignOrder fail", logx.Field("err", err), logx.Field("authOrderId", periodModel.SignNo))
 		return &resp, nil
 	}
 
@@ -160,9 +163,9 @@ func (l *DouyinPeriodOrderLogic) terminateSign(in *pb.DouyinPeriodOrderReq) (*pb
 	}
 
 	// 再查询一下抖音服务确认是否签约
-	signResult, err := l.dyClient.QuerySignOrder(clientToken, periodModel.ThirdSignOrderNo)
+	signResult, err := l.dyClient.QuerySignOrder(clientToken, periodModel.SignNo)
 	if err != nil || signResult == nil {
-		l.Errorw("QuerySignOrder fail", logx.Field("err", err), logx.Field("authOrderId", periodModel.ThirdSignOrderNo))
+		l.Errorw("QuerySignOrder fail", logx.Field("err", err), logx.Field("authOrderId", periodModel.SignNo))
 		return &resp, nil
 	}
 
