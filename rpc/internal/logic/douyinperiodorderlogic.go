@@ -175,6 +175,8 @@ func (l *DouyinPeriodOrderLogic) terminateSign(in *pb.DouyinPeriodOrderReq) (*pb
 	}
 
 	if signResult.UserSignData.Status != douyin.Dy_Sign_Status_Query_SERVING {
+		resp.IsUnsignSuccess = true
+		resp.Msg = "解约成功"
 		return &resp, nil
 	}
 
