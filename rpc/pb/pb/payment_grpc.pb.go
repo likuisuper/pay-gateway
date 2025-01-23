@@ -86,7 +86,7 @@ type PaymentClient interface {
 	BindHuaweiPayData(ctx context.Context, in *BindHuaweiPayDataReq, opts ...grpc.CallOption) (*BindHuaweiPayDataResp, error)
 	// 用户主动解除华为订阅
 	UnsubscribeHuawei(ctx context.Context, in *UnsubscribeHuaweiReq, opts ...grpc.CallOption) (*UnsubscribeHuaweiResp, error)
-	// 抖音周期代扣相关查询和修改
+	// 抖音周期代扣相关查询和修改(包括解约)
 	DouyinPeriodOrder(ctx context.Context, in *DouyinPeriodOrderReq, opts ...grpc.CallOption) (*DouyinPeriodOrderResp, error)
 }
 
@@ -331,7 +331,7 @@ type PaymentServer interface {
 	BindHuaweiPayData(context.Context, *BindHuaweiPayDataReq) (*BindHuaweiPayDataResp, error)
 	// 用户主动解除华为订阅
 	UnsubscribeHuawei(context.Context, *UnsubscribeHuaweiReq) (*UnsubscribeHuaweiResp, error)
-	// 抖音周期代扣相关查询和修改
+	// 抖音周期代扣相关查询和修改(包括解约)
 	DouyinPeriodOrder(context.Context, *DouyinPeriodOrderReq) (*DouyinPeriodOrderResp, error)
 	mustEmbedUnimplementedPaymentServer()
 }

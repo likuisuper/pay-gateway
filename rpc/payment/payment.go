@@ -95,7 +95,7 @@ type (
 		BindHuaweiPayData(ctx context.Context, in *BindHuaweiPayDataReq, opts ...grpc.CallOption) (*BindHuaweiPayDataResp, error)
 		// 用户主动解除华为订阅
 		UnsubscribeHuawei(ctx context.Context, in *UnsubscribeHuaweiReq, opts ...grpc.CallOption) (*UnsubscribeHuaweiResp, error)
-		// 抖音周期代扣相关查询和修改
+		// 抖音周期代扣相关查询和修改(包括解约)
 		DouyinPeriodOrder(ctx context.Context, in *DouyinPeriodOrderReq, opts ...grpc.CallOption) (*DouyinPeriodOrderResp, error)
 	}
 
@@ -230,7 +230,7 @@ func (m *defaultPayment) UnsubscribeHuawei(ctx context.Context, in *UnsubscribeH
 	return client.UnsubscribeHuawei(ctx, in, opts...)
 }
 
-// 抖音周期代扣相关查询和修改
+// 抖音周期代扣相关查询和修改(包括解约)
 func (m *defaultPayment) DouyinPeriodOrder(ctx context.Context, in *DouyinPeriodOrderReq, opts ...grpc.CallOption) (*DouyinPeriodOrderResp, error) {
 	client := pb.NewPaymentClient(m.cli.Conn())
 	return client.DouyinPeriodOrder(ctx, in, opts...)

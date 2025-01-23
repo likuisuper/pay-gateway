@@ -7,6 +7,7 @@ import (
 	"crypto/sha256"
 	"crypto/x509"
 	"encoding/base64"
+	"encoding/json"
 	"encoding/pem"
 	"errors"
 	"fmt"
@@ -18,6 +19,15 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/zeromicro/go-zero/core/logx"
 )
+
+// 订单查询url
+const trade_order_query_url = "https://open.douyin.com/api/trade_basic/v1/developer/order_query/"
+
+// 解约周期代扣
+const trade_terminate_sign_url = "https://open.douyin.com/api/trade_auth/v1/developer/terminate_sign/"
+
+// 查询抖音周期代扣签约单的状态
+const query_sign_order_url = "https://open.douyin.com/api/trade_auth/v1/developer/query_sign_order/"
 
 type PayConfig struct {
 	AppId             string
@@ -111,16 +121,28 @@ type DySignCallbackNotify struct {
 	EventTime      int64  `json:"event_time"`        // 用户签约成功/签约取消/解约成功的时间戳，单位为毫秒
 }
 
+// 签约回调用户签约状态
 const (
 	Dy_Sign_Status_SUCCESS  = "SUCCESS"  // 用户签约成功
 	Dy_Sign_Status_TIME_OUT = "TIME_OUT" // 用户未签约，订单超时关单
 	Dy_Sign_Status_CANCEL   = "CANCEL"   // 解约成功
-	Dy_Sign_Status_DONE     = "DONE"     // 服务完成，已到期(按照解约处理 ?? 这个状态需要观察数据)
+	Dy_Sign_Status_DONE     = "DONE"     // 服务完成，服务完成，签约已到期
 )
+
+// 签约支付状态
 const (
 	Dy_Sign_Pay_Status_SUCCESS  = "SUCCESS"  // 成功
 	Dy_Sign_Pay_Status_TIME_OUT = "TIME_OUT" // 超时未支付 ｜超时未扣款成功
 	Dy_Sign_Pay_Status_FAIL     = "FAIL"     // （扣款失败，原因基本都是用户无支付方式（解绑了付款卡）或用户的扣款卡余额不足，建议失败后不要立即重试，隔日再进行重试，若一个月内连续多次扣款均不成功，考虑和用户进行解约）
+)
+
+// 签约订单查询返回的用户签约状态
+// TOBESERVED: 待服务 SERVING：服务中 CANCEL: 已解约 TIMEOUT: 用户未签约 DONE: 服务完成，签约已到期
+const (
+	Dy_Sign_Status_Query_SERVING = "SERVING" // 服务中
+	Dy_Sign_Status_Query_CANCEL  = "CANCEL"  // 已解约
+	Dy_Sign_Status_Query_TIMEOUT = "TIMEOUT" // 用户未签约
+	Dy_Sign_Status_Query_DONE    = "DONE"    // 服务完成，签约已到期
 )
 
 // 抖音签约支付回调结构体
@@ -391,6 +413,12 @@ type QueryOrderItemOrder struct {
 	ItemOrderCurrencyAmount int64  `json:"item_order_currency_amount,omitempty"` // 非必填 当用户以钻石兑换时，该字段会填充对应的钻石数量
 }
 
+type ApiCommonResp struct {
+	ErrNo  int64  `json:"err_no,omitempty"`
+	ErrMsg string `json:"err_msg,omitempty"`
+	LogId  string `json:"log_id,omitempty"`
+}
+
 // QueryOrder 查询订单 https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/server/trade-system/general/order/query_order
 func (c *PayClient) QueryOrder(orderId, outOrderId, clientToken string) (*QueryOrderResp, error) {
 	if orderId == "" && outOrderId == "" {
@@ -404,7 +432,7 @@ func (c *PayClient) QueryOrder(orderId, outOrderId, clientToken string) (*QueryO
 		OrderId:    orderId,
 		OutOrderNo: outOrderId, // 类似1235700313565384704
 	}
-	result, err := util.HttpPostWithHeader("https://open.douyin.com/api/trade_basic/v1/developer/order_query/", req, header, time.Second*3)
+	result, err := util.HttpPostWithHeader(trade_order_query_url, req, header, time.Second*5)
 
 	// 记录返回日志
 	logx.Sloww("QueryOrder", logx.Field("result", result), logx.Field("OrderId", orderId), logx.Field("OutOrderNo", outOrderId), logx.Field("err", err))
@@ -414,7 +442,7 @@ func (c *PayClient) QueryOrder(orderId, outOrderId, clientToken string) (*QueryO
 	}
 
 	resp := new(QueryOrderResp)
-	err = sonic.UnmarshalString(result, resp)
+	err = json.Unmarshal([]byte(result), resp)
 	if err != nil {
 		return nil, err
 	}
@@ -422,8 +450,123 @@ func (c *PayClient) QueryOrder(orderId, outOrderId, clientToken string) (*QueryO
 	return resp, nil
 }
 
-type ApiCommonResp struct {
-	ErrNo  int64  `json:"err_no,omitempty"`
-	ErrMsg string `json:"err_msg,omitempty"`
-	LogId  string `json:"log_id,omitempty"`
+// 用户签约返回数据结构体
+type UserSignResp struct {
+	ApiCommonResp
+	UserSignData UserSignDataObj `json:"data,optional"`
+}
+
+type UserSignDataObj struct {
+	AppId          string `json:"app_id,optional"`            // 小程序 app_id
+	AuthOrderId    string `json:"auth_order_id,optional"`     // 平台侧签约单的单号，长度<=64byte
+	OutAuthOrderNo string `json:"out_auth_order_no,optional"` // 开发者侧签约单的单号，长度<=64byte
+	ServiceId      string `json:"service_id,optional"`        // 签约模板ID
+	Status         string `json:"status,optional"`            // 签约单状态 TOBESERVED: 待服务 SERVING：服务中 CANCEL: 已解约 TIMEOUT: 用户未签约 DONE: 服务完成，签约已到期
+	CancelSource   int    `json:"cancel_source,optional"`     // 解约来源 1-用户解约 2-商户解约
+	OpenId         string `json:"open_id,optional"`           // 用户open id
+	SignTime       int64  `json:"sign_time,optional"`         // 用户签约完成时间，时间毫秒
+}
+
+// 查询抖音周期代扣签约单的状态
+// https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/server/payment/management-capacity/periodic-deduction/sign/query-sign-order
+//
+// clientToken appid的access token
+//
+// authOrderId 平台侧签约单的单号
+func (c *PayClient) QuerySignOrder(clientToken, authOrderId string) (*UserSignResp, error) {
+	header := map[string]string{
+		"access-token": clientToken,
+	}
+
+	params := map[string]string{
+		"auth_order_id": authOrderId,
+	}
+	result, err := util.HttpPostWithHeader(query_sign_order_url, params, header, time.Second*5)
+
+	// 记录返回日志
+	logx.Sloww("QuerySignOrder", logx.Field("result", result), logx.Field("authOrderId", authOrderId), logx.Field("err", err))
+
+	if err != nil {
+		return nil, err
+	}
+
+	// 正常时返回
+	// {
+	// 	"data": {
+	// 	  "app_id": "tt312312313123",
+	// 	  "auth_order_id": "ad712312312313213",
+	// 	  "out_auth_order_no": "out_order_1",
+	// 	  "service_id": "64",
+	// 	  "status": "CANCEL",
+	// 	  "cancel_source": 1,
+	// 	  "open_id": "ffwqeqgyqwe312",
+	// 	  "sign_time": 1698128528000,
+	// 	  "notify_url": "https://www.asdasd"
+	// 	},
+	// 	"err_no": 0,
+	// 	"err_msg": "success",
+	// 	"log_id": "2022092115392201020812109511046"
+	//   }
+
+	// 异常时返回
+	// {
+	// 	"err_no": 10000,
+	// 	"err_msg": "参数不合法",
+	// 	"log_id": "2022092115392201020812109511046"
+	// }
+
+	resp := new(UserSignResp)
+	err = json.Unmarshal([]byte(result), resp)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+// 发起解约抖音周期代扣
+// 签约单状态只有在 服务中（SERVING）才允许解约
+// https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/server/payment/management-capacity/periodic-deduction/sign/terminate-sign
+//
+// clientToken appid的access token
+//
+// authOrderId 平台侧签约单的单号
+func (c *PayClient) TerminateSign(clientToken, authOrderId string) (*ApiCommonResp, error) {
+	header := map[string]string{
+		"access-token": clientToken,
+	}
+
+	params := map[string]string{
+		"auth_order_id": authOrderId,
+	}
+	result, err := util.HttpPostWithHeader(trade_terminate_sign_url, params, header, time.Second*5)
+
+	// 记录返回日志
+	logx.Sloww("TerminateSign", logx.Field("result", result), logx.Field("authOrderId", authOrderId), logx.Field("err", err))
+
+	if err != nil {
+		return nil, err
+	}
+
+	// 正常时返回
+	// {
+	// 	"err_no": 0,
+	// 	"err_msg": "success",
+	// 	"log_id": "2022092115392201020812109511046"
+	// 	}
+
+	// 异常时返回
+	// {
+	// 	"err_no": 10000,
+	// 	"err_msg": "参数不合法",
+	// 	"log_id": "2022092115392201020812109511046"
+	// }
+
+	resp := new(ApiCommonResp)
+	err = json.Unmarshal([]byte(result), resp)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
 }

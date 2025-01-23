@@ -348,7 +348,7 @@ message UnsubscribeHuaweiResp {
 // 动作
 enum DouyinPeriodOrderReqAction {
   DyPeriodActionQuery = 0; // 查询
-  DyPeriodActionUpdate = 1; // 更新
+  DyPeriodActionCancel = 1; // 解约
 }
 
 message DouyinPeriodOrderReq {
@@ -428,7 +428,7 @@ service Payment {
   // 用户主动解除华为订阅
   rpc UnsubscribeHuawei(UnsubscribeHuaweiReq) returns (UnsubscribeHuaweiResp);
 
-  // 抖音周期代扣相关查询和修改
+  // 抖音周期代扣相关查询和修改(包括解约)
   rpc DouyinPeriodOrder(DouyinPeriodOrderReq) returns (DouyinPeriodOrderResp);
 
 }

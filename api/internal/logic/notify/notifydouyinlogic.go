@@ -472,20 +472,20 @@ func (l *NotifyDouyinLogic) handleSignPayCallback(msg string, originData interfa
 		return nil
 	}
 
+	// 根据开发者侧代扣单的单号和appid查询
 	orderInfo, err := l.payDyPeriodOrderModel.GetOneByOrderSnAndAppId(signResult.OutPayOrderNo, signResult.AppId)
 	if err != nil || orderInfo == nil || orderInfo.ID < 1 {
 		l.Errorf("扣款成功 查询记录出错 err: %s , orderNo: %s , appId: %s , eventTime: %d ", err.Error(), signResult.OutPayOrderNo, signResult.AppId, signResult.EventTime)
 		return fmt.Errorf("扣款成功 查询记录出错 error: %s", err.Error())
 	}
 
-	if orderInfo.PayStatus == 1 {
-		l.Slowf("扣款成功 订单已经处理过了 不需要再次数据 raw msg: %s , orderInfo id: %d ", msg, orderInfo.ID)
+	if orderInfo.PayStatus > 0 {
+		l.Slowf("扣款成功 订单已经处理过了 不需要再次数据 raw msg: %s , orderInfo id: %d , payStatus : %d", msg, orderInfo.ID, orderInfo.PayStatus)
 		return nil
 	}
 
 	updateData := map[string]interface{}{
 		"pay_status":          1,
-		"third_sign_order_no": signResult.AuthOrderId,                                                                 // 抖音侧签约单的单号，长度<=64byte
 		"pay_channel":         signResult.PayChannel,                                                                  // 支付渠道 扣款成功时才有
 		"third_order_sn":      signResult.ChannelPayId,                                                                // 抖音平台返回的渠道支付单号
 		"third_order_no":      signResult.PayOrderId,                                                                  // 抖音平台返回的代扣单的单号
@@ -493,6 +493,17 @@ func (l *NotifyDouyinLogic) handleSignPayCallback(msg string, originData interfa
 		"user_bill_pay_id":    signResult.UserBillPayId,                                                               // 用户抖音交易单号（账单号）
 		"notify_amount":       signResult.TotalAmount,                                                                 // 回调扣款金额（分）
 	}
+
+	if orderInfo.ThirdSignOrderNo == "" {
+		// 抖音侧签约单的单号，长度<=64byte
+		updateData["third_sign_order_no"] = signResult.AuthOrderId
+	} else if orderInfo.ThirdSignOrderNo != signResult.AuthOrderId {
+		// 签约单单号不一样 说明逻辑处理有问题
+		l.Errorf("两个签约单单号不一样, 本地数据库: %s, 抖音返回的 : %s ", orderInfo.ThirdSignOrderNo, signResult.AuthOrderId)
+		// 不一样的话 覆盖
+		updateData["third_sign_order_no"] = signResult.AuthOrderId
+	}
+
 	err = l.payDyPeriodOrderModel.UpdateSomeData(orderInfo.ID, updateData)
 	// 记录日志
 	l.Sloww("payDyPeriodOrderModel.UpdateSomeData", logx.Field("id", orderInfo.ID), logx.Field("updateData", updateData), logx.Field("err", err))
@@ -564,28 +575,41 @@ func (l *NotifyDouyinLogic) handleSignCallback(msg string) error {
 		return err
 	}
 
+	// 根据开发者签约单单号查询
+	tbl, err := l.payDyPeriodOrderModel.GetOneBySignNoAndAppId(signResult.OutAuthOrderNo, signResult.AppId)
+	if err != nil || tbl == nil || tbl.ID < 1 {
+		l.Errorf("查询记录出错 err: %s , orderNo: %s , appId: %s , eventTime: %d ", err.Error(), signResult.OutAuthOrderNo, signResult.AppId, signResult.EventTime)
+		return fmt.Errorf("查询记录出错 error: %s", err.Error())
+	}
+
 	if signResult.Status == douyin.Dy_Sign_Status_DONE {
-		// 记录一下日志 这个怎么处理 暂时还不知道
+		// 记录一下日志
 		l.Slowf("服务完成已到期 orderNo: %s , appId: %s , eventTime: %d ", signResult.OutAuthOrderNo, signResult.AppId, signResult.EventTime)
+
+		// 修改数据库状态 以后不再发起代扣了
+		updateData := map[string]interface{}{
+			"sign_status": model.Sign_Status_Done,
+			"expire_date": time.Unix(signResult.EventTime/1000, 0).Format("2006-01-02 15:04:05"), // 签约到期时间
+		}
+		err = l.payDyPeriodOrderModel.UpdateSomeData(tbl.ID, updateData)
+		// 记录日志
+		l.Sloww("payDyPeriodOrderModel.UpdateSomeData", logx.Field("id", tbl.ID), logx.Field("updateData", updateData), logx.Field("err", err))
+		if err != nil {
+			return err
+		}
 	} else if signResult.Status == douyin.Dy_Sign_Status_TIME_OUT {
 		// 记录一下日志
 		l.Slowf("签约单超时 orderNo: %s , appId: %s , eventTime: %d ", signResult.OutAuthOrderNo, signResult.AppId, signResult.EventTime)
 	} else if signResult.Status == douyin.Dy_Sign_Status_SUCCESS {
-		// 签约成功 查询记录是否存在
-		tbl, err := l.payDyPeriodOrderModel.GetOneByOrderSnAndAppId(signResult.OutAuthOrderNo, signResult.AppId)
-		if err != nil || tbl == nil || tbl.ID < 1 {
-			l.Errorf("签约成功 查询记录出错 err: %s , orderNo: %s , appId: %s , eventTime: %d ", err.Error(), signResult.OutAuthOrderNo, signResult.AppId, signResult.EventTime)
-			return fmt.Errorf("签约成功 查询记录出错 error: %s", err.Error())
-		}
-
-		if tbl.SignStatus == 1 {
+		// 签约成功
+		if tbl.SignStatus == model.Sign_Status_Success {
 			// 已签约过了
 			return nil
 		}
 
 		// 修改状态为签约成功
 		updateData := map[string]interface{}{
-			"sign_status":         1,
+			"sign_status":         model.Sign_Status_Success,
 			"sign_date":           time.Unix(signResult.EventTime/1000, 0).Format("2006-01-02 15:04:05"),
 			"third_sign_order_no": signResult.AuthOrderId, // 抖音的签约单号
 		}
@@ -596,23 +620,16 @@ func (l *NotifyDouyinLogic) handleSignCallback(msg string) error {
 			return err
 		}
 	} else if signResult.Status == douyin.Dy_Sign_Status_CANCEL {
-		// 解约成功 查询记录是否存在
-		tbl, err := l.payDyPeriodOrderModel.GetOneByOrderSnAndAppId(signResult.OutAuthOrderNo, signResult.AppId)
-		if err != nil || tbl == nil || tbl.ID < 1 {
-			l.Errorf("解约成功 查询记录出错 err: %s , orderNo: %s , appId: %s , eventTime: %d ", err.Error(), signResult.OutAuthOrderNo, signResult.AppId, signResult.EventTime)
-			return fmt.Errorf("解约成功 查询记录出错 error: %s", err.Error())
-		}
-
-		if tbl.SignStatus == 2 {
+		// 解约成功
+		if tbl.SignStatus == model.Sign_Status_Cancel {
 			// 已解约过了
 			return nil
 		}
 
 		// 修改状态为解约成功
 		updateData := map[string]interface{}{
-			"sign_status":           2,
-			"unsign_date":           time.Unix(signResult.EventTime/1000, 0).Format("2006-01-02 15:04:05"),
-			"third_unsign_order_no": signResult.AuthOrderId, // 抖音的签约单号
+			"sign_status": model.Sign_Status_Cancel,
+			"unsign_date": time.Unix(signResult.EventTime/1000, 0).Format("2006-01-02 15:04:05"),
 		}
 		err = l.payDyPeriodOrderModel.UpdateSomeData(tbl.ID, updateData)
 		// 记录日志
