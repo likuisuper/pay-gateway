@@ -170,11 +170,12 @@ func (l *DouyinPeriodOrderLogic) terminateSign(in *pb.DouyinPeriodOrderReq) (*pb
 	}
 
 	if signResult.ErrNo != 0 {
+		// 记录一下日志就可以了
 		l.Errorw("dyClient.QuerySignOrder failed", logx.Field("signResult", signResult))
-		return &resp, nil
 	}
 
-	if signResult.UserSignData.Status != douyin.Dy_Sign_Status_Query_SERVING {
+	// "err_no":20000,"err_msg":"订单不存在"
+	if signResult.ErrNo == 20000 || (len(signResult.UserSignData.Status) > 0 && signResult.UserSignData.Status != douyin.Dy_Sign_Status_Query_SERVING) {
 		// 修改数据库
 		updateData := map[string]interface{}{
 			"sign_status": model.Sign_Status_Cancel,
