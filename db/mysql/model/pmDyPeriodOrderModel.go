@@ -12,30 +12,29 @@ import (
 
 // 抖音周期签约订单表
 type PmDyPeriodOrderTable struct {
-	ID                 int       `gorm:"column:id;primary_key;AUTO_INCREMENT" json:"id"`
-	OrderSn            string    `gorm:"column:order_sn;NOT NULL" json:"order_sn"`                            // 内部 订单唯一标识 (开发者侧代扣单的单号)
-	SignNo             string    `gorm:"column:sign_no;NOT NULL" json:"sign_no"`                              // 内部 签约单号 (开发者侧签约单号)
-	AppPkgName         string    `gorm:"column:app_pkg_name;NOT NULL" json:"app_pkg_name"`                    // 来源包名
-	UserId             int       `gorm:"column:user_id;NOT NULL" json:"user_id"`                              // 内部用户id
-	Amount             int       `gorm:"column:amount;default:0;NOT NULL" json:"amount"`                      // 订单金额（分）
-	NotifyAmount       int       `gorm:"column:notify_amount;default:0;NOT NULL" json:"notify_amount"`        // 回调金额（分）
-	Subject            string    `gorm:"column:subject;NOT NULL" json:"subject"`                              // 订单标题
-	PayType            int       `gorm:"column:pay_type;default:0;NOT NULL" json:"pay_type"`                  // 支付方式  1微信小程序支付 2头条小程序支付
-	NotifyUrl          string    `gorm:"column:notify_url;NOT NULL" json:"notify_url"`                        // 回调通知地址
-	PayStatus          int       `gorm:"column:pay_status;NOT NULL" json:"pay_status"`                        // 支付状态 0未支付 1已支付
-	PayChannel         int       `gorm:"column:pay_channel;NOT NULL" json:"pay_channel"`                      // 支付渠道 扣款成功时才有
-	SignStatus         int       `gorm:"column:sign_status;NOT NULL" json:"sign_status"`                      // 签约状态, 0 待签约 , 1已签约 , 2取消签约 , 3 签约到期(服务已完成)
-	PayAppId           string    `gorm:"column:pay_app_id;NOT NULL" json:"pay_app_id"`                        // 第三方支付的appid
-	ThirdOrderSn       string    `gorm:"column:third_order_sn;NULL" json:"third_order_sn"`                    // 抖音平台返回的渠道支付单号
-	ThirdOrderNo       string    `gorm:"column:third_order_no;NULL" json:"third_order_no"`                    // 抖音平台返回的代扣单的单号
-	ThirdSignOrderNo   string    `gorm:"column:third_sign_order_no;NULL" json:"third_sign_order_no"`          // 抖音平台返回的签约单号
-	ThirdUnsignOrderNo string    `gorm:"column:third_unsign_order_no;NULL" json:"third_unsign_order_no"`      // 抖音平台返回的解约单号
-	Currency           string    `gorm:"column:currency;type:varchar(16);NOT NULL"`                           // 支付币种
-	UserBillPayId      string    `gorm:"column:user_bill_pay_id;NULL" json:"user_bill_pay_id"`                // 用户抖音交易单号（账单号），和用户抖音钱包-账单中所展示的交易单号相同
-	SignDate           time.Time `gorm:"column:sign_date;type:datetime" json:"sign_date"`                     // 签约时间 默认值2000-01-01 00:00:01
-	UnsignDate         time.Time `gorm:"column:unsign_date;type:datetime" json:"unsign_date"`                 // 解约时间 默认值2000-01-01 00:00:01
-	ExpireDate         time.Time `gorm:"column:expire_date;type:datetime" json:"expire_date"`                 // 签约到期时间 默认值2000-01-01 00:00:01
-	NextDecuctionTime  time.Time `gorm:"column:next_decuction_time;type:datetime" json:"next_decuction_time"` // 下次扣款时间 默认值2000-01-01 00:00:01
+	ID                int       `gorm:"column:id;primary_key;AUTO_INCREMENT" json:"id"`
+	OrderSn           string    `gorm:"column:order_sn;NOT NULL" json:"order_sn"`                            // 内部 订单唯一标识 (开发者侧代扣单的单号)
+	SignNo            string    `gorm:"column:sign_no;NOT NULL" json:"sign_no"`                              // 内部 签约单号 (开发者侧签约单号)
+	AppPkgName        string    `gorm:"column:app_pkg_name;NOT NULL" json:"app_pkg_name"`                    // 来源包名
+	UserId            int       `gorm:"column:user_id;NOT NULL" json:"user_id"`                              // 内部用户id
+	Amount            int       `gorm:"column:amount;default:0;NOT NULL" json:"amount"`                      // 订单金额（分）
+	NotifyAmount      int       `gorm:"column:notify_amount;default:0;NOT NULL" json:"notify_amount"`        // 回调金额（分）
+	Subject           string    `gorm:"column:subject;NOT NULL" json:"subject"`                              // 订单标题
+	PayType           int       `gorm:"column:pay_type;default:0;NOT NULL" json:"pay_type"`                  // 支付方式  1微信小程序支付 2头条小程序支付
+	NotifyUrl         string    `gorm:"column:notify_url;NOT NULL" json:"notify_url"`                        // 回调通知地址
+	PayStatus         int       `gorm:"column:pay_status;NOT NULL" json:"pay_status"`                        // 支付状态 0未支付 1已支付
+	PayChannel        int       `gorm:"column:pay_channel;NOT NULL" json:"pay_channel"`                      // 支付渠道 扣款成功时才有
+	SignStatus        int       `gorm:"column:sign_status;NOT NULL" json:"sign_status"`                      // 签约状态, 0 待签约 , 1已签约 , 2取消签约 , 3 签约到期(服务已完成)
+	PayAppId          string    `gorm:"column:pay_app_id;NOT NULL" json:"pay_app_id"`                        // 第三方支付的appid
+	ThirdOrderSn      string    `gorm:"column:third_order_sn;NULL" json:"third_order_sn"`                    // 抖音平台返回的渠道支付单号
+	ThirdOrderNo      string    `gorm:"column:third_order_no;NULL" json:"third_order_no"`                    // 抖音平台返回的代扣单的单号
+	ThirdSignOrderNo  string    `gorm:"column:third_sign_order_no;NULL" json:"third_sign_order_no"`          // 抖音平台返回的签约单号
+	Currency          string    `gorm:"column:currency;type:varchar(16);NOT NULL"`                           // 支付币种
+	UserBillPayId     string    `gorm:"column:user_bill_pay_id;NULL" json:"user_bill_pay_id"`                // 用户抖音交易单号（账单号），和用户抖音钱包-账单中所展示的交易单号相同
+	SignDate          time.Time `gorm:"column:sign_date;type:datetime" json:"sign_date"`                     // 签约时间 默认值2000-01-01 00:00:01
+	UnsignDate        time.Time `gorm:"column:unsign_date;type:datetime" json:"unsign_date"`                 // 解约时间 默认值2000-01-01 00:00:01
+	ExpireDate        time.Time `gorm:"column:expire_date;type:datetime" json:"expire_date"`                 // 签约到期时间 默认值2000-01-01 00:00:01
+	NextDecuctionTime time.Time `gorm:"column:next_decuction_time;type:datetime" json:"next_decuction_time"` // 下次扣款时间 默认值2000-01-01 00:00:01
 	// CreatedAt    time.Time `gorm:"column:created_at;type:datetime" json:"created_at"`
 	// UpdatedAt    time.Time `gorm:"column:updated_at;type:datetime" json:"updated_at"`
 }
