@@ -149,13 +149,6 @@ func (l *DouyinPeriodOrderLogic) terminateSign(in *pb.DouyinPeriodOrderReq) (*pb
 		return &resp, nil
 	}
 
-	periodModel, err := l.payDyPeriodOrderModel.GetSignedByUserIdAndPkg(int(in.GetUserId()), in.GetPkg(), model.Sign_Status_Wait)
-	if err != nil && periodModel == nil || periodModel.ID < 1 {
-		// 查询失败
-		l.Errorf("querySignOrder failed: %v, userId: %d, pkg: %s ", err, in.GetUserId(), in.GetPkg())
-		return &resp, nil
-	}
-
 	clientToken, err := l.svcCtx.BaseAppConfigServerApi.GetDyClientToken(l.ctx, periodModel.PayAppId)
 	if err != nil || clientToken == "" {
 		l.Errorw("get douyin client token fail", logx.Field("err", err), logx.Field("appId", periodModel.PayAppId))
