@@ -186,7 +186,7 @@ func (l *DouyinPeriodOrderLogic) terminateSign(in *pb.DouyinPeriodOrderReq) (*pb
 	// 修改数据库
 	updateData := map[string]interface{}{
 		"sign_status": model.Sign_Status_Cancel,
-		"unsign_date": time.Now().Format("2006-01-02 15:04:05")
+		"unsign_date": time.Now().Format("2006-01-02 15:04:05"),
 	}
 	err = l.payDyPeriodOrderModel.UpdateSomeData(periodModel.ID, updateData)
 	// 记录日志
