@@ -175,6 +175,16 @@ func (l *DouyinPeriodOrderLogic) terminateSign(in *pb.DouyinPeriodOrderReq) (*pb
 	}
 
 	if signResult.UserSignData.Status != douyin.Dy_Sign_Status_Query_SERVING {
+		// 修改数据库
+		updateData := map[string]interface{}{
+			"sign_status": model.Sign_Status_Cancel,
+			"unsign_date": time.Now().Format("2006-01-02 15:04:05"),
+		}
+		err = l.payDyPeriodOrderModel.UpdateSomeData(periodModel.ID, updateData)
+
+		// 记录日志
+		l.Sloww("payDyPeriodOrderModel.UpdateSomeData", logx.Field("id", periodModel.ID), logx.Field("updateData", updateData), logx.Field("err", err))
+
 		resp.IsUnsignSuccess = true
 		resp.Msg = "解约成功"
 		return &resp, nil
