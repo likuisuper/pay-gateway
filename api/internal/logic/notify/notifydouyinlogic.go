@@ -106,7 +106,7 @@ func (l *NotifyDouyinLogic) NotifyDouyin(req *http.Request) (resp *types.DouyinR
 		return l.notifyPreCreateRefund(req, body, data.Msg, data)
 	case douyin.EventSignCallback:
 		// 抖音周期代扣签约回调
-		err = l.handleSignCallback(data.Msg)
+		err = l.handleSignCallback(data.Msg, data)
 		if err == nil {
 			resp := &types.DouyinResp{
 				ErrNo:   0,
@@ -419,7 +419,7 @@ func (l *NotifyDouyinLogic) notifyPreCreateRefund(req *http.Request, body []byte
 
 // 抖音周期代扣结果回调通知
 // https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/server/payment/management-capacity/periodic-deduction/pay/sign-pay-callback
-func (l *NotifyDouyinLogic) handleSignPayCallback(msg string, originData interface{}) error {
+func (l *NotifyDouyinLogic) handleSignPayCallback(msg string, originData *douyin.GeneralTradeCallbackData) error {
 	//扣款成功回调示例
 	// {
 	//     "app_id": "tt312312313123",
@@ -529,7 +529,7 @@ func (l *NotifyDouyinLogic) handleSignPayCallback(msg string, originData interfa
 
 // 抖音周期代扣签约回调处理
 // https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/server/payment/management-capacity/periodic-deduction/sign/sign-callback
-func (l *NotifyDouyinLogic) handleSignCallback(msg string) error {
+func (l *NotifyDouyinLogic) handleSignCallback(msg string, originData *douyin.GeneralTradeCallbackData) error {
 	// msg 字段内容示例
 	//签约成功回调示例
 	// {
@@ -581,6 +581,19 @@ func (l *NotifyDouyinLogic) handleSignCallback(msg string) error {
 		l.Errorf("查询记录出错 err: %s , orderNo: %s , appId: %s , eventTime: %d ", err.Error(), signResult.OutAuthOrderNo, signResult.AppId, signResult.EventTime)
 		return fmt.Errorf("查询记录出错 error: %s", err.Error())
 	}
+
+	// 回调
+	go util.SafeRun(func() {
+		headMap := map[string]string{
+			"App-Origin": tbl.AppPkgName,
+		}
+		respData, requestErr := util.HttpPostWithHeader(tbl.NotifyUrl, originData, headMap, 5*time.Second)
+		if requestErr != nil {
+			l.Errorf("handleSignCallback failed req: %+v, err: %v", originData, requestErr)
+		} else {
+			l.Slowf("handleSignCallback success req: %+v, err: %v, respData: %v", originData, requestErr, respData)
+		}
+	})
 
 	if signResult.Status == douyin.Dy_Sign_Status_DONE {
 		// 记录一下日志
