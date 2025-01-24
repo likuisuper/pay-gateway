@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"time"
 
 	douyin "gitee.com/zhuyunkj/pay-gateway/common/client/douyinGeneralTrade"
@@ -588,11 +589,11 @@ func (l *NotifyDouyinLogic) handleSignCallback(msg string, originData *douyin.Ge
 			"App-Origin": tbl.AppPkgName,
 		}
 
-		tmpData := map[string]interface{}{
+		tmpData := map[string]string{
 			"app_id":  signResult.AppId,
 			"app_pkg": tbl.AppPkgName,
 			"status":  signResult.Status,
-			"userId":  tbl.UserId,
+			"userId":  strconv.Itoa(tbl.UserId),
 		}
 		msgByte, _ := json.Marshal(tmpData)
 
