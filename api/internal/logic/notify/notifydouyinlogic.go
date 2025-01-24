@@ -587,11 +587,18 @@ func (l *NotifyDouyinLogic) handleSignCallback(msg string, originData *douyin.Ge
 		headMap := map[string]string{
 			"App-Origin": tbl.AppPkgName,
 		}
-		respData, requestErr := util.HttpPostWithHeader(tbl.NotifyUrl, originData, headMap, 5*time.Second)
+
+		postData := map[string]interface{}{
+			"app_id":  signResult.AppId,
+			"app_pkg": tbl.AppPkgName,
+			"status":  signResult.Status,
+			"userId":  tbl.UserId,
+		}
+		respData, requestErr := util.HttpPostWithHeader(tbl.NotifyUrl, postData, headMap, 5*time.Second)
 		if requestErr != nil {
-			l.Errorf("handleSignCallback failed req: %+v, err: %v", originData, requestErr)
+			l.Errorf("handleSignCallback failed req: %+v, err: %v", postData, requestErr)
 		} else {
-			l.Slowf("handleSignCallback success req: %+v, err: %v, respData: %v", originData, requestErr, respData)
+			l.Slowf("handleSignCallback success req: %+v, err: %v, respData: %v", postData, requestErr, respData)
 		}
 	})
 
