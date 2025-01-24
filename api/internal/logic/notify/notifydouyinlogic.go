@@ -588,11 +588,18 @@ func (l *NotifyDouyinLogic) handleSignCallback(msg string, originData *douyin.Ge
 			"App-Origin": tbl.AppPkgName,
 		}
 
-		postData := map[string]interface{}{
+		tmpData := map[string]interface{}{
 			"app_id":  signResult.AppId,
 			"app_pkg": tbl.AppPkgName,
 			"status":  signResult.Status,
 			"userId":  tbl.UserId,
+		}
+		msgByte, _ := json.Marshal(tmpData)
+
+		// 回调数据
+		postData := map[string]interface{}{
+			"type": douyin.EventSignCallback,
+			"msg":  string(msgByte),
 		}
 		respData, requestErr := util.HttpPostWithHeader(tbl.NotifyUrl, postData, headMap, 5*time.Second)
 		if requestErr != nil {
