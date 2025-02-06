@@ -133,6 +133,7 @@ func (l *NotifyKspayLogic) NotifyKspay(r *http.Request, w http.ResponseWriter) (
 	//修改数据库
 	orderInfo.NotifyAmount = notifyData.Data.OrderAmount
 	orderInfo.PayStatus = model.PmPayOrderTablePayStatusPaid
+	orderInfo.ThirdOrderNo = notifyData.Data.KsOrderNo
 	//orderInfo.PayType = model.PmPayOrderTablePayTypeKs //改为创建订单时指定支付类型，用于补偿机制建设
 	err = l.payOrderModel.UpdateNotify(orderInfo)
 	if err != nil {
