@@ -590,11 +590,11 @@ func (l *WeChatCommPay) GetOrderStatus(codeCode string) (orderInfo *payments.Tra
 
 	if err != nil {
 		weChatHttpRequestErr.CounterInc()
-		logx.Errorf("请求微信查询订单发生错误 err =%v", err)
+		logx.Errorf("GetWechatOrderStatus 发生错误 err =%v", err)
 		return nil, err
 	}
 
-	logx.Slowf("请求微信支付成功 resp = %v,result=%v", resp, result)
+	logx.Slowf("GetWechatOrderStatus resp = %v, result = %v, OutTradeNo = %s", resp, result, codeCode)
 	return resp, nil
 }
 

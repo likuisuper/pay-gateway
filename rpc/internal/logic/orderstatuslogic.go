@@ -66,11 +66,12 @@ func (l *OrderStatusLogic) OrderStatus(in *pb.OrderStatusReq) (resp *pb.OrderSta
 			return
 		}
 		transaction, err := l.wxOrderStatus(in, payCfg.TransClientConfig())
-		if err != nil {
+		if err != nil || transaction == nil {
 			err = fmt.Errorf("查询微信订单失败, orderSn=%s, err=%v", in.OrderSn, err)
 			util.CheckError(err.Error())
 			return nil, err
 		}
+
 		jsonStr, _ := jsoniter.MarshalToString(transaction)
 		resp.ThirdRespJson = jsonStr
 		if *transaction.TradeState == "SUCCESS" {
