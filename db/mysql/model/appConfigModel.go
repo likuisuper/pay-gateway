@@ -1,6 +1,7 @@
 package model
 
 import (
+	"context"
 	"time"
 
 	"gitee.com/zhuyunkj/pay-gateway/db"
@@ -42,13 +43,25 @@ func NewPmAppConfigModel(dbName string) *PmAppConfigModel {
 }
 
 // 获取应用配置信息
+const pm_app_config_cache_key = "pm:app:config:cache:%s" // %s是包名
 func (o *PmAppConfigModel) GetOneByPkgName(pkgName string) (appConfig *PmAppConfigTable, err error) {
 	var cfg PmAppConfigTable
+
+	rkey := o.RDB.GetRedisKey(pm_app_config_cache_key, pkgName)
+	err = o.RDB.GetObject(context.Background(), rkey, &cfg)
+	if err == nil && cfg.ID > 0 {
+		return &cfg, nil
+	}
+
 	err = o.DB.Where(" `app_pkg_name` = ?", pkgName).First(&cfg).Error
 	if err != nil {
 		logx.Errorf("获取app配置信息失败，err:=%v,pkg=%s", err, pkgName)
 		getPayOrderErr.CounterInc()
 		return nil, err
 	}
+
+	// 设置缓存时间为3分钟
+	o.RDB.Set(context.Background(), rkey, cfg, 180)
+
 	return &cfg, nil
 }
