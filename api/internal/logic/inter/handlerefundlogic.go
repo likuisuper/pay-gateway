@@ -74,7 +74,7 @@ func (l *HandleRefundLogic) HandleRefund(req *types.RefundReq) (resp *types.Resu
 
 		result, err := payClient.TradeRefund(tradeRefund)
 		if err != nil {
-			logx.Errorf(err.Error())
+			logx.Error(err.Error())
 			res := response.MakeResult(code.CODE_ERROR, "退款异常", nil)
 			return &res, nil
 		}

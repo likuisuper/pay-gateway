@@ -573,6 +573,8 @@ func (l *WeChatCommPay) WechatPayV3(info *PayOrder, openId string) (uniAppResp *
 }
 
 // 查询支付状态
+//
+// 微信查询订单接口文档: https://pay.weixin.qq.com/doc/v3/merchant/4013070356
 func (l *WeChatCommPay) GetOrderStatus(codeCode string) (orderInfo *payments.Transaction, err error) {
 	client, err := l.getClient()
 	if err != nil {

@@ -74,6 +74,17 @@ func (l *OrderStatusLogic) OrderStatus(in *pb.OrderStatusReq) (resp *pb.OrderSta
 
 		jsonStr, _ := jsoniter.MarshalToString(transaction)
 		resp.ThirdRespJson = jsonStr
+
+		// https://pay.weixin.qq.com/doc/v3/merchant/4013070356
+		// trade_state 【交易状态】
+		// 交易状态，详细业务流转状态处理请参考开发指引-订单状态流转图。枚举值：
+		// SUCCESS：支付成功
+		// REFUND：转入退款
+		// NOTPAY：未支付
+		// CLOSED：已关闭
+		// REVOKED：已撤销（仅付款码支付会返回）
+		// USERPAYING：用户支付中（仅付款码支付会返回）
+		// PAYERROR：支付失败（仅付款码支付会返回）
 		if *transaction.TradeState == "SUCCESS" {
 			resp.Status = 1
 			resp.PayAmount = *transaction.Amount.PayerTotal
