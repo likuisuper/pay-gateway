@@ -35,6 +35,7 @@ type PmDyPeriodOrderTable struct {
 	UnsignDate        time.Time `gorm:"column:unsign_date;type:datetime" json:"unsign_date"`                 // 解约时间 默认值2000-01-01 00:00:01
 	ExpireDate        time.Time `gorm:"column:expire_date;type:datetime" json:"expire_date"`                 // 签约到期时间 默认值2000-01-01 00:00:01
 	NextDecuctionTime time.Time `gorm:"column:next_decuction_time;type:datetime" json:"next_decuction_time"` // 下次扣款时间 默认值2000-01-01 00:00:01
+	DyProductId       string    `gorm:"column:dy_product_id;NOT NULL" json:"dy_product_id"`                  // 抖音商品id
 	// CreatedAt    time.Time `gorm:"column:created_at;type:datetime" json:"created_at"`
 	// UpdatedAt    time.Time `gorm:"column:updated_at;type:datetime" json:"updated_at"`
 }

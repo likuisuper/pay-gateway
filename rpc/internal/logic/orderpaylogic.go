@@ -111,6 +111,7 @@ func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (out *pb.OrderPayResp, err 
 			UnsignDate:        model.Default2000Date,
 			ExpireDate:        model.Default2000Date,
 			NextDecuctionTime: model.Default2000Date,
+			DyProductId:       in.DouyinGeneralTradeReq.GetSkuId(), // 抖音商品id
 		}
 		// 数据库有唯一约束 如果重复 创建的时候会报错
 		err = l.payDyPeriodOrderModel.Create(orderInfo)
