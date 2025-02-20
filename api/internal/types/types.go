@@ -77,6 +77,16 @@ type WechatRefundReq struct {
 	Resource     Resource `json:"resource"`
 }
 
+type WechatMiniRefundReq struct {
+	OutRefundNo  string   `path:"OutRefundNo,optional"`
+	EventType    string   `json:"event_type"`
+	Id           string   `json:"id"`
+	CreateTime   string   `json:"create_time"`
+	ResourceType string   `json:"resource_type"`
+	Summary      string   `json:"summary"`
+	Resource     Resource `json:"resource"`
+}
+
 type WechatNotifyH5Req struct {
 	AppID        string   `path:"AppID,optional"` // 微信支付appid
 	Id           string   `json:"id"`             // 通知的唯一ID

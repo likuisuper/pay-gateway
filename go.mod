@@ -20,4 +20,5 @@ require (
 	google.golang.org/grpc v1.50.1
 	google.golang.org/protobuf v1.28.1
 	gorm.io/gorm v1.23.6
+	k8s.io/apimachinery v0.22.9
 )

@@ -367,6 +367,94 @@ message DouyinPeriodOrderResp {
   string Msg = 7;  // 描述信息
 }
 
+// 微信退款申请
+message WechatMiniRefundReq {
+  string appPkgName = 1;      // 应用包名
+  string outOrderNo = 2;      // 商户支付订单号
+  string outRefundNo = 3;     // 商户退款订单号
+  int64 refundAmount = 4;     // 退款金额 分
+  string refundReason = 5;    // 退款原因
+  string refundNotifyUrl = 6; // 退款回调地址
+  int64 totalAmount = 7;      // 所在订单的总金额 分
+  string orderSn = 8;         // orderCode订单号，所在订单唯一标识
+}
+
+message WechatMiniRefundResp {
+  // refundId【微信支付退款单号】申请退款受理成功时，该笔退款单在微信支付侧生成的唯一标识。
+  string refundId = 1;
+}
+
+// 微信退款单详情
+message WechatMiniRefundQueryReq {
+  string appPkgName = 1;  // 应用包名
+  string outRefundNo = 2; // 商户退款订单号
+}
+
+message WechatMiniRefundQueryResp {
+  // refundId【微信支付退款单号】申请退款受理成功时，该笔退款单在微信支付侧生成的唯一标识。
+  string refundId = 1;
+  string outRefundNo = 2; // 商户退款订单号
+  // successTime
+  // 退款成功的时间，该字段在退款状态status为SUCCESS（退款成功）时返回。示例：2015-05-20T13:29:35+08:00
+  string successTime = 3;
+  // createTime 提交退款申请成功，微信受理退款申请单的时间。格式如 successTime
+  string createTime = 4;
+
+  // status 【退款状态】退款单的退款处理状态,SUCCESS: 退款成功,CLOSED:
+  //  退款关闭,PROCESSING: 退款处理中,ABNORMAL: 退款异常，
+  string status = 5;
+}
+
+// 微信退款申请-虚拟支付退款
+message WechatMiniXPayRefundReq {
+  string appPkgName = 1;      // 应用包名
+  string outOrderNo = 2;      // 商户支付订单号
+  string outRefundNo = 3;     // 商户退款订单号
+  int64 refundAmount = 4;     // 退款金额 分
+  string refundReason = 5;    // 退款原因
+  string refundNotifyUrl = 6; // 退款回调地址
+  int64 totalAmount = 7;      // 所在订单的总金额 分
+  string orderSn = 8;         // orderCode订单号，所在订单唯一标识
+  string OpenId = 9;     // 下单时的微信用户openid
+  string SessionKey = 10;     // 微信平台返回的session_key
+}
+
+
+message WechatMiniXPayRefundResp {
+  string refundId = 1; // 退款单的微信侧单号
+}
+
+// 微信-虚拟支付-查询创建的订单（现金单，非代币单）/退款单
+message WechatMiniXPayQueryOrderReq {
+  string appPkgName = 1; // 应用包名
+  string outOrderNo = 2; // 商户支付订单号
+  string wxOrderId = 3;  // 微信内部单号(与order_id二选一)
+  string OpenId = 4;     // 下单时的微信用户openid
+  string SessionKey = 5;     // 微信平台返回的session_key
+}
+message WechatMiniXPayQueryOrderResp {
+  string outOrderNo = 1; // 商户支付订单号
+  string wxOrderId = 2;  // 微信内部单号(与order_id二选一)
+  int64 createTime = 3;  // 微信内部单号(与order_id二选一)
+  int64 updateTime = 4;  // 微信内部单号(与order_id二选一)
+  // status
+  //  当前状态 0-订单初始化（未创建成功，不可用于支付）1-订单创建成功
+  //  2-订单已经支付，待发货 3-订单发货中 4-订单已发货 5-订单已经退款
+  //  6-订单已经关闭（不可再使用） 7-订单退款失败 8-用户退款完成
+  //  9-回收广告金完成 10-分账回退完成
+  int64 status = 5;
+  int64 bizType = 6;
+  int64 orderFee = 7;   // 订单金额，单位分
+  int64 couponFee = 8;  // 订单优惠金额，单位分(暂无此字段)
+  int64 paidFee = 9;    // 用户支付金额
+  int64 orderType = 10; // 订单类型0-支付单 1-退款单
+  int64 refundFee = 11; // 当类型为退款单时表示退款金额，单位分
+  int64 paidTime = 12;  // 支付/退款时间，unix秒级时间戳
+  int64 leftFee = 13;   // 支付单类型时表示此单经过退款还剩余的金额，单位分
+  // wxPayOrderId 微信支付交易单号，为用户微信支付详情页面上的交易单号
+  string wxPayOrderId = 14;
+}
+
 //============== service ==============================================================================
 
 service Payment {
@@ -431,5 +519,17 @@ service Payment {
 
   // 抖音周期代扣相关查询和修改(包括解约)
   rpc DouyinPeriodOrder(DouyinPeriodOrderReq) returns (DouyinPeriodOrderResp);
+
+  // 小程序-微信的退款申请
+  rpc WechatMiniRefund(WechatMiniRefundReq) returns (WechatMiniRefundResp);
+
+  // 小程序-微信的退款单详情
+  rpc WechatMiniRefundQuery(WechatMiniRefundQueryReq) returns (WechatMiniRefundQueryResp);
+
+  // 微信虚拟支付-退款申请
+  rpc WechatMiniXPayRefund(WechatMiniXPayRefundReq) returns (WechatMiniXPayRefundResp);
+
+  // 微信虚拟支付-退款/订单详情
+  rpc WechatMiniXPayQueryOrder(WechatMiniXPayQueryOrderReq) returns (WechatMiniXPayQueryOrderResp);
 
 }

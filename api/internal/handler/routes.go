@@ -67,6 +67,12 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 				Handler: notify.NotifyWechatRefundOrderHandler(serverCtx),
 			},
 			{
+				// 小程序业务-微信商户退款回调通知
+				Method:  http.MethodPost,
+				Path:    "/notify/refund/wechatMini/:OutRefundNo",
+				Handler: notify.NotifyRefundWechatMiniHandler(serverCtx),
+			},
+			{
 				Method:  http.MethodPost,
 				Path:    "/notify/h5/wechat/:AppID",
 				Handler: notify.NotifyWechatH5OrderHandler(serverCtx),

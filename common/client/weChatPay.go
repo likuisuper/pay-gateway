@@ -793,3 +793,68 @@ func (l *WeChatCommPay) RefundOrder(refundOrder *RefundOrder) (*refunddomestic.R
 
 	return resp, nil
 }
+
+// MiniRefundOrder 小程序的商家退款-订单退款
+func (l *WeChatCommPay) MiniRefundOrder(refundOrder *MiniRefundOrder) (*refunddomestic.Refund, error) {
+	client, err := l.getClient()
+	notifyPath := "/notify/refund/wechatMini"
+	if err != nil {
+		weChatRefundOrderErr.CounterInc()
+		logx.Errorf("退款发生错误,err =%v", err)
+		return nil, err
+	}
+
+	params, _ := url.Parse(l.Config.NotifyUrl)
+	notifyUri := fmt.Sprintf("%s://%s%s/%s",
+		params.Scheme,
+		params.Host,
+		notifyPath,
+		refundOrder.OutRefundNo, //使用退款单号作为回调，一笔订单支持多条退款
+	)
+
+	svc := refunddomestic.RefundsApiService{Client: client}
+	resp, result, err := svc.Create(l.Ctx,
+		refunddomestic.CreateRequest{
+			OutTradeNo:   core.String(refundOrder.OutTradeNo),
+			OutRefundNo:  core.String(refundOrder.OutRefundNo),
+			Reason:       core.String(refundOrder.Reason),
+			NotifyUrl:    core.String(notifyUri),
+			FundsAccount: refunddomestic.REQFUNDSACCOUNT_AVAILABLE.Ptr(),
+			Amount: &refunddomestic.AmountReq{
+				Currency: core.String("CNY"),
+				Refund:   core.Int64(refundOrder.RefundFee),
+				Total:    core.Int64(refundOrder.TotalFee),
+			},
+		},
+	)
+
+	if err != nil {
+		// 处理错误
+		weChatRefundOrderErr.CounterInc()
+		logx.Errorf("退款 call Create err:%s", err)
+		return nil, err
+	} else {
+		// 处理返回结果
+		logx.Infof("退款 status=%d resp=%s", result.Response.StatusCode, resp)
+	}
+
+	return resp, nil
+}
+
+func (l *WeChatCommPay) MiniRefundOrderQuery(orderQuery *MiniRefundOrderQuery) (*refunddomestic.Refund, error) {
+	client, err := l.getClient()
+	if err != nil {
+		logx.Errorf("MiniRefundOrderQuery 退款单查询初始化失败,err =%v", err)
+		return nil, err
+	}
+	svc := refunddomestic.RefundsApiService{Client: client}
+	resp, _, err := svc.QueryByOutRefundNo(l.Ctx, refunddomestic.QueryByOutRefundNoRequest{
+		OutRefundNo: &orderQuery.OutRefundNo,
+	})
+	if err != nil {
+		logx.Errorf("MiniRefundOrderQuery err:%s", err)
+		return nil, err
+	}
+
+	return resp, nil
+}
