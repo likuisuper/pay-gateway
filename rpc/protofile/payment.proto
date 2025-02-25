@@ -349,12 +349,22 @@ message UnsubscribeHuaweiResp {
 enum DouyinPeriodOrderReqAction {
   DyPeriodActionQuery = 0; // 查询
   DyPeriodActionCancel = 1; // 解约
+  DyPeriodActionGetPayList = 2; // 获取今日可以扣款的签约订单信息
 }
 
 message DouyinPeriodOrderReq {
   DouyinPeriodOrderReqAction Action = 1; // 动作
   string Pkg = 2;  // 客户端包名
   int64 UserId = 3; // 用户id
+}
+
+// 抖音已签约周期扣款信息
+message DySignedOrderInfo {
+  string OrderSn = 1; // 内部 订单唯一标识 (开发者侧代扣单的单号)
+  string AppPkg = 2; // 来源包名
+  int64 UserId = 3; // 用户id
+  string NextDecuctionTime = 4; // 下次扣款时间
+  string DySignNo = 5; // 抖音平台返回的签约单号
 }
 
 message DouyinPeriodOrderResp {
@@ -365,6 +375,7 @@ message DouyinPeriodOrderResp {
   string ExpireDate = 5;  // 已签约到期时间 年-月-日 时:分:秒
   string NextDecuctionTime = 6;  // 下次扣款时间 年-月-日 时:分:秒
   string Msg = 7;  // 描述信息
+  repeated DySignedOrderInfo SignedList = 8;  // 抖音已签约周期扣款列表信息
 }
 
 // 微信退款申请

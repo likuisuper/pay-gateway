@@ -39,7 +39,7 @@ func (l *DouyinPeriodOrderLogic) DouyinPeriodOrder(in *pb.DouyinPeriodOrderReq) 
 	l.Sloww("DouyinPeriodOrder", logx.Field("in", in), logx.Field("action", in.GetAction()))
 
 	if in.GetAction() == pb.DouyinPeriodOrderReqAction_DyPeriodActionQuery {
-		// 查询签约情况
+		// 查询单个签约情况
 		return l.querySignOrder(in)
 	}
 
@@ -48,11 +48,39 @@ func (l *DouyinPeriodOrderLogic) DouyinPeriodOrder(in *pb.DouyinPeriodOrderReq) 
 		return l.terminateSign(in)
 	}
 
+	if in.GetAction() == pb.DouyinPeriodOrderReqAction_DyPeriodActionGetPayList {
+		// 获取今日可以扣款的签约订单信息
+		return l.getSignedPayList(in)
+	}
+
 	resp := pb.DouyinPeriodOrderResp{
 		UserId: in.GetUserId(),
 		IsSign: 0,
 		Msg:    "不支持的操作类型",
 	}
+	return &resp, nil
+}
+
+// 获取今日可以扣款的签约订单信息
+func (l *DouyinPeriodOrderLogic) getSignedPayList(in *pb.DouyinPeriodOrderReq) (*pb.DouyinPeriodOrderResp, error) {
+	resp := pb.DouyinPeriodOrderResp{}
+
+	list, err := model.NewPmDyPeriodOrderModel(define.DbPayGateway).GetSignedPayList()
+	if err != nil {
+		l.Errorf("getSignedPayList failed: %v", err)
+		return &resp, nil
+	}
+
+	for _, v := range list {
+		resp.SignedList = append(resp.SignedList, &pb.DySignedOrderInfo{
+			OrderSn:           v.OrderSn,
+			AppPkg:            v.AppPkgName,
+			UserId:            int64(v.UserId),
+			NextDecuctionTime: v.NextDecuctionTime.Format("2006-01-02 15:04:05"),
+			DySignNo:          v.ThirdSignOrderNo,
+		})
+	}
+
 	return &resp, nil
 }
 

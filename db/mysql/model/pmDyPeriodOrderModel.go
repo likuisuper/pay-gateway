@@ -150,3 +150,13 @@ func (o *PmDyPeriodOrderModel) UpdateSomeData(id int, updateData map[string]inte
 
 	return err
 }
+
+// 获取今日可以扣款的签约订单信息
+func (o *PmDyPeriodOrderModel) GetSignedPayList() ([]PmDyPeriodOrderTable, error) {
+	var info []PmDyPeriodOrderTable
+	startAt := time.Now().Format("2006-01-02")
+	endAt := time.Now().AddDate(0, 0, 1).Format("2006-01-02")
+
+	err := o.DB.Table(PmDyPeriodOrderTableName).Where("`sign_status` = 1 and `next_decuction_time` >= ? and `next_decuction_time` < ?", startAt, endAt).Find(&info).Error
+	return info, err
+}

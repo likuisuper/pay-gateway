@@ -38,6 +38,7 @@ type (
 	DouyinPeriodOrderResp         = pb.DouyinPeriodOrderResp
 	DyOrderRefundReq              = pb.DyOrderRefundReq
 	DyOrderRefundResp             = pb.DyOrderRefundResp
+	DySignedOrderInfo             = pb.DySignedOrderInfo
 	Empty                         = pb.Empty
 	KsUniAppReply                 = pb.KsUniAppReply
 	OrderPayReq                   = pb.OrderPayReq
