@@ -22,6 +22,9 @@ message OrderPayReq {
   string InnerUserOpen = 14; // 下单用户open id
   int64 FirstDeductionAmount = 15; // 首期或者最近几期优惠扣款金额
   string MerchantUid = 16; // 开发者自定义收款商户号，限定在在小程序绑定的商户号内
+  bool IsBaseExistSignedOrder = 17; // 是否基于已有的签约订单生成代扣单
+  string ExistSignedOrderNo = 18; // 已有的签约订单号
+  int32 NthNum = 19; // 第几期代扣单
 }
 
 // 币种枚举

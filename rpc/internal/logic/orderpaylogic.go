@@ -13,6 +13,7 @@ import (
 	douyin "gitee.com/zhuyunkj/pay-gateway/common/client/douyinGeneralTrade"
 	"gitee.com/zhuyunkj/pay-gateway/common/code"
 	"gitee.com/zhuyunkj/pay-gateway/common/define"
+	"gitee.com/zhuyunkj/pay-gateway/common/utils"
 	"gitee.com/zhuyunkj/pay-gateway/db/mysql/model"
 	"gitee.com/zhuyunkj/pay-gateway/rpc/internal/svc"
 	"gitee.com/zhuyunkj/pay-gateway/rpc/pb/pb"
@@ -63,6 +64,11 @@ func NewOrderPayLogic(ctx context.Context, svcCtx *svc.ServiceContext) *OrderPay
 
 // OrderPay 创建支付订单
 func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (out *pb.OrderPayResp, err error) {
+	if in.GetIsBaseExistSignedOrder() {
+		// 基于已存在周期代扣签约订单创建代扣单
+		return l.createOrderBaseSignedOrder(in)
+	}
+
 	//读取应用配置
 	pkgCfg, err := l.appConfigModel.GetOneByPkgName(in.AppPkgName)
 	if err != nil {
@@ -277,6 +283,61 @@ func (l *OrderPayLogic) OrderPay(in *pb.OrderPayReq) (out *pb.OrderPayResp, err 
 	}
 
 	return
+}
+
+// 基于已存在周期代扣签约订单创建代扣单
+func (l *OrderPayLogic) createOrderBaseSignedOrder(in *pb.OrderPayReq) (*pb.OrderPayResp, error) {
+	l.Sloww("createOrderBaseSignedOrder", logx.Field("params", in))
+
+	out := new(pb.OrderPayResp)
+	orderNo := in.GetExistSignedOrderNo()
+	if orderNo == "" {
+		return out, errors.New("参数ExistSignedOrderNo为空")
+	}
+
+	tbl, err := l.payDyPeriodOrderModel.GetOneByOrderSnAndPkg(orderNo, in.GetAppPkgName())
+	if err != nil || tbl == nil {
+		return out, errors.New("GetOneByOrderSnAndPkg失败: " + err.Error())
+	}
+
+	if tbl.UserId != int(in.GetInnerUserId()) {
+		return out, errors.New("用户ID不匹配")
+	}
+
+	newAmount := int(in.GetAmount())
+	newOrderSn := utils.GenerateOrderCode(l.svcCtx.Config.SnowFlake.MachineNo, l.svcCtx.Config.SnowFlake.WorkerNo)
+
+	orderInfo := &model.PmDyPeriodOrderTable{
+		OrderSn:           newOrderSn,                        // 内部 订单唯一标识
+		SignNo:            newOrderSn + dy_sign_order_suffix, // 内部 签约单号
+		UserId:            tbl.UserId,
+		AppPkgName:        tbl.AppPkgName,
+		Amount:            newAmount,
+		Subject:           "签约代扣单",
+		NotifyUrl:         tbl.NotifyUrl,
+		PayAppId:          tbl.PayAppId,
+		PayType:           tbl.PayType,
+		PayStatus:         model.PmPayOrderTablePayStatusNo,
+		Currency:          tbl.Currency,
+		SignDate:          tbl.SignDate, // 默认时间
+		UnsignDate:        tbl.UnsignDate,
+		ExpireDate:        tbl.ExpireDate,
+		NextDecuctionTime: tbl.NextDecuctionTime.AddDate(0, 1, 0),
+		DyProductId:       tbl.DyProductId,     // 抖音商品id
+		NthNum:            int(in.GetNthNum()), // 第几期代扣单
+	}
+
+	// 数据库有唯一约束 如果重复 创建的时候会报错
+	err = l.payDyPeriodOrderModel.Create(orderInfo)
+	if err != nil {
+		err = fmt.Errorf("创建周期签约订单失败 %w", err)
+		l.Errorf("payDyPeriodOrderModel.Create failed", logx.Field("err", err), logx.Field("orderInfo", orderInfo))
+		return out, err
+	}
+
+	out.OrderSn = newOrderSn
+
+	return out, nil
 }
 
 // 支付宝wap支付

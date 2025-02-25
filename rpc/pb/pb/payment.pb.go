@@ -298,22 +298,25 @@ type OrderPayReq struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	AppPkgName            string                 `protobuf:"bytes,1,opt,name=AppPkgName,proto3" json:"AppPkgName,omitempty"`                        //应用包名
-	OrderSn               string                 `protobuf:"bytes,2,opt,name=OrderSn,proto3" json:"OrderSn,omitempty"`                              //唯一订单号
-	Amount                int64                  `protobuf:"varint,3,opt,name=Amount,proto3" json:"Amount,omitempty"`                               //订单金额，单位分
-	Subject               string                 `protobuf:"bytes,4,opt,name=Subject,proto3" json:"Subject,omitempty"`                              //订单标题
-	PayType               PayType                `protobuf:"varint,5,opt,name=PayType,proto3,enum=payment.PayType" json:"PayType,omitempty"`        //支付方式
-	NotifyURL             string                 `protobuf:"bytes,6,opt,name=NotifyURL,proto3" json:"NotifyURL,omitempty"`                          //回调通知地址
-	ReturnURL             string                 `protobuf:"bytes,7,opt,name=returnURL,proto3" json:"returnURL,omitempty"`                          //H5,wap支付跳转地址
-	WxOpenID              string                 `protobuf:"bytes,8,opt,name=WxOpenID,proto3" json:"WxOpenID,omitempty"`                            //微信小程序支付时必传
-	Os                    string                 `protobuf:"bytes,9,opt,name=os,proto3" json:"os,omitempty"`                                        // 系统标识
-	DouyinGeneralTradeReq *DouyinGeneralTradeReq `protobuf:"bytes,10,opt,name=douyinGeneralTradeReq,proto3" json:"douyinGeneralTradeReq,omitempty"` //抖音小程序订单信息-通用交易系统
-	Currency              Currency               `protobuf:"varint,11,opt,name=currency,proto3,enum=payment.Currency" json:"currency,omitempty"`    // 币种
-	IsPeriodProduct       bool                   `protobuf:"varint,12,opt,name=IsPeriodProduct,proto3" json:"IsPeriodProduct,omitempty"`            // 是否是周期代扣商品
-	InnerUserId           int64                  `protobuf:"varint,13,opt,name=InnerUserId,proto3" json:"InnerUserId,omitempty"`                    // 下单用户id(内部user表主键id)
-	InnerUserOpen         string                 `protobuf:"bytes,14,opt,name=InnerUserOpen,proto3" json:"InnerUserOpen,omitempty"`                 // 下单用户open id
-	FirstDeductionAmount  int64                  `protobuf:"varint,15,opt,name=FirstDeductionAmount,proto3" json:"FirstDeductionAmount,omitempty"`  // 首期或者最近几期优惠扣款金额
-	MerchantUid           string                 `protobuf:"bytes,16,opt,name=MerchantUid,proto3" json:"MerchantUid,omitempty"`                     // 开发者自定义收款商户号，限定在在小程序绑定的商户号内
+	AppPkgName             string                 `protobuf:"bytes,1,opt,name=AppPkgName,proto3" json:"AppPkgName,omitempty"`                           //应用包名
+	OrderSn                string                 `protobuf:"bytes,2,opt,name=OrderSn,proto3" json:"OrderSn,omitempty"`                                 //唯一订单号
+	Amount                 int64                  `protobuf:"varint,3,opt,name=Amount,proto3" json:"Amount,omitempty"`                                  //订单金额，单位分
+	Subject                string                 `protobuf:"bytes,4,opt,name=Subject,proto3" json:"Subject,omitempty"`                                 //订单标题
+	PayType                PayType                `protobuf:"varint,5,opt,name=PayType,proto3,enum=payment.PayType" json:"PayType,omitempty"`           //支付方式
+	NotifyURL              string                 `protobuf:"bytes,6,opt,name=NotifyURL,proto3" json:"NotifyURL,omitempty"`                             //回调通知地址
+	ReturnURL              string                 `protobuf:"bytes,7,opt,name=returnURL,proto3" json:"returnURL,omitempty"`                             //H5,wap支付跳转地址
+	WxOpenID               string                 `protobuf:"bytes,8,opt,name=WxOpenID,proto3" json:"WxOpenID,omitempty"`                               //微信小程序支付时必传
+	Os                     string                 `protobuf:"bytes,9,opt,name=os,proto3" json:"os,omitempty"`                                           // 系统标识
+	DouyinGeneralTradeReq  *DouyinGeneralTradeReq `protobuf:"bytes,10,opt,name=douyinGeneralTradeReq,proto3" json:"douyinGeneralTradeReq,omitempty"`    //抖音小程序订单信息-通用交易系统
+	Currency               Currency               `protobuf:"varint,11,opt,name=currency,proto3,enum=payment.Currency" json:"currency,omitempty"`       // 币种
+	IsPeriodProduct        bool                   `protobuf:"varint,12,opt,name=IsPeriodProduct,proto3" json:"IsPeriodProduct,omitempty"`               // 是否是周期代扣商品
+	InnerUserId            int64                  `protobuf:"varint,13,opt,name=InnerUserId,proto3" json:"InnerUserId,omitempty"`                       // 下单用户id(内部user表主键id)
+	InnerUserOpen          string                 `protobuf:"bytes,14,opt,name=InnerUserOpen,proto3" json:"InnerUserOpen,omitempty"`                    // 下单用户open id
+	FirstDeductionAmount   int64                  `protobuf:"varint,15,opt,name=FirstDeductionAmount,proto3" json:"FirstDeductionAmount,omitempty"`     // 首期或者最近几期优惠扣款金额
+	MerchantUid            string                 `protobuf:"bytes,16,opt,name=MerchantUid,proto3" json:"MerchantUid,omitempty"`                        // 开发者自定义收款商户号，限定在在小程序绑定的商户号内
+	IsBaseExistSignedOrder bool                   `protobuf:"varint,17,opt,name=IsBaseExistSignedOrder,proto3" json:"IsBaseExistSignedOrder,omitempty"` // 是否基于已有的签约订单生成代扣单
+	ExistSignedOrderNo     string                 `protobuf:"bytes,18,opt,name=ExistSignedOrderNo,proto3" json:"ExistSignedOrderNo,omitempty"`          // 已有的签约订单号
+	NthNum                 int32                  `protobuf:"varint,19,opt,name=NthNum,proto3" json:"NthNum,omitempty"`                                 // 第几期代扣单
 }
 
 func (x *OrderPayReq) Reset() {
@@ -458,6 +461,27 @@ func (x *OrderPayReq) GetMerchantUid() string {
 		return x.MerchantUid
 	}
 	return ""
+}
+
+func (x *OrderPayReq) GetIsBaseExistSignedOrder() bool {
+	if x != nil {
+		return x.IsBaseExistSignedOrder
+	}
+	return false
+}
+
+func (x *OrderPayReq) GetExistSignedOrderNo() string {
+	if x != nil {
+		return x.ExistSignedOrderNo
+	}
+	return ""
+}
+
+func (x *OrderPayReq) GetNthNum() int32 {
+	if x != nil {
+		return x.NthNum
+	}
+	return 0
 }
 
 // 创建支付订单返回
@@ -4113,7 +4137,7 @@ var File_payment_proto protoreflect.FileDescriptor
 
 var file_payment_proto_rawDesc = []byte{
 	0x0a, 0x0d, 0x70, 0x61, 0x79, 0x6d, 0x65, 0x6e, 0x74, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12,
-	0x07, 0x70, 0x61, 0x79, 0x6d, 0x65, 0x6e, 0x74, 0x22, 0xda, 0x04, 0x0a, 0x0b, 0x4f, 0x72, 0x64,
+	0x07, 0x70, 0x61, 0x79, 0x6d, 0x65, 0x6e, 0x74, 0x22, 0xda, 0x05, 0x0a, 0x0b, 0x4f, 0x72, 0x64,
 	0x65, 0x72, 0x50, 0x61, 0x79, 0x52, 0x65, 0x71, 0x12, 0x1e, 0x0a, 0x0a, 0x41, 0x70, 0x70, 0x50,
 	0x6b, 0x67, 0x4e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0a, 0x41, 0x70,
 	0x70, 0x50, 0x6b, 0x67, 0x4e, 0x61, 0x6d, 0x65, 0x12, 0x18, 0x0a, 0x07, 0x4f, 0x72, 0x64, 0x65,
@@ -4151,7 +4175,15 @@ var file_payment_proto_rawDesc = []byte{
 	0x69, 0x72, 0x73, 0x74, 0x44, 0x65, 0x64, 0x75, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x41, 0x6d, 0x6f,
 	0x75, 0x6e, 0x74, 0x12, 0x20, 0x0a, 0x0b, 0x4d, 0x65, 0x72, 0x63, 0x68, 0x61, 0x6e, 0x74, 0x55,
 	0x69, 0x64, 0x18, 0x10, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x4d, 0x65, 0x72, 0x63, 0x68, 0x61,
-	0x6e, 0x74, 0x55, 0x69, 0x64, 0x22, 0xf5, 0x03, 0x0a, 0x0c, 0x4f, 0x72, 0x64, 0x65, 0x72, 0x50,
+	0x6e, 0x74, 0x55, 0x69, 0x64, 0x12, 0x36, 0x0a, 0x16, 0x49, 0x73, 0x42, 0x61, 0x73, 0x65, 0x45,
+	0x78, 0x69, 0x73, 0x74, 0x53, 0x69, 0x67, 0x6e, 0x65, 0x64, 0x4f, 0x72, 0x64, 0x65, 0x72, 0x18,
+	0x11, 0x20, 0x01, 0x28, 0x08, 0x52, 0x16, 0x49, 0x73, 0x42, 0x61, 0x73, 0x65, 0x45, 0x78, 0x69,
+	0x73, 0x74, 0x53, 0x69, 0x67, 0x6e, 0x65, 0x64, 0x4f, 0x72, 0x64, 0x65, 0x72, 0x12, 0x2e, 0x0a,
+	0x12, 0x45, 0x78, 0x69, 0x73, 0x74, 0x53, 0x69, 0x67, 0x6e, 0x65, 0x64, 0x4f, 0x72, 0x64, 0x65,
+	0x72, 0x4e, 0x6f, 0x18, 0x12, 0x20, 0x01, 0x28, 0x09, 0x52, 0x12, 0x45, 0x78, 0x69, 0x73, 0x74,
+	0x53, 0x69, 0x67, 0x6e, 0x65, 0x64, 0x4f, 0x72, 0x64, 0x65, 0x72, 0x4e, 0x6f, 0x12, 0x16, 0x0a,
+	0x06, 0x4e, 0x74, 0x68, 0x4e, 0x75, 0x6d, 0x18, 0x13, 0x20, 0x01, 0x28, 0x05, 0x52, 0x06, 0x4e,
+	0x74, 0x68, 0x4e, 0x75, 0x6d, 0x22, 0xf5, 0x03, 0x0a, 0x0c, 0x4f, 0x72, 0x64, 0x65, 0x72, 0x50,
 	0x61, 0x79, 0x52, 0x65, 0x73, 0x70, 0x12, 0x18, 0x0a, 0x07, 0x4f, 0x72, 0x64, 0x65, 0x72, 0x53,
 	0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x4f, 0x72, 0x64, 0x65, 0x72, 0x53, 0x6e,
 	0x12, 0x2a, 0x0a, 0x07, 0x50, 0x61, 0x79, 0x54, 0x79, 0x70, 0x65, 0x18, 0x06, 0x20, 0x01, 0x28,
