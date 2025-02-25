@@ -78,6 +78,7 @@ func (l *DouyinPeriodOrderLogic) getSignedPayList(in *pb.DouyinPeriodOrderReq) (
 			UserId:            int64(v.UserId),
 			NextDecuctionTime: v.NextDecuctionTime.Format("2006-01-02 15:04:05"),
 			DySignNo:          v.ThirdSignOrderNo,
+			NotifyUrl:         v.NotifyUrl,
 		})
 	}
 

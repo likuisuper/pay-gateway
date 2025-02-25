@@ -368,6 +368,7 @@ message DySignedOrderInfo {
   int64 UserId = 3; // 用户id
   string NextDecuctionTime = 4; // 下次扣款时间
   string DySignNo = 5; // 抖音平台返回的签约单号
+  string NotifyUrl = 6; // 通知地址
 }
 
 message DouyinPeriodOrderResp {
