@@ -71,7 +71,15 @@ func (l *DouyinPeriodOrderLogic) getSignedPayList(in *pb.DouyinPeriodOrderReq) (
 		return &resp, nil
 	}
 
+	payConfigTiktokModel := model.NewPmPayConfigTiktokModel(define.DbPayGateway)
+
 	for _, v := range list {
+		merchantUid := ""
+		appConfig, err := payConfigTiktokModel.GetOneByAppID(v.PayAppId)
+		if err == nil && appConfig != nil {
+			merchantUid = appConfig.SignPayMerchantUid
+		}
+
 		resp.SignedList = append(resp.SignedList, &pb.DySignedOrderInfo{
 			OrderSn:           v.OrderSn,
 			AppPkg:            v.AppPkgName,
@@ -79,6 +87,7 @@ func (l *DouyinPeriodOrderLogic) getSignedPayList(in *pb.DouyinPeriodOrderReq) (
 			NextDecuctionTime: v.NextDecuctionTime.Format("2006-01-02 15:04:05"),
 			DySignNo:          v.ThirdSignOrderNo,
 			NotifyUrl:         v.NotifyUrl,
+			MerchantUid:       merchantUid,
 		})
 	}
 
