@@ -68,6 +68,11 @@ const (
 	KsQueryOrder             = "https://open.kuaishou.com/openapi/mp/developer/epay/query_order"               // 查询订单
 )
 
+const (
+	Settle  = "SETTLE"  //结算
+	Payment = "PAYMENT" //支付
+)
+
 type KsPayConfig struct {
 	AppId     string
 	AppSecret string

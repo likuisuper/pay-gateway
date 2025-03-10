@@ -132,9 +132,9 @@ func (l *NotifyKspayLogic) NotifyKspay(r *http.Request, w http.ResponseWriter) (
 		return
 	}
 	switch data.BizType {
-	case "SETTLE":
+	case client.Settle: // 结算回调
 		return l.SettleNotify(bodyData, w)
-	case "PAYMENT":
+	case client.Payment: // 订单支付回调
 		return l.OrderNotify(bodyData, w)
 	}
 
