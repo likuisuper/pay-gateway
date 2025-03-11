@@ -353,12 +353,14 @@ enum DouyinPeriodOrderReqAction {
   DyPeriodActionQuery = 0; // 查询
   DyPeriodActionCancel = 1; // 解约
   DyPeriodActionGetPayList = 2; // 获取今日可以扣款的签约订单信息
+  DyPeriodActionUpdateNextTime = 3; // 更新下一期抖音签约代扣扣款时间
 }
 
 message DouyinPeriodOrderReq {
   DouyinPeriodOrderReqAction Action = 1; // 动作
   string Pkg = 2;  // 客户端包名
   int64 UserId = 3; // 用户id
+  int64 PmDyPeriodOrderId = 4; // pm_dy_period_order id
 }
 
 // 抖音已签约周期扣款信息

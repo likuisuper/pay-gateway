@@ -161,3 +161,9 @@ func (o *PmDyPeriodOrderModel) GetSignedPayList() ([]PmDyPeriodOrderTable, error
 	err := o.DB.Table(PmDyPeriodOrderTableName).Where("`sign_status` = 1 and `next_decuction_time` >= ? and `next_decuction_time` < ?", startAt, endAt).Find(&info).Error
 	return info, err
 }
+
+func (o *PmDyPeriodOrderModel) GetById(id int64) (PmDyPeriodOrderTable, error) {
+	var info PmDyPeriodOrderTable
+	err := o.DB.Table(PmDyPeriodOrderTableName).Where("id = ?", id).First(&info).Error
+	return info, err
+}
