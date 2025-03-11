@@ -117,6 +117,7 @@ func (l *DouyinPeriodOrderLogic) getSignedPayList(in *pb.DouyinPeriodOrderReq) (
 			DySignNo:          v.ThirdSignOrderNo,
 			NotifyUrl:         v.NotifyUrl,
 			MerchantUid:       merchantUid,
+			PkId:              int64(v.ID),
 		})
 	}
 
