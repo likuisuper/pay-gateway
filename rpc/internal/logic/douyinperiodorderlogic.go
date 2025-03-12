@@ -53,6 +53,11 @@ func (l *DouyinPeriodOrderLogic) DouyinPeriodOrder(in *pb.DouyinPeriodOrderReq) 
 		return l.getSignedPayList(in)
 	}
 
+	if in.GetAction() == pb.DouyinPeriodOrderReqAction_DyPeriodActionUpdateNextTime {
+		// 更新下一期抖音签约代扣扣款时间
+		return l.updateNexDecuctionTime(in)
+	}
+
 	resp := pb.DouyinPeriodOrderResp{
 		UserId: in.GetUserId(),
 		IsSign: 0,
@@ -61,7 +66,31 @@ func (l *DouyinPeriodOrderLogic) DouyinPeriodOrder(in *pb.DouyinPeriodOrderReq) 
 	return &resp, nil
 }
 
-// 获取今日可以扣款的签约订单信息
+// 更新下一期抖音签约代扣扣款时间
+func (l *DouyinPeriodOrderLogic) updateNexDecuctionTime(in *pb.DouyinPeriodOrderReq) (*pb.DouyinPeriodOrderResp, error) {
+	resp := pb.DouyinPeriodOrderResp{}
+
+	mdl := model.NewPmDyPeriodOrderModel(define.DbPayGateway)
+	tbl, err := mdl.GetById(in.GetPmDyPeriodOrderId())
+	if err != nil {
+		l.Errorf("GetById failed: %v", err)
+		resp.Msg = "NewPmDyPeriodOrderModel GetById err : " + err.Error()
+		return &resp, nil
+	}
+
+	err = mdl.UpdateSomeData(int(in.GetPmDyPeriodOrderId()), map[string]interface{}{
+		"next_decuction_time": tbl.NextDecuctionTime.AddDate(0, 1, 0).Format("2006-01-02 15:04:05"),
+	})
+	if err != nil {
+		l.Errorf("UpdateSomeData failed: %v", err)
+		resp.Msg = "NewPmDyPeriodOrderModel UpdateSomeData err : " + err.Error()
+		return &resp, nil
+	}
+
+	resp.Msg = "success"
+	return &resp, nil
+}
+
 func (l *DouyinPeriodOrderLogic) getSignedPayList(in *pb.DouyinPeriodOrderReq) (*pb.DouyinPeriodOrderResp, error) {
 	resp := pb.DouyinPeriodOrderResp{}
 
@@ -88,6 +117,7 @@ func (l *DouyinPeriodOrderLogic) getSignedPayList(in *pb.DouyinPeriodOrderReq) (
 			DySignNo:          v.ThirdSignOrderNo,
 			NotifyUrl:         v.NotifyUrl,
 			MerchantUid:       merchantUid,
+			PkId:              int64(v.ID),
 		})
 	}
 
