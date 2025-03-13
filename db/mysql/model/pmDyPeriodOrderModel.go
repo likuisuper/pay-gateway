@@ -122,6 +122,16 @@ func (o *PmDyPeriodOrderModel) GetSignedByUserIdAndPkg(userId int, pkg string, s
 	return orderInfo, err
 }
 
+func (o *PmDyPeriodOrderModel) GetSignedByUserIdAndPkgLast(userId int, pkg string) (*PmDyPeriodOrderTable, error) {
+	orderInfo := new(PmDyPeriodOrderTable)
+	err := o.DB.Table(PmDyPeriodOrderTableName).Where("`user_id` = ? and `app_pkg_name` = ? ", userId, pkg).Last(orderInfo).Error
+	if err != nil && err != gorm.ErrRecordNotFound {
+		logx.Errorf("GetSignedByUserIdAndPkgLast 获取最新订单信息失败 err:%v, pkg:%s, userId:%d", err, pkg, userId)
+	}
+
+	return orderInfo, err
+}
+
 func (o *PmDyPeriodOrderModel) UpdatePayAppID(orderSn string, payAppId string) (err error) {
 	err = o.DB.Table(PmDyPeriodOrderTableName).Where("order_sn = ?", orderSn).Update("pay_app_id", payAppId).Error
 	if err != nil {

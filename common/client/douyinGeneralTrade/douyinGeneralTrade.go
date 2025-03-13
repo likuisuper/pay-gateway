@@ -29,6 +29,8 @@ const trade_terminate_sign_url = "https://open.douyin.com/api/trade_auth/v1/deve
 // 查询抖音周期代扣签约单的状态
 const query_sign_order_url = "https://open.douyin.com/api/trade_auth/v1/developer/query_sign_order/"
 
+const refund_sign_order_url = "https://open.douyin.com/api/trade_auth/v1/developer/create_sign_refund/"
+
 type PayConfig struct {
 	AppId             string
 	PrivateKey        string // 应用私钥
@@ -101,6 +103,8 @@ type SkuTagGroupId string
 const (
 	SKuTagGroupIdContentRecharge SkuTagGroupId = "tag_group_7272625659888041996"
 )
+
+const DySuccess = 0
 
 const (
 	PaySceneIM      = "IM"      // 支付场景值-im
@@ -419,6 +423,15 @@ type ApiCommonResp struct {
 	LogId  string `json:"log_id,omitempty"`
 }
 
+type SignRefundResp struct {
+	ErrNo  int64  `json:"err_no,omitempty"` // 0是正常
+	ErrMsg string `json:"err_msg,omitempty"`
+	LogId  string `json:"log_id,omitempty"`
+	Data   struct {
+		PayRefundId string `json:"pay_refund_id,omitempty"`
+	} `json:"data,omitempty"`
+}
+
 // QueryOrder 查询订单 https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/server/trade-system/general/order/query_order
 func (c *PayClient) QueryOrder(orderId, outOrderId, clientToken string) (*QueryOrderResp, error) {
 	if orderId == "" && outOrderId == "" {
@@ -579,4 +592,65 @@ func (c *PayClient) TerminateSign(clientToken, authOrderId string) (*ApiCommonRe
 	}
 
 	return resp, nil
+}
+
+//CreateSignRefund 周期代扣发起退款
+//https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/server/payment/management-capacity/periodic-deduction/refund/create-sign-refund
+//可用该接口，对已经扣款成功的代扣单发起退款。
+//out_pay_refund_no 请保证在小程序内不重复，请勿传入已经在担保支付或交易系统使用过的开发者侧单号。
+func (c *PayClient) CreateSignRefund(clientToken, outPayRefundNo, thirdOrderNo string, refundAmount int64) (string, error) {
+	header := map[string]string{
+		"access-token": clientToken,
+	}
+
+	params := map[string]interface{}{
+		"out_pay_refund_no":   outPayRefundNo, //开发者侧退款单的单号
+		"pay_order_id":        thirdOrderNo,   //平台侧代扣单的单号
+		"refund_total_amount": refundAmount,   //退款总金额，单位[分]
+		"notify_url":          "",             //退款结果回调地址，https开头
+		"refund_reason":       "",             //退款原因，长度<=256byte
+
+	}
+	result, err := util.HttpPostWithHeader(refund_sign_order_url, params, header, time.Second*5)
+
+	// 记录返回日志
+	logx.Sloww("CreateSignRefund", logx.Field("result", result), logx.Field("outPayRefundNo", outPayRefundNo), logx.Field("thirdOrderNo", thirdOrderNo), logx.Field("err", err))
+
+	if err != nil {
+		return "", err
+	}
+
+	/**
+	正常响应
+	{
+	  "data": {
+	    "pay_refund_id": "ad712312662312"
+	  },
+	  "err_no": 0,
+	  "err_msg": "success",
+	  "log_id": "2022092115392201020812109511046"
+	}
+	*/
+
+	/**
+	异常响应
+	{
+	  "err_no": 10000,
+	  "err_msg": "参数不合法",
+	  "log_id": "2022092115392201020812109511046"
+	}
+	*/
+
+	resp := new(SignRefundResp)
+	err = json.Unmarshal([]byte(result), resp)
+	if err != nil {
+		logx.Errorw("CreateSignRefund Unmarshal error", logx.Field("result", result), logx.Field("outPayRefundNo", outPayRefundNo), logx.Field("thirdOrderNo", thirdOrderNo), logx.Field("err", err))
+		return "", err
+	}
+	if resp.ErrNo != DySuccess {
+		logx.Errorw("CreateSignRefund error", logx.Field("result", result), logx.Field("outPayRefundNo", outPayRefundNo), logx.Field("thirdOrderNo", thirdOrderNo), logx.Field("err", err))
+		return "", errors.New(resp.ErrMsg)
+	}
+
+	return resp.Data.PayRefundId, nil
 }
