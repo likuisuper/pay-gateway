@@ -291,12 +291,13 @@ type GeneralTradeCallbackData struct {
 type EventType string
 
 const (
-	EventPayment         EventType = "payment"           // 支付
-	EventRefund          EventType = "refund"            // 退款
-	EventPreCreateRefund EventType = "pre_create_refund" // 客服预退款订单
-	EventSettle          EventType = "settle"            //
-	EventSignCallback    EventType = "sign_callback"     // 抖音周期代扣签约回调
-	EventSignPayCallback EventType = "sign_pay_callback" // 抖音周期代扣结果回调通知
+	EventPayment          EventType = "payment"              // 支付
+	EventRefund           EventType = "refund"               // 退款
+	EventPreCreateRefund  EventType = "pre_create_refund"    // 客服预退款订单
+	EventSettle           EventType = "settle"               // 结算
+	EventSignCallback     EventType = "sign_callback"        // 抖音周期代扣签约回调
+	EventSignPayCallback  EventType = "sign_pay_callback"    // 抖音周期代扣结果回调通知
+	EventSignRefundNotify EventType = "sign_refund_callback" // 抖音周期代扣退款回调通知
 )
 
 type GeneralTradeMsg struct {

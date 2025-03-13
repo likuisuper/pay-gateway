@@ -127,6 +127,8 @@ func (l *NotifyDouyinLogic) NotifyDouyin(req *http.Request) (resp *types.DouyinR
 			}
 			return resp, nil
 		}
+	case douyin.EventSignRefundNotify:
+
 	}
 
 	l.Errorf("NotifyDouyin invalid msg type:%s, data:%v, raw body", data.Type, data, string(body))
@@ -662,4 +664,137 @@ func (l *NotifyDouyinLogic) handleSignCallback(msg string, originData *douyin.Ge
 	}
 
 	return nil
+}
+
+// 抖音代扣退款回调
+func (l *NotifyDouyinLogic) notifySignRefund(req *http.Request, body []byte, msgJson string, originData interface{}) (*types.DouyinResp, error) {
+	msg := new(douyin.SignRefundMsg)
+	err := sonic.UnmarshalString(msgJson, msg)
+	if err != nil {
+		err = fmt.Errorf("notifySignRefund unmarshalString fial, msgJson:%v, err:%v", msgJson, err)
+		util.CheckError(err.Error())
+		CallbackRefundFailNum.CounterInc()
+		return nil, err
+	}
+
+	l.Slowf("notifySignRefund, reqHeader:%v, msgJson:%s", req.Header, msgJson)
+
+	payCfg, cfgErr := l.payConfigTiktokModel.GetOneByAppID(msg.AppId)
+	if cfgErr != nil {
+		err = fmt.Errorf("notifySignRefund appid = %s, 读取抖音支付配置失败，err:=%v", msg.AppId, cfgErr)
+		util.CheckError(err.Error())
+		CallbackRefundFailNum.CounterInc()
+		return nil, cfgErr
+	}
+
+	// 验签
+	client := douyin.NewDouyinPay(payCfg.GetGeneralTradeConfig())
+	err = client.VerifyNotify(req, body)
+	if err != nil {
+		l.Errorf("notifySignRefund 验签未通过，或者解密失败！err=%v", err)
+		CallbackRefundFailNum.CounterInc()
+		return &types.DouyinResp{
+			ErrNo:   400,
+			ErrTips: "验签未通过，或者解密失败",
+		}, nil
+	}
+
+	// redis 并发控制
+	concurrentKey, value := fmt.Sprintf("payGateway:signRefundNotify:douyin:%s", msg.OutPayRefundNo), uuid.New().String()
+	isLock, err := l.Rdb.TryLockWithTimeout(context.Background(), concurrentKey, value, 1000)
+	if err != nil || !isLock {
+		l.Slowf("notifySignRefund redis lock fail, err:%s, isLock:%v, key:%v", err.Error(), isLock, concurrentKey)
+		return nil, fmt.Errorf("redis lock fail, err:%s, isLock:%v, key:%v", err.Error(), isLock, concurrentKey)
+	}
+	defer func() {
+		unlockErr := l.Rdb.Unlock(context.Background(), concurrentKey, value)
+		if unlockErr != nil {
+			l.Slowf("redis unlock fail, key:%s, value:%s", concurrentKey, value)
+		}
+	}()
+	//修改数据库
+	refundInfo, err := l.refundOrderModel.GetInfoByRefundNo(msg.PayRefundId)
+	if err != nil {
+		CallbackRefundFailNum.CounterInc()
+		l.Errorf("notifySignRefund 获取退款订单失败！err=%v,refund_no = %s", err, msg.PayRefundId)
+		return &types.DouyinResp{
+			ErrNo:   400,
+			ErrTips: "获取退款订单失败",
+		}, nil
+	}
+	//根据支付网关的退款单号查询 创建退款订单超时未拿到抖音侧退款单号 还需更新退款单号信息
+	if refundInfo.ID == 0 {
+		refundInfo, err = l.refundOrderModel.GetInfo(msg.OutPayRefundNo)
+		if err != nil || refundInfo.ID == 0 {
+			CallbackRefundFailNum.CounterInc()
+			l.Errorf("notifySignRefund 获取退款订单失败！err=%v,refund_no = %s", err, msg.PayRefundId)
+			return &types.DouyinResp{
+				ErrNo:   400,
+				ErrTips: "获取退款订单失败",
+			}, nil
+		}
+	}
+	//判断改退款订单是否已被处理过
+	if refundInfo.RefundStatus != model.PmRefundOrderTableRefundStatusApply {
+		l.Slowf("notifySignRefund 退款订单已被处理过！refund_no = %s", msg.PayRefundId)
+		resp := &types.DouyinResp{
+			ErrNo:   0,
+			ErrTips: "success",
+		}
+		return resp, nil
+	}
+
+	//查询订单的包名信息
+	orderInfo, err := l.payDyPeriodOrderModel.GetOneByThirdSignOrderNoAndAppId(msg.PayOrderId, msg.AppId)
+	if err != nil || orderInfo.ID == 0 {
+		CallbackRefundFailNum.CounterInc()
+		l.Errorf("notifySignRefund 获取订单失败！err=%v,refund_no = %s", err, msg.PayRefundId)
+		return &types.DouyinResp{
+			ErrNo:   400,
+			ErrTips: "获取订单失败",
+		}, nil
+	}
+
+	refundInfo.NotifyData = msgJson
+	refundInfo.RefundedAt = msg.EventTime
+	if refundInfo.RefundNo == "" {
+		//创建退款订单超时未拿到抖音侧退款单号 还需更新退款单号信息
+		refundInfo.RefundNo = msg.PayRefundId
+	}
+	if msg.Status == "SUCCESS" {
+		refundInfo.RefundStatus = model.PmRefundOrderTableRefundStatusSuccess
+	} else {
+		refundInfo.RefundStatus = model.PmRefundOrderTableRefundStatusFail
+	}
+	err = l.refundOrderModel.Update(msg.OutPayRefundNo, refundInfo)
+	if err != nil {
+		CallbackRefundFailNum.CounterInc()
+		l.Errorf("notifySignRefund 更新退款订单失败！err=%v,refund_no = %s", err, msg.PayRefundId)
+		return &types.DouyinResp{
+			ErrNo:   400,
+			ErrTips: "更新退款订单失败",
+		}, nil
+	}
+	//回调业务方接口
+	go func() {
+		defer exception.Recover()
+		headMap := map[string]string{
+			"App-Origin": orderInfo.AppPkgName,
+		}
+		respData, requestErr := util.HttpPostWithHeader(refundInfo.NotifyUrl, originData, headMap, 5*time.Second)
+		if requestErr != nil {
+			CallbackRefundFailNum.CounterInc()
+			CallbackBizFailNum.CounterInc()
+			util.CheckError("notifySignRefund NotifyRefund-post, req:%+v, err:%v", originData, requestErr)
+			l.Errorf("notifySignRefund NotifyRefund-post, req:%+v, err:%v, url:%v", originData, requestErr, refundInfo.NotifyUrl)
+			return
+		}
+		l.Slowf("notifySignRefund NotifyRefund-post, req:%+v, respData:%s", originData, respData)
+	}()
+
+	resp := &types.DouyinResp{
+		ErrNo:   0,
+		ErrTips: "success",
+	}
+	return resp, nil
 }

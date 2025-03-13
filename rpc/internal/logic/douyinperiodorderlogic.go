@@ -132,28 +132,22 @@ func (l *DouyinPeriodOrderLogic) querySignOrder(in *pb.DouyinPeriodOrderReq) (*p
 		Msg:    "未签约",
 	}
 
-	// 查询最新一单状态
-	periodModel, err := l.payDyPeriodOrderModel.GetSignedByUserIdAndPkgLast(int(in.GetUserId()), in.GetPkg())
+	// 查询最新一单状态 目前一个用户在每个扣款周期内只能发起一笔代扣单。要是同一周期内已有处理中或成功的代扣单，就无法再发起新订单
+	// 查询
+	periodModel, _ := l.payDyPeriodOrderModel.GetSignedByUserIdAndPkg(int(in.GetUserId()), in.GetPkg(), model.Sign_Status_Success)
+	if periodModel != nil && periodModel.ID > 0 {
+		// 已签约
+		resp.IsSign = 1
+		resp.Msg = "已签约"
+		resp.NextDecuctionTime = periodModel.NextDecuctionTime.Format("2006-01-02 15:04:05")
+		resp.DeductionAmount = int64(periodModel.Amount) // 单位分
+	}
+
+	periodModel, err := l.payDyPeriodOrderModel.GetSignedByUserIdAndPkg(int(in.GetUserId()), in.GetPkg(), model.Sign_Status_Wait)
 	if err != nil && periodModel == nil || periodModel.ID < 1 {
 		// 查询失败
 		l.Errorf("querySignOrder failed: %v, userId: %d, pkg: %s ", err, in.GetUserId(), in.GetPkg())
 		return &resp, nil
-	}
-	if periodModel.SignStatus == model.Sign_Status_Success {
-		// 已签约
-		resp.IsSign = model.Sign_Status_Success
-		resp.Msg = "已签约"
-		resp.NextDecuctionTime = periodModel.NextDecuctionTime.Format("2006-01-02 15:04:05")
-		resp.DeductionAmount = int64(periodModel.Amount) // 单位分
-	} else if periodModel.SignStatus == model.Sign_Status_Cancel {
-		// 取消签约
-		resp.IsSign = model.Sign_Status_Cancel
-		resp.Msg = "取消签约"
-		return &resp, nil
-	} else if periodModel.SignStatus == model.Sign_Status_Wait {
-		// 签约中
-		resp.IsSign = model.Sign_Status_Wait
-		resp.Msg = "等待签约"
 	}
 
 	clientToken, err := l.svcCtx.BaseAppConfigServerApi.GetDyClientToken(l.ctx, periodModel.PayAppId)

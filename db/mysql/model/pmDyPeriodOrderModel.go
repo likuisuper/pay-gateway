@@ -147,6 +147,15 @@ func (o *PmDyPeriodOrderModel) GetOneByThirdOrderNoAndAppId(orderSn, appId strin
 	if err != nil {
 		logx.Errorf("GetOneByThirdOrderNoAndAppId 获取订单信息失败 err:%v, order_sn:%s", err, orderSn)
 	}
+	return orderInfo, err
+}
+
+func (o *PmDyPeriodOrderModel) GetOneByThirdSignOrderNoAndAppId(signOrderNo, appId string) (*PmDyPeriodOrderTable, error) {
+	orderInfo := new(PmDyPeriodOrderTable)
+	err := o.DB.Table(PmDyPeriodOrderTableName).Where("`third_sign_order_no` = ? and pay_app_id = ?", signOrderNo, appId).First(orderInfo).Error
+	if err != nil {
+		logx.Errorf("GetOneByThirdSignOrderNoAndAppId 获取订单信息失败 err:%v, order_sn:%s", err, signOrderNo)
+	}
 
 	return orderInfo, err
 }

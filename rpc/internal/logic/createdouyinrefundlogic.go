@@ -68,13 +68,14 @@ func (l *CreateDouyinRefundLogic) CreateDouyinRefund(in *pb.CreateDouyinRefundRe
 	}
 
 	if in.IsPeriodProduct {
+		return l.DyPeriodRefund(in, pkgCfg)
 
 	}
 	return l.DyRefund(in, err, pkgCfg, payCfg)
 }
 
 // DyPeriodRefund 抖音代扣退款
-func (l *CreateDouyinRefundLogic) DyPeriodRefund(in *pb.CreateDouyinRefundReq, err error, pkgCfg *model.PmAppConfigTable) (*pb.CreateDouyinRefundResp, error) {
+func (l *CreateDouyinRefundLogic) DyPeriodRefund(in *pb.CreateDouyinRefundReq, pkgCfg *model.PmAppConfigTable) (*pb.CreateDouyinRefundResp, error) {
 	//查询订单数否存在
 	periodOrderInfo, err := l.periodOrderModel.GetOneByOrderSnAndAppId(in.OrderSn, pkgCfg.TiktokPayAppID)
 	if err != nil || periodOrderInfo == nil || periodOrderInfo.ID < 1 {
