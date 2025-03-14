@@ -99,7 +99,8 @@ func (l *CreateDouyinRefundLogic) DyPeriodRefund(in *pb.CreateDouyinRefundReq, p
 	if !terminateRes.IsUnsignSuccess {
 		CreateDyRefundFailNum.CounterInc()
 		l.Errorf("CreateDyPeriodRefund pkgName= %s, order_sn: %v 解约失败 err:=%v,res:%v", in.AppPkgName, in.OrderSn, err, terminateRes)
-		return nil, err
+	} else {
+		l.Errorf("CreateDyPeriodRefund pkgName= %s, order_sn: %v 解约成功 res:=%v", in.AppPkgName, in.OrderSn, terminateRes)
 	}
 
 	clientToken, err := l.svcCtx.BaseAppConfigServerApi.GetDyClientToken(l.ctx, periodOrderInfo.PayAppId)
