@@ -745,7 +745,7 @@ func (l *NotifyDouyinLogic) notifySignRefund(req *http.Request, body []byte, msg
 	}
 
 	//查询订单的包名信息
-	orderInfo, err := l.payDyPeriodOrderModel.GetOneByThirdSignOrderNoAndAppId(msg.PayOrderId, msg.AppId)
+	orderInfo, err := l.payDyPeriodOrderModel.GetOneByThirdOrderNoAndAppId(msg.PayOrderId, msg.AppId)
 	if err != nil || orderInfo.ID == 0 {
 		CallbackRefundFailNum.CounterInc()
 		l.Errorf("notifySignRefund 获取订单失败！err=%v,refund_no = %s", err, msg.PayRefundId)
