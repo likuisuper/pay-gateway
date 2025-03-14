@@ -68,14 +68,14 @@ func (l *CreateDouyinRefundLogic) CreateDouyinRefund(in *pb.CreateDouyinRefundRe
 	}
 
 	if in.IsPeriodProduct {
-		return l.DyPeriodRefund(in, pkgCfg)
+		return l.DyPeriodRefund(in, pkgCfg, payCfg)
 
 	}
 	return l.DyRefund(in, err, pkgCfg, payCfg)
 }
 
 // DyPeriodRefund 抖音代扣退款
-func (l *CreateDouyinRefundLogic) DyPeriodRefund(in *pb.CreateDouyinRefundReq, pkgCfg *model.PmAppConfigTable) (*pb.CreateDouyinRefundResp, error) {
+func (l *CreateDouyinRefundLogic) DyPeriodRefund(in *pb.CreateDouyinRefundReq, pkgCfg *model.PmAppConfigTable, payCfg *model.PmPayConfigTiktokTable) (*pb.CreateDouyinRefundResp, error) {
 	//查询订单数否存在
 	periodOrderInfo, err := l.periodOrderModel.GetOneByOrderSnAndAppId(in.OrderSn, pkgCfg.TiktokPayAppID)
 	if err != nil || periodOrderInfo == nil || periodOrderInfo.ID < 1 {
@@ -109,7 +109,7 @@ func (l *CreateDouyinRefundLogic) DyPeriodRefund(in *pb.CreateDouyinRefundReq, p
 	}
 
 	//请求退款
-	refundNo, err := l.dyClient.CreateSignRefund(clientToken, in.OutRefundNo, periodOrderInfo.ThirdSignOrderNo, in.RefundAmount)
+	refundNo, err := l.dyClient.CreateSignRefund(clientToken, in.OutRefundNo, periodOrderInfo.ThirdOrderNo, payCfg.NotifyUrl, in.RefundReason, in.RefundAmount)
 	if err != nil {
 		CreateDyRefundFailNum.CounterInc()
 		l.Errorf("CreateDyPeriodRefund pkgName= %s, order_sn: %v 创建抖音退款订单失败 err:=%v", in.AppPkgName, in.OrderSn, err)

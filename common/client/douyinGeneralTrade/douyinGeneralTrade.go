@@ -599,7 +599,7 @@ func (c *PayClient) TerminateSign(clientToken, authOrderId string) (*ApiCommonRe
 //https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/server/payment/management-capacity/periodic-deduction/refund/create-sign-refund
 //可用该接口，对已经扣款成功的代扣单发起退款。
 //out_pay_refund_no 请保证在小程序内不重复，请勿传入已经在担保支付或交易系统使用过的开发者侧单号。
-func (c *PayClient) CreateSignRefund(clientToken, outPayRefundNo, thirdOrderNo string, refundAmount int64) (string, error) {
+func (c *PayClient) CreateSignRefund(clientToken, outPayRefundNo, thirdOrderNo, notifyUrl, reason string, refundAmount int64) (string, error) {
 	header := map[string]string{
 		"access-token": clientToken,
 	}
@@ -608,8 +608,8 @@ func (c *PayClient) CreateSignRefund(clientToken, outPayRefundNo, thirdOrderNo s
 		"out_pay_refund_no":   outPayRefundNo, //开发者侧退款单的单号
 		"pay_order_id":        thirdOrderNo,   //平台侧代扣单的单号
 		"refund_total_amount": refundAmount,   //退款总金额，单位[分]
-		"notify_url":          "",             //退款结果回调地址，https开头
-		"refund_reason":       "",             //退款原因，长度<=256byte
+		"notify_url":          notifyUrl,      //退款结果回调地址，https开头
+		"refund_reason":       reason,         //退款原因，长度<=256byte
 
 	}
 	result, err := util.HttpPostWithHeader(refund_sign_order_url, params, header, time.Second*5)
