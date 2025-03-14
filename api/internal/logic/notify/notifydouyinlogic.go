@@ -128,7 +128,7 @@ func (l *NotifyDouyinLogic) NotifyDouyin(req *http.Request) (resp *types.DouyinR
 			return resp, nil
 		}
 	case douyin.EventSignRefundNotify:
-
+		return l.notifySignRefund(req, body, data.Msg, data)
 	}
 
 	l.Errorf("NotifyDouyin invalid msg type:%s, data:%v, raw body", data.Type, data, string(body))
