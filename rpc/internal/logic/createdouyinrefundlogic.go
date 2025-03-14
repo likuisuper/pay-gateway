@@ -84,23 +84,23 @@ func (l *CreateDouyinRefundLogic) DyPeriodRefund(in *pb.CreateDouyinRefundReq, p
 		return nil, err
 	}
 
-	////解约
-	//terminateRes, err := NewDouyinPeriodOrderLogic(l.ctx, l.svcCtx).terminateSign(&pb.DouyinPeriodOrderReq{
-	//	Action:            pb.DouyinPeriodOrderReqAction_DyPeriodActionCancel,
-	//	Pkg:               periodOrderInfo.AppPkgName,
-	//	UserId:            int64(periodOrderInfo.UserId),
-	//	PmDyPeriodOrderId: int64(periodOrderInfo.ID),
-	//})
-	//if err != nil {
-	//	CreateDyRefundFailNum.CounterInc()
-	//	l.Errorf("CreateDyPeriodRefund pkgName= %s, order_sn: %v 解约失败 err:=%v", in.AppPkgName, in.OrderSn, err)
-	//	return nil, err
-	//}
-	//if !terminateRes.IsUnsignSuccess {
-	//	CreateDyRefundFailNum.CounterInc()
-	//	l.Errorf("CreateDyPeriodRefund pkgName= %s, order_sn: %v 解约失败 err:=%v,res:%v", in.AppPkgName, in.OrderSn, err, terminateRes)
-	//	return nil, err
-	//}
+	//解约
+	terminateRes, err := NewDouyinPeriodOrderLogic(l.ctx, l.svcCtx).terminateSign(&pb.DouyinPeriodOrderReq{
+		Action:            pb.DouyinPeriodOrderReqAction_DyPeriodActionCancel,
+		Pkg:               periodOrderInfo.AppPkgName,
+		UserId:            int64(periodOrderInfo.UserId),
+		PmDyPeriodOrderId: int64(periodOrderInfo.ID),
+	})
+	if err != nil {
+		CreateDyRefundFailNum.CounterInc()
+		l.Errorf("CreateDyPeriodRefund pkgName= %s, order_sn: %v 解约失败 err:=%v", in.AppPkgName, in.OrderSn, err)
+		return nil, err
+	}
+	if !terminateRes.IsUnsignSuccess {
+		CreateDyRefundFailNum.CounterInc()
+		l.Errorf("CreateDyPeriodRefund pkgName= %s, order_sn: %v 解约失败 err:=%v,res:%v", in.AppPkgName, in.OrderSn, err, terminateRes)
+		return nil, err
+	}
 
 	clientToken, err := l.svcCtx.BaseAppConfigServerApi.GetDyClientToken(l.ctx, periodOrderInfo.PayAppId)
 	if err != nil || clientToken == "" {
