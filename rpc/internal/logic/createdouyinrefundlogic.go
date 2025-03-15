@@ -24,6 +24,8 @@ type CreateDouyinRefundLogic struct {
 	payConfigTiktokModel *model.PmPayConfigTiktokModel
 	refundOrderModel     *model.PmRefundOrderModel
 	orderModel           *model.PmPayOrderModel
+	periodOrderModel     *model.PmDyPeriodOrderModel
+	dyClient             douyin.PayClient
 }
 
 func NewCreateDouyinRefundLogic(ctx context.Context, svcCtx *svc.ServiceContext) *CreateDouyinRefundLogic {
@@ -36,6 +38,8 @@ func NewCreateDouyinRefundLogic(ctx context.Context, svcCtx *svc.ServiceContext)
 		payConfigTiktokModel: model.NewPmPayConfigTiktokModel(define.DbPayGateway),
 		refundOrderModel:     model.NewPmRefundOrderModel(define.DbPayGateway),
 		orderModel:           model.NewPmPayOrderModel(define.DbPayGateway),
+		periodOrderModel:     model.NewPmDyPeriodOrderModel(define.DbPayGateway),
+		dyClient:             douyin.PayClient{}, // 由于用不到支付相关的配置 直接初始化一个空的就是
 	}
 }
 
@@ -63,6 +67,85 @@ func (l *CreateDouyinRefundLogic) CreateDouyinRefund(in *pb.CreateDouyinRefundRe
 		return nil, errors.New("订单号和抖音订单号不能同时为空")
 	}
 
+	if in.IsPeriodProduct {
+		return l.DyPeriodRefund(in, pkgCfg, payCfg)
+
+	}
+	return l.DyRefund(in, err, pkgCfg, payCfg)
+}
+
+// DyPeriodRefund 抖音代扣退款
+func (l *CreateDouyinRefundLogic) DyPeriodRefund(in *pb.CreateDouyinRefundReq, pkgCfg *model.PmAppConfigTable, payCfg *model.PmPayConfigTiktokTable) (*pb.CreateDouyinRefundResp, error) {
+	//查询订单数否存在
+	periodOrderInfo, err := l.periodOrderModel.GetOneByOrderSnAndAppId(in.OrderSn, pkgCfg.TiktokPayAppID)
+	if err != nil || periodOrderInfo == nil || periodOrderInfo.ID < 1 {
+		CreateDyRefundFailNum.CounterInc()
+		l.Errorf("CreateDyPeriodRefund pkgName= %s, order_sn: %v 获取抖音代扣订单失败 err:=%v", in.AppPkgName, in.OrderSn, err)
+		return nil, err
+	}
+
+	//解约
+	terminateRes, err := NewDouyinPeriodOrderLogic(l.ctx, l.svcCtx).terminateSign(&pb.DouyinPeriodOrderReq{
+		Action:            pb.DouyinPeriodOrderReqAction_DyPeriodActionCancel,
+		Pkg:               periodOrderInfo.AppPkgName,
+		UserId:            int64(periodOrderInfo.UserId),
+		PmDyPeriodOrderId: int64(periodOrderInfo.ID),
+	})
+	if err != nil {
+		CreateDyRefundFailNum.CounterInc()
+		l.Errorf("CreateDyPeriodRefund pkgName= %s, order_sn: %v 解约失败 err:=%v", in.AppPkgName, in.OrderSn, err)
+		return nil, err
+	}
+	if !terminateRes.IsUnsignSuccess {
+		CreateDyRefundFailNum.CounterInc()
+		l.Errorf("CreateDyPeriodRefund pkgName= %s, order_sn: %v 解约失败 err:=%v,res:%v", in.AppPkgName, in.OrderSn, err, terminateRes)
+	} else {
+		l.Errorf("CreateDyPeriodRefund pkgName= %s, order_sn: %v 解约成功 res:=%v", in.AppPkgName, in.OrderSn, terminateRes)
+	}
+
+	clientToken, err := l.svcCtx.BaseAppConfigServerApi.GetDyClientToken(l.ctx, periodOrderInfo.PayAppId)
+	if err != nil || clientToken == "" {
+		l.Errorw("CreateDyPeriodRefund get douyin client token fail", logx.Field("err", err), logx.Field("appId", periodOrderInfo.PayAppId))
+		return nil, errors.New("获取抖音支付token失败")
+	}
+
+	//请求退款
+	refundNo, err := l.dyClient.CreateSignRefund(clientToken, in.OutRefundNo, periodOrderInfo.ThirdOrderNo, payCfg.NotifyUrl, in.RefundReason, in.RefundAmount)
+	if err != nil {
+		CreateDyRefundFailNum.CounterInc()
+		l.Errorf("CreateDyPeriodRefund pkgName= %s, order_sn: %v 创建抖音退款订单失败 err:=%v", in.AppPkgName, in.OrderSn, err)
+		return nil, err
+	}
+
+	//退款表新增记录
+	l.Slowf("CreateDyPeriodRefund createRefund success, req:%+v,refundResp:%+v", in, refundNo)
+	//写入数据库
+	refundOrder := &model.PmRefundOrderTable{
+		AppID:        pkgCfg.TiktokPayAppID,
+		OutOrderNo:   in.OutOrderNo,
+		OutRefundNo:  in.OutRefundNo,
+		Reason:       in.RefundReason,
+		RefundAmount: int(in.RefundAmount),
+		NotifyUrl:    periodOrderInfo.NotifyUrl, //退款回调地址和支付回调地址一致
+		RefundNo:     refundNo,
+		RefundStatus: model.PmRefundOrderTableRefundStatusApply,
+	}
+	err = l.refundOrderModel.Create(refundOrder)
+	if err != nil {
+		CreateDyRefundFailNum.CounterInc()
+		l.Errorf("CreateDyPeriodRefund create refund order fail, err:%v, refundOrder:%+v", err, refundOrder)
+	}
+
+	//更新订单状态(解约逻辑中已修改)
+
+	//返回三方退款订单号
+	return &pb.CreateDouyinRefundResp{
+		RefundId: refundNo,
+	}, nil
+}
+
+// DyRefund 抖音退款
+func (l *CreateDouyinRefundLogic) DyRefund(in *pb.CreateDouyinRefundReq, err error, pkgCfg *model.PmAppConfigTable, payCfg *model.PmPayConfigTiktokTable) (*pb.CreateDouyinRefundResp, error) {
 	//查询订单是否存在
 	payOrderInfo, err := l.orderModel.GetOneByOrderSnAndAppId(in.OrderSn, pkgCfg.TiktokPayAppID)
 	if err != nil || payOrderInfo == nil || payOrderInfo.ID < 1 {

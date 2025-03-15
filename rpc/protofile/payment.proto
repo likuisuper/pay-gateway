@@ -318,6 +318,7 @@ message CreateDouyinRefundReq {
   Schema orderEntrySchema = 7; // 退款单的跳转的 schema
   string orderSn = 8; //orderCode订单号
   bool refundAll = 9; //是否退款全部金额
+  bool isPeriodProduct = 10; //是否是周期代扣商品
 
 }
 

@@ -132,6 +132,7 @@ func (l *DouyinPeriodOrderLogic) querySignOrder(in *pb.DouyinPeriodOrderReq) (*p
 		Msg:    "未签约",
 	}
 
+	// 查询最新一单状态 目前一个用户在每个扣款周期内只能发起一笔代扣单。要是同一周期内已有处理中或成功的代扣单，就无法再发起新订单
 	// 查询
 	periodModel, _ := l.payDyPeriodOrderModel.GetSignedByUserIdAndPkg(int(in.GetUserId()), in.GetPkg(), model.Sign_Status_Success)
 	if periodModel != nil && periodModel.ID > 0 {

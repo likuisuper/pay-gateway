@@ -111,6 +111,18 @@ type PreCreateRefundMsg struct {
 	Currency string `json:"currency,omitempty"` // 非必填 支付币种 钻石支付为DIAMOND
 }
 
+//SignRefundMsg 周期代扣退款结果通知 https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/server/payment/management-capacity/periodic-deduction/refund/sign-refund-callback
+type SignRefundMsg struct {
+	AppId             string `json:"app_id"`              //小程序 app_id
+	Status            string `json:"status"`              //退款结果状态，状态枚举：SUCCESS：退款成功  FAIL：退款失败
+	PayOrderId        string `json:"pay_order_id"`        //扣款单平台订单号，长度<=64byte
+	PayRefundId       string `json:"pay_refund_id"`       //退款单开发者的单号，长度<=64byte
+	OutPayRefundNo    string `json:"out_pay_refund_no"`   //退款单开发者侧退款单号，长度<=64byte
+	RefundTotalAmount int64  `json:"refund_total_amount"` //退款总金额
+	Message           string `json:"message"`             //结果描述信息，如失败原因
+	EventTime         int64  `json:"event_time"`          //用户退款成功/退款失败时间戳，单位为毫秒
+}
+
 type AuditRefundReq struct {
 	RefundId          string `json:"refund_id"`
 	RefundAuditStatus int8   `json:"refund_audit_status"`
