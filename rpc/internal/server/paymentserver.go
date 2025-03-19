@@ -171,3 +171,9 @@ func (s *PaymentServer) WechatMiniXPayQueryOrder(ctx context.Context, in *pb.Wec
 	l := logic.NewWechatMiniXPayQueryOrderLogic(ctx, s.svcCtx)
 	return l.WechatMiniXPayQueryOrder(in)
 }
+
+//  AutoPkgAdd 自动创建应用
+func (s *PaymentServer) AutoPkgAdd(ctx context.Context, in *pb.AutoPkgAddReq) (*pb.AutoPkgAddResp, error) {
+	l := logic.NewAutoPkgAddLogic(ctx, s.svcCtx)
+	return l.AutoPkgAdd(in)
+}
