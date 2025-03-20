@@ -44,6 +44,7 @@ const (
 	Payment_WechatMiniRefundQuery_FullMethodName             = "/payment.Payment/WechatMiniRefundQuery"
 	Payment_WechatMiniXPayRefund_FullMethodName              = "/payment.Payment/WechatMiniXPayRefund"
 	Payment_WechatMiniXPayQueryOrder_FullMethodName          = "/payment.Payment/WechatMiniXPayQueryOrder"
+	Payment_AutoPkgAdd_FullMethodName                        = "/payment.Payment/AutoPkgAdd"
 )
 
 // PaymentClient is the client API for Payment service.
@@ -100,6 +101,8 @@ type PaymentClient interface {
 	WechatMiniXPayRefund(ctx context.Context, in *WechatMiniXPayRefundReq, opts ...grpc.CallOption) (*WechatMiniXPayRefundResp, error)
 	// 微信虚拟支付-退款/订单详情
 	WechatMiniXPayQueryOrder(ctx context.Context, in *WechatMiniXPayQueryOrderReq, opts ...grpc.CallOption) (*WechatMiniXPayQueryOrderResp, error)
+	// AutoPkgAdd 自动创建应用
+	AutoPkgAdd(ctx context.Context, in *AutoPkgAddReq, opts ...grpc.CallOption) (*AutoPkgAddResp, error)
 }
 
 type paymentClient struct {
@@ -335,6 +338,15 @@ func (c *paymentClient) WechatMiniXPayQueryOrder(ctx context.Context, in *Wechat
 	return out, nil
 }
 
+func (c *paymentClient) AutoPkgAdd(ctx context.Context, in *AutoPkgAddReq, opts ...grpc.CallOption) (*AutoPkgAddResp, error) {
+	out := new(AutoPkgAddResp)
+	err := c.cc.Invoke(ctx, Payment_AutoPkgAdd_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PaymentServer is the server API for Payment service.
 // All implementations must embed UnimplementedPaymentServer
 // for forward compatibility
@@ -389,6 +401,8 @@ type PaymentServer interface {
 	WechatMiniXPayRefund(context.Context, *WechatMiniXPayRefundReq) (*WechatMiniXPayRefundResp, error)
 	// 微信虚拟支付-退款/订单详情
 	WechatMiniXPayQueryOrder(context.Context, *WechatMiniXPayQueryOrderReq) (*WechatMiniXPayQueryOrderResp, error)
+	// AutoPkgAdd 自动创建应用
+	AutoPkgAdd(context.Context, *AutoPkgAddReq) (*AutoPkgAddResp, error)
 	mustEmbedUnimplementedPaymentServer()
 }
 
@@ -470,6 +484,9 @@ func (UnimplementedPaymentServer) WechatMiniXPayRefund(context.Context, *WechatM
 }
 func (UnimplementedPaymentServer) WechatMiniXPayQueryOrder(context.Context, *WechatMiniXPayQueryOrderReq) (*WechatMiniXPayQueryOrderResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method WechatMiniXPayQueryOrder not implemented")
+}
+func (UnimplementedPaymentServer) AutoPkgAdd(context.Context, *AutoPkgAddReq) (*AutoPkgAddResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AutoPkgAdd not implemented")
 }
 func (UnimplementedPaymentServer) mustEmbedUnimplementedPaymentServer() {}
 
@@ -934,6 +951,24 @@ func _Payment_WechatMiniXPayQueryOrder_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Payment_AutoPkgAdd_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AutoPkgAddReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PaymentServer).AutoPkgAdd(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Payment_AutoPkgAdd_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PaymentServer).AutoPkgAdd(ctx, req.(*AutoPkgAddReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Payment_ServiceDesc is the grpc.ServiceDesc for Payment service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1040,6 +1075,10 @@ var Payment_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "WechatMiniXPayQueryOrder",
 			Handler:    _Payment_WechatMiniXPayQueryOrder_Handler,
+		},
+		{
+			MethodName: "AutoPkgAdd",
+			Handler:    _Payment_AutoPkgAdd_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

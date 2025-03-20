@@ -25,6 +25,8 @@ type (
 	AlipayRefundReq               = pb.AlipayRefundReq
 	AlipayTradePayReq             = pb.AlipayTradePayReq
 	AlipayTradeReq                = pb.AlipayTradeReq
+	AutoPkgAddReq                 = pb.AutoPkgAddReq
+	AutoPkgAddResp                = pb.AutoPkgAddResp
 	BindHuaweiPayDataReq          = pb.BindHuaweiPayDataReq
 	BindHuaweiPayDataResp         = pb.BindHuaweiPayDataResp
 	ClosePayOrderReq              = pb.ClosePayOrderReq
@@ -114,6 +116,8 @@ type (
 		WechatMiniXPayRefund(ctx context.Context, in *WechatMiniXPayRefundReq, opts ...grpc.CallOption) (*WechatMiniXPayRefundResp, error)
 		//  微信虚拟支付-退款/订单详情
 		WechatMiniXPayQueryOrder(ctx context.Context, in *WechatMiniXPayQueryOrderReq, opts ...grpc.CallOption) (*WechatMiniXPayQueryOrderResp, error)
+		//  AutoPkgAdd 自动创建应用
+		AutoPkgAdd(ctx context.Context, in *AutoPkgAddReq, opts ...grpc.CallOption) (*AutoPkgAddResp, error)
 	}
 
 	defaultPayment struct {
@@ -275,4 +279,10 @@ func (m *defaultPayment) WechatMiniXPayRefund(ctx context.Context, in *WechatMin
 func (m *defaultPayment) WechatMiniXPayQueryOrder(ctx context.Context, in *WechatMiniXPayQueryOrderReq, opts ...grpc.CallOption) (*WechatMiniXPayQueryOrderResp, error) {
 	client := pb.NewPaymentClient(m.cli.Conn())
 	return client.WechatMiniXPayQueryOrder(ctx, in, opts...)
+}
+
+//  AutoPkgAdd 自动创建应用
+func (m *defaultPayment) AutoPkgAdd(ctx context.Context, in *AutoPkgAddReq, opts ...grpc.CallOption) (*AutoPkgAddResp, error) {
+	client := pb.NewPaymentClient(m.cli.Conn())
+	return client.AutoPkgAdd(ctx, in, opts...)
 }

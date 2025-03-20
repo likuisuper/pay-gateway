@@ -475,6 +475,16 @@ message WechatMiniXPayQueryOrderResp {
   string wxPayOrderId = 14;
 }
 
+message AutoPkgAddReq {
+  repeated string sqlList = 1; //执行sql
+}
+
+message AutoPkgAddResp {
+  repeated string appIds = 1; //失败的app_id
+  string failMsg = 2; //失败原因
+  int64 status = 3; //0成功，1失败
+}
+
 //============== service ==============================================================================
 
 service Payment {
@@ -552,4 +562,6 @@ service Payment {
   // 微信虚拟支付-退款/订单详情
   rpc WechatMiniXPayQueryOrder(WechatMiniXPayQueryOrderReq) returns (WechatMiniXPayQueryOrderResp);
 
+  // AutoPkgAdd 自动创建应用
+  rpc AutoPkgAdd(AutoPkgAddReq) returns (AutoPkgAddResp);
 }
