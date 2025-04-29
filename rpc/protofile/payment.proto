@@ -485,6 +485,17 @@ message AutoPkgAddResp {
   int64 status = 3; //0成功，1失败
 }
 
+message DyPeriodOrderReq {
+  string OrderSn = 1; // 内部 订单唯一标识 (开发者侧代扣单的单号)
+  string AppPkg = 2; // 来源包名
+}
+
+
+message DyPeriodOrderResp {
+  string signNo = 1; // 抖音签约单号
+  int64 payStatus = 2; //支付状态 0未支付  1已支付
+  int64 signStatus = 3; //签约状态, 0 待签约 , 1已签约 , 2取消签约 , 3 签约到期
+}
 //============== service ==============================================================================
 
 service Payment {
@@ -564,4 +575,7 @@ service Payment {
 
   // AutoPkgAdd 自动创建应用
   rpc AutoPkgAdd(AutoPkgAddReq) returns (AutoPkgAddResp);
+
+  // DyPeriodOrder 查询抖音周期代扣订单
+  rpc DyPeriodOrder(DyPeriodOrderReq) returns (DyPeriodOrderResp);
 }

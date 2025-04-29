@@ -177,3 +177,9 @@ func (s *PaymentServer) AutoPkgAdd(ctx context.Context, in *pb.AutoPkgAddReq) (*
 	l := logic.NewAutoPkgAddLogic(ctx, s.svcCtx)
 	return l.AutoPkgAdd(in)
 }
+
+//  DyPeriodOrder 查询抖音周期代扣订单
+func (s *PaymentServer) DyPeriodOrder(ctx context.Context, in *pb.DyPeriodOrderReq) (*pb.DyPeriodOrderResp, error) {
+	l := logic.NewDyPeriodOrderLogic(ctx, s.svcCtx)
+	return l.DyPeriodOrder(in)
+}
