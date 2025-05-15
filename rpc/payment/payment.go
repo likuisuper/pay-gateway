@@ -39,6 +39,8 @@ type (
 	DouyinPeriodOrderResp         = pb.DouyinPeriodOrderResp
 	DyOrderRefundReq              = pb.DyOrderRefundReq
 	DyOrderRefundResp             = pb.DyOrderRefundResp
+	DyPeriodOrderReq              = pb.DyPeriodOrderReq
+	DyPeriodOrderResp             = pb.DyPeriodOrderResp
 	DySignedOrderInfo             = pb.DySignedOrderInfo
 	Empty                         = pb.Empty
 	KsUniAppReply                 = pb.KsUniAppReply
@@ -118,6 +120,8 @@ type (
 		WechatMiniXPayQueryOrder(ctx context.Context, in *WechatMiniXPayQueryOrderReq, opts ...grpc.CallOption) (*WechatMiniXPayQueryOrderResp, error)
 		//  AutoPkgAdd 自动创建应用
 		AutoPkgAdd(ctx context.Context, in *AutoPkgAddReq, opts ...grpc.CallOption) (*AutoPkgAddResp, error)
+		//  DyPeriodOrder 查询抖音周期代扣订单
+		DyPeriodOrder(ctx context.Context, in *DyPeriodOrderReq, opts ...grpc.CallOption) (*DyPeriodOrderResp, error)
 	}
 
 	defaultPayment struct {
@@ -285,4 +289,10 @@ func (m *defaultPayment) WechatMiniXPayQueryOrder(ctx context.Context, in *Wecha
 func (m *defaultPayment) AutoPkgAdd(ctx context.Context, in *AutoPkgAddReq, opts ...grpc.CallOption) (*AutoPkgAddResp, error) {
 	client := pb.NewPaymentClient(m.cli.Conn())
 	return client.AutoPkgAdd(ctx, in, opts...)
+}
+
+//  DyPeriodOrder 查询抖音周期代扣订单
+func (m *defaultPayment) DyPeriodOrder(ctx context.Context, in *DyPeriodOrderReq, opts ...grpc.CallOption) (*DyPeriodOrderResp, error) {
+	client := pb.NewPaymentClient(m.cli.Conn())
+	return client.DyPeriodOrder(ctx, in, opts...)
 }

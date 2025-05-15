@@ -45,6 +45,7 @@ const (
 	Payment_WechatMiniXPayRefund_FullMethodName              = "/payment.Payment/WechatMiniXPayRefund"
 	Payment_WechatMiniXPayQueryOrder_FullMethodName          = "/payment.Payment/WechatMiniXPayQueryOrder"
 	Payment_AutoPkgAdd_FullMethodName                        = "/payment.Payment/AutoPkgAdd"
+	Payment_DyPeriodOrder_FullMethodName                     = "/payment.Payment/DyPeriodOrder"
 )
 
 // PaymentClient is the client API for Payment service.
@@ -103,6 +104,8 @@ type PaymentClient interface {
 	WechatMiniXPayQueryOrder(ctx context.Context, in *WechatMiniXPayQueryOrderReq, opts ...grpc.CallOption) (*WechatMiniXPayQueryOrderResp, error)
 	// AutoPkgAdd 自动创建应用
 	AutoPkgAdd(ctx context.Context, in *AutoPkgAddReq, opts ...grpc.CallOption) (*AutoPkgAddResp, error)
+	// DyPeriodOrder 查询抖音周期代扣订单
+	DyPeriodOrder(ctx context.Context, in *DyPeriodOrderReq, opts ...grpc.CallOption) (*DyPeriodOrderResp, error)
 }
 
 type paymentClient struct {
@@ -347,6 +350,15 @@ func (c *paymentClient) AutoPkgAdd(ctx context.Context, in *AutoPkgAddReq, opts 
 	return out, nil
 }
 
+func (c *paymentClient) DyPeriodOrder(ctx context.Context, in *DyPeriodOrderReq, opts ...grpc.CallOption) (*DyPeriodOrderResp, error) {
+	out := new(DyPeriodOrderResp)
+	err := c.cc.Invoke(ctx, Payment_DyPeriodOrder_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PaymentServer is the server API for Payment service.
 // All implementations must embed UnimplementedPaymentServer
 // for forward compatibility
@@ -403,6 +415,8 @@ type PaymentServer interface {
 	WechatMiniXPayQueryOrder(context.Context, *WechatMiniXPayQueryOrderReq) (*WechatMiniXPayQueryOrderResp, error)
 	// AutoPkgAdd 自动创建应用
 	AutoPkgAdd(context.Context, *AutoPkgAddReq) (*AutoPkgAddResp, error)
+	// DyPeriodOrder 查询抖音周期代扣订单
+	DyPeriodOrder(context.Context, *DyPeriodOrderReq) (*DyPeriodOrderResp, error)
 	mustEmbedUnimplementedPaymentServer()
 }
 
@@ -487,6 +501,9 @@ func (UnimplementedPaymentServer) WechatMiniXPayQueryOrder(context.Context, *Wec
 }
 func (UnimplementedPaymentServer) AutoPkgAdd(context.Context, *AutoPkgAddReq) (*AutoPkgAddResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AutoPkgAdd not implemented")
+}
+func (UnimplementedPaymentServer) DyPeriodOrder(context.Context, *DyPeriodOrderReq) (*DyPeriodOrderResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DyPeriodOrder not implemented")
 }
 func (UnimplementedPaymentServer) mustEmbedUnimplementedPaymentServer() {}
 
@@ -969,6 +986,24 @@ func _Payment_AutoPkgAdd_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Payment_DyPeriodOrder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DyPeriodOrderReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PaymentServer).DyPeriodOrder(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Payment_DyPeriodOrder_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PaymentServer).DyPeriodOrder(ctx, req.(*DyPeriodOrderReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Payment_ServiceDesc is the grpc.ServiceDesc for Payment service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1079,6 +1114,10 @@ var Payment_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AutoPkgAdd",
 			Handler:    _Payment_AutoPkgAdd_Handler,
+		},
+		{
+			MethodName: "DyPeriodOrder",
+			Handler:    _Payment_DyPeriodOrder_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
