@@ -639,14 +639,17 @@ func (l *OrderPayLogic) createDouyinPeriodOrder(in *pb.OrderPayReq, payConf *dou
 		authPayOrder.InitialAmount = &initialAmount
 	}
 
+	// 首次扣款日期
+	firstDeductionDate := "2026-01-01"
 	data := &douyin.RequestPeriodOrderData{
-		OutAuthOrderNo: in.GetOrderSn() + dy_sign_order_suffix, // 周期签约订单后面固定添加后缀
-		ServiceId:      douyinReq.GetSkuId(),
-		OpenId:         in.GetInnerUserOpen(),
-		ExpireSeconds:  code.DouyinPayExpireSeconds, // 默认是半个小时
-		NotifyUrl:      payConf.NotifyUrl,
-		OnBehalfUid:    strconv.Itoa(int(in.GetInnerUserId())),
-		AuthPayOrder:   authPayOrder,
+		OutAuthOrderNo:     in.GetOrderSn() + dy_sign_order_suffix, // 周期签约订单后面固定添加后缀
+		ServiceId:          douyinReq.GetSkuId(),
+		OpenId:             in.GetInnerUserOpen(),
+		ExpireSeconds:      code.DouyinPayExpireSeconds, // 默认是半个小时
+		NotifyUrl:          payConf.NotifyUrl,
+		OnBehalfUid:        strconv.Itoa(int(in.GetInnerUserId())),
+		AuthPayOrder:       authPayOrder,
+		FirstDeductionDate: &firstDeductionDate, // 首次扣款日期
 	}
 
 	l.Sloww("createDouyinPeriodOrder", logx.Field("data", data))
