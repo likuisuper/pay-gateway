@@ -2,8 +2,8 @@ package logic
 
 import (
 	"context"
-	"errors"
 	"fmt"
+
 	"gitee.com/zhuyunkj/pay-gateway/common/define"
 	"gitee.com/zhuyunkj/pay-gateway/common/thirdApis"
 	"gitee.com/zhuyunkj/pay-gateway/db/mysql/model"
@@ -50,14 +50,14 @@ func (l *WechatMiniXPayQueryOrderLogic) WechatMiniXPayQueryOrder(in *pb.WechatMi
 
 	payCfg, cfgErr := l.payConfigWechatModel.GetOneByAppID(pkgCfg.WechatPayAppID)
 	if cfgErr != nil || payCfg.XPayAppKey == "" {
-		err = fmt.Errorf("WechatMiniXPayQueryOrder pkgName= %s, 读取微信xpay支付配置失败，err:=%v", in.AppPkgName, cfgErr)
+		err = fmt.Errorf("WechatMiniXPayQueryOrder pkgName= %s, 读取微信xpay支付配置失败 err:=%v", in.AppPkgName, cfgErr)
 		util.CheckError(err.Error())
 		return
 	}
 
 	token, err := l.svcCtx.BaseAppConfigServerApi.GetWxAccessToken(l.ctx, pkgCfg.WechatPayAppID)
 	if err != nil {
-		l.Errorf("WechatMiniXPayQueryOrder accessToken fail，err= %v, appid:%s, pkgName:%s", err, pkgCfg.WechatPayAppID, in.AppPkgName)
+		l.Errorf("WechatMiniXPayQueryOrder accessToken fail err= %v, appid:%s, pkgName:%s", err, pkgCfg.WechatPayAppID, in.AppPkgName)
 		return
 	}
 
@@ -68,11 +68,12 @@ func (l *WechatMiniXPayQueryOrderLogic) WechatMiniXPayQueryOrder(in *pb.WechatMi
 	}
 	wechatOrderRes, err := thirdApis.WechatXPayApi.QueryOrder(param, payCfg.XPayAppKey, token)
 	if err != nil {
-		l.Errorf("WechatXPayApi QueryOrder fail，err= %v, appid:%s, pkgName:%s", err, pkgCfg.WechatPayAppID, in.AppPkgName)
+		l.Errorf("WechatXPayApi QueryOrder fail err= %v, appid:%s, pkgName:%s", err, pkgCfg.WechatPayAppID, in.AppPkgName)
 		return
 	}
+
 	if wechatOrderRes.ErrCode != 0 {
-		err = errors.New(fmt.Sprintf("WechatXPayApi.QueryOrder errcode[%d],errmsg[%s]", wechatOrderRes.ErrCode, wechatOrderRes.ErrMsg))
+		err = fmt.Errorf("WechatXPayApi.QueryOrder errcode[%d],errmsg[%s]", wechatOrderRes.ErrCode, wechatOrderRes.ErrMsg)
 		return
 	}
 

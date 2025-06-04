@@ -50,7 +50,7 @@ func (l *DouyinPeriodOrderLogic) DouyinPeriodOrder(in *pb.DouyinPeriodOrderReq) 
 
 	if in.GetAction() == pb.DouyinPeriodOrderReqAction_DyPeriodActionGetPayList {
 		// 获取今日可以扣款的签约订单信息
-		return l.getSignedPayList(in)
+		return l.getSignedPayList()
 	}
 
 	if in.GetAction() == pb.DouyinPeriodOrderReqAction_DyPeriodActionUpdateNextTime {
@@ -91,7 +91,7 @@ func (l *DouyinPeriodOrderLogic) updateNexDecuctionTime(in *pb.DouyinPeriodOrder
 	return &resp, nil
 }
 
-func (l *DouyinPeriodOrderLogic) getSignedPayList(in *pb.DouyinPeriodOrderReq) (*pb.DouyinPeriodOrderResp, error) {
+func (l *DouyinPeriodOrderLogic) getSignedPayList() (*pb.DouyinPeriodOrderResp, error) {
 	resp := pb.DouyinPeriodOrderResp{}
 
 	list, err := model.NewPmDyPeriodOrderModel(define.DbPayGateway).GetSignedPayList()

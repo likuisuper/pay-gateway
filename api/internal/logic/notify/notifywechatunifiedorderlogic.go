@@ -71,19 +71,19 @@ type AttachInfo struct {
 	KsTypeId int
 }
 
-// 微信退款回调解密内容
-type wechatRefundReply struct {
-	TransactionId       string `xml:"transaction_id"`
-	OutTradeNo          string `xml:"out_trade_no"`
-	RefundId            string `xml:"refund_id"`
-	OutRefundNo         string `xml:"out_refund_no"`
-	RefundFee           int    `xml:"refund_fee"`
-	SettlementRefundFee int    `xml:"settlement_refund_fee"`
-	RefundStatus        string `xml:"refund_status"`
-	SuccessTime         string `xml:"success_time"`
-	TotalFee            int    `xml:"total_fee"`
-	CashRefundFee       string `xml:"cash_refund_fee"`
-}
+// // 微信退款回调解密内容
+// type wechatRefundReply struct {
+// 	TransactionId       string `xml:"transaction_id"`
+// 	OutTradeNo          string `xml:"out_trade_no"`
+// 	RefundId            string `xml:"refund_id"`
+// 	OutRefundNo         string `xml:"out_refund_no"`
+// 	RefundFee           int    `xml:"refund_fee"`
+// 	SettlementRefundFee int    `xml:"settlement_refund_fee"`
+// 	RefundStatus        string `xml:"refund_status"`
+// 	SuccessTime         string `xml:"success_time"`
+// 	TotalFee            int    `xml:"total_fee"`
+// 	CashRefundFee       string `xml:"cash_refund_fee"`
+// }
 
 func (l *NotifyWechatUnifiedOrderLogic) NotifyWechatUnifiedOrder(r *http.Request) (resp *types.WeChatResp, err error) {
 	body, err := ioutil.ReadAll(r.Body)

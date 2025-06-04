@@ -53,6 +53,7 @@ func (l *NotifyBytedanceLogic) NotifyBytedance(req *types.ByteDanceReq) (resp *t
 
 	if req.Type == "refund" {
 		resp, err = l.NotifyRefund(req)
+		return
 	}
 
 	resp = &types.ByteDanceResp{
@@ -124,7 +125,7 @@ func (l *NotifyBytedanceLogic) NotifyPayment(req *types.ByteDanceReq) (resp *typ
 	orderInfo.ThirdOrderNo = order.OrderId
 	err = l.payOrderModel.UpdateNotify(orderInfo)
 	if err != nil {
-		err = fmt.Errorf("orderSn = %s, UpdateNotify，err:=%v", orderInfo.OrderSn, err)
+		err = fmt.Errorf("orderSn = %s, UpdateNotify err:=%v", orderInfo.OrderSn, err)
 		util.CheckError(err.Error())
 		return
 	}

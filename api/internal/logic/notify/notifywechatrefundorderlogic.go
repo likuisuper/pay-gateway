@@ -42,14 +42,15 @@ func NewNotifyWechatRefundOrderLogic(ctx context.Context, svcCtx *svc.ServiceCon
 	}
 }
 
-type wxRefundOrderReply struct {
-	EventType    string   `json:"event_type"`
-	Id           string   `json:"id"`
-	CreateTime   string   `json:"create_time"`
-	ResourceType string   `json:"resource_type"`
-	Summary      string   `json:"summary"`
-	Resource     Resource `json:"resource"`
-}
+// type wxRefundOrderReply struct {
+// 	EventType    string   `json:"event_type"`
+// 	Id           string   `json:"id"`
+// 	CreateTime   string   `json:"create_time"`
+// 	ResourceType string   `json:"resource_type"`
+// 	Summary      string   `json:"summary"`
+// 	Resource     Resource `json:"resource"`
+// }
+
 type Resource struct {
 	OriginalType   string `json:"original_type"`
 	Algorithm      string `json:"algorithm"`

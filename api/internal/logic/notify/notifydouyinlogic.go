@@ -372,6 +372,7 @@ func (l *NotifyDouyinLogic) notifyRefund(req *http.Request, body []byte, msgJson
 }
 
 func (l *NotifyDouyinLogic) notifyPreCreateRefund(req *http.Request, body []byte, msgJson string, originData interface{}) (*types.DouyinResp, error) {
+	_ = originData
 	msg := new(douyin.PreCreateRefundMsg)
 	err := sonic.UnmarshalString(msgJson, msg)
 	if err != nil {
@@ -533,6 +534,8 @@ func (l *NotifyDouyinLogic) handleSignPayCallback(msg string, originData *douyin
 // 抖音周期代扣签约回调处理
 // https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/server/payment/management-capacity/periodic-deduction/sign/sign-callback
 func (l *NotifyDouyinLogic) handleSignCallback(msg string, originData *douyin.GeneralTradeCallbackData) error {
+	_ = originData
+
 	// msg 字段内容示例
 	//签约成功回调示例
 	// {
