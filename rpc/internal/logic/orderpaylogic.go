@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"gitee.com/zhuyunkj/alipay/v3"
 	"gitee.com/zhuyunkj/pay-gateway/common/client"
@@ -640,7 +641,7 @@ func (l *OrderPayLogic) createDouyinPeriodOrder(in *pb.OrderPayReq, payConf *dou
 	}
 
 	// 首次扣款日期
-	firstDeductionDate := "2026-01-01"
+	firstDeductionDate := time.Now().Format("2006-01-02")
 	data := &douyin.RequestPeriodOrderData{
 		OutAuthOrderNo:     in.GetOrderSn() + dy_sign_order_suffix, // 周期签约订单后面固定添加后缀
 		ServiceId:          douyinReq.GetSkuId(),
