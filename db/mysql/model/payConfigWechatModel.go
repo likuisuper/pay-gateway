@@ -29,7 +29,7 @@ type PmPayConfigWechatTable struct {
 	PublicKeyPath  string `gorm:"column:public_key_path;NOT NULL" json:"public_key_path"`   // 公钥文件路径
 	SerialNumber   string `gorm:"column:serial_number;NOT NULL" json:"serial_number"`       // 商户证书序列号
 	Remark         string `gorm:"column:remark;NOT NULL" json:"remark"`                     // 备注信息
-	XPayAppKey     string `gorm:"column:xpay_appkey;NOT NULL" json:"xpay_appkey"`           // 备注信息
+	XPayAppKey     string `gorm:"column:xpay_appkey;NOT NULL" json:"xpay_appkey"`           // 虚拟支付现网AppKey
 
 	WapUrl  string `gorm:"column:wap_url" json:"wap_url"`   // 支付H5域名
 	WapName string `gorm:"column:wap_name" json:"wap_name"` // 支付名称
