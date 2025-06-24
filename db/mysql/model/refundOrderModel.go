@@ -86,7 +86,7 @@ func (o *PmRefundOrderModel) GetInfo(outRefundNo string) (info *PmRefundOrderTab
 func (o *PmRefundOrderModel) GetInfoByRefundNo(refundNo string) (info *PmRefundOrderTable, err error) {
 	info = new(PmRefundOrderTable)
 	err = o.DB.Where("refund_no = ?", refundNo).Find(info).Error
-	if err != nil && !errors.Is(gorm.ErrRecordNotFound, err) {
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		logx.Errorf("GetInfo, refundNo:%s, err:%v", refundNo, err)
 		refundOrderMysqlErr.CounterInc()
 	}

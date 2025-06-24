@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	createRefundOrderErr       = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "createRefundOrderErr", nil, "创建退款订单失败(新)", nil})}
+	// createRefundOrderErr       = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "createRefundOrderErr", nil, "创建退款订单失败(新)", nil})}
 	updateRefundOrderNotifyErr = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "updateRefundOrderNotifyErr", nil, "更新回调退款订单失败（新）", nil})}
 	getRefundOrderErr          = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "getRefundOrderErr", nil, "获取退款订单失败（新）", nil})}
 )

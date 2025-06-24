@@ -2,10 +2,11 @@ package middleware
 
 import (
 	"errors"
-	"github.com/zeromicro/go-zero/core/logx"
-	"github.com/zeromicro/go-zero/rest/httpx"
 	"net/http"
 	"strings"
+
+	"github.com/zeromicro/go-zero/core/logx"
+	"github.com/zeromicro/go-zero/rest/httpx"
 )
 
 type InterMiddleware struct {
@@ -21,6 +22,7 @@ func (m *InterMiddleware) Handle(next http.HandlerFunc) http.HandlerFunc {
 		ip := r.Header.Get("X-Forwarded-For")
 		logx.Info("InterMiddleware X-Forwarded-For: %s", ip)
 		logx.Info("InterMiddleware remote-addr: %s", r.RemoteAddr)
+
 		//如果直接ip+端口访问取不到ip
 		if ip == "" {
 			ip = r.RemoteAddr
@@ -33,22 +35,23 @@ func (m *InterMiddleware) Handle(next http.HandlerFunc) http.HandlerFunc {
 			next(w, r)
 			return
 		}
+
 		err := errors.New("not allow")
 		logx.Errorf("InterMiddleware err: %v", err)
 		httpx.Error(w, err)
-		return
 
 		//next(w, r)
 	}
 }
 
-//判断网段合法
+// 判断网段合法
 func (m *InterMiddleware) isBelong(ip, cidr string) bool {
 	ipStrList := strings.Split(ip, ".")
 	cidrList := strings.Split(cidr, ".")
 	if len(ipStrList) != 4 || len(ipStrList) != 4 {
 		return false
 	}
+
 	for i := 0; i < 2; i++ {
 		if ipStrList[i] != cidrList[i] {
 			return false

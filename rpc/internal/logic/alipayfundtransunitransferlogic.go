@@ -90,7 +90,7 @@ func (l *AlipayFundTransUniTransferLogic) AlipayFundTransUniTransfer(in *pb.Alip
 		return
 	}
 
-	if rest.IsSuccess() == false {
+	if !rest.IsSuccess() {
 		err = fmt.Errorf("调用转账失败 err: %s %s", rest.Content.SubCode, rest.Content.SubMsg)
 		logx.Errorf(err.Error())
 		alipayFundTransUniTransferFailNum.CounterInc()

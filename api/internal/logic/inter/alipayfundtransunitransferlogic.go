@@ -111,13 +111,15 @@ func (l *AlipayFundTransUniTransferLogic) AlipayFundTransUniTransfer(req *types.
 		res := response.MakeResult(code.CODE_ERROR, err.Error(), nil)
 		return &res, nil
 	}
-	if rest.IsSuccess() == false {
+
+	if !rest.IsSuccess() {
 		err = fmt.Errorf("调用转账失败 err: %s %s", rest.Content.SubCode, rest.Content.SubMsg)
 		logx.Errorf(err.Error())
 		alipayFundTransUniTransferFailNum.CounterInc()
 		res := response.MakeResult(code.CODE_ERROR, err.Error(), nil)
 		return &res, nil
 	}
+
 	//提现记录入库
 	amount, _ := strconv.ParseFloat(req.TransAmount, 64)
 	orderInfo := &model.PmFundTransOrderTable{

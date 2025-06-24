@@ -85,6 +85,10 @@ func RegisterInstance(nacosConfig *nacos.Config) (*nacos.Instance, error) {
 
 	var registerInsParamm nacos.RegisterInstanceParam
 	ip, err := util.ExternalIP()
+	if err != nil {
+		logx.Errorf("util.ExternalIP err : %v", err)
+	}
+
 	registerInsParamm.Ip = ip.String()
 	registerInsParamm.Port = 0
 	registerInsParamm.ServiceName = nacosServerName

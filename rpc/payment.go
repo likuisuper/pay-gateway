@@ -24,7 +24,8 @@ import (
 )
 
 var nacosConfigFile = flag.String("nacos", "etc/nacos.yaml", "the nacos config file")
-var configFile = flag.String("f", "etc/payment.yaml", "the config file")
+
+// var configFile = flag.String("f", "etc/payment.yaml", "the config file")
 
 func main() {
 	kv_m.SetAllMonitorFixLabel("business", "payment.rpc")
@@ -32,7 +33,9 @@ func main() {
 	flag.Parse()
 
 	var c config.Config
+
 	//conf.MustLoad(*configFile, &c)
+
 	//从nacos获取配置
 	var nacosConfig nacos.Config
 	conf.MustLoad(*nacosConfigFile, &nacosConfig)

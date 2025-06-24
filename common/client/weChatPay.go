@@ -157,9 +157,10 @@ func NewWeChatCommPay(config WechatPayConfig) *WeChatCommPay {
 func WxPayCalcSign(mReq map[string]interface{}, key string) (sign string) {
 	//STEP 1, 对key进行升序排序.
 	sorted_keys := make([]string, 0)
-	for k, _ := range mReq {
+	for k := range mReq {
 		sorted_keys = append(sorted_keys, k)
 	}
+
 	sort.Strings(sorted_keys)
 
 	//STEP2, 对key=value的键值对用&连接起来，略过空值

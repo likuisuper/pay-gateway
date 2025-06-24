@@ -3,13 +3,14 @@ package inter
 import (
 	"bufio"
 	"context"
-	"gitee.com/zhuyunkj/zhuyun-core/util"
-	"google.golang.org/grpc/codes"
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"os"
 	"path/filepath"
+
+	"gitee.com/zhuyunkj/zhuyun-core/util"
+	"google.golang.org/grpc/codes"
 
 	"gitee.com/zhuyunkj/pay-gateway/api/internal/svc"
 	"gitee.com/zhuyunkj/pay-gateway/api/internal/types"
@@ -33,11 +34,13 @@ func NewCrtUploadLogic(ctx context.Context, svcCtx *svc.ServiceContext) *CrtUplo
 
 func (l *CrtUploadLogic) CrtUpload(req *types.CrtUploadReq, r *http.Request) (resp *types.ResultResp, err error) {
 
-	acpk, acpkInfo, err := r.FormFile("AlipayAppCertPublicKey")
-	pk, pkInfo, err := r.FormFile("AlipayPublicKey")
-	prCert, prCertInfo, err := r.FormFile("AlipayPayRootCert")
+	acpk, acpkInfo, _ := r.FormFile("AlipayAppCertPublicKey")
 
-	wxPk, wxPkInfo, err := r.FormFile("WeChatPayPrivateKey")
+	pk, pkInfo, _ := r.FormFile("AlipayPublicKey")
+
+	prCert, prCertInfo, _ := r.FormFile("AlipayPayRootCert")
+
+	wxPk, wxPkInfo, _ := r.FormFile("WeChatPayPrivateKey")
 
 	if acpkInfo != nil && req.AlipayAppCertPublicKeyPath != "" {
 		err = l.writeCrtFile(acpk, req.AlipayAppCertPublicKeyPath)
@@ -90,10 +93,12 @@ func (l *CrtUploadLogic) writeCrtFile(file multipart.File, filePath string) (err
 	}
 
 	nf, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
-	defer nf.Close()
 	if err != nil {
 		return
 	}
+
+	defer nf.Close()
+
 	writer := bufio.NewWriter(nf)
 
 	info, err := ioutil.ReadAll(file)

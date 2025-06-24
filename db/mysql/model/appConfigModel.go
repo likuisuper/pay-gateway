@@ -6,14 +6,13 @@ import (
 
 	"gitee.com/zhuyunkj/pay-gateway/db"
 	"gitee.com/zhuyunkj/zhuyun-core/cache"
-	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
 	"github.com/zeromicro/go-zero/core/logx"
 	"gorm.io/gorm"
 )
 
-var (
-	getAppConfigErr = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "getAppConfigErr", nil, "获取app配置信息失败", nil})}
-)
+// var (
+// 	getAppConfigErr = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "getAppConfigErr", nil, "获取app配置信息失败", nil})}
+// )
 
 type PmAppConfigTable struct {
 	ID             int       `gorm:"column:id;primary_key;AUTO_INCREMENT" json:"id"`

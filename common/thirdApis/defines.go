@@ -8,7 +8,7 @@ const (
 type XPayRefundOrderParam struct {
 	OpenId        string `json:"openid"`          // openid	string	下单时的用户openid
 	OrderId       string `json:"order_id"`        // order_id	string	下单时的单号，即jsapi接口传入的OutTradeNo，与wx_order_id字段二选一
-	wxOrderId     string `json:"wx_order_id"`     // wx_order_id	string	支付单对应的微信侧单号，与order_id字段二选一
+	WxOrderId     string `json:"wx_order_id"`     // wx_order_id	string	支付单对应的微信侧单号，与order_id字段二选一
 	RefundOrderId string `json:"refund_order_id"` // refund_order_id	string	本次退款时需要传的单号，长度为[8,32]，字符只允许使用字母、数字、'_'、'-'
 	LeftFee       int    `json:"left_fee"`        // left_fee	int	当前单剩余可退金额，单位分，可以通过调用query_order接口查到
 	RefundFee     int    `json:"refund_fee"`      // refund_fee	int	本次退款金额，单位分，需要(0,left_fee]

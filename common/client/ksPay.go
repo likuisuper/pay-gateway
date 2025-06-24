@@ -6,8 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
-	"net/http"
 	"sort"
 	"strings"
 	"time"
@@ -405,36 +403,36 @@ func (p *KsPay) makeSign(data map[string]string) string {
 	return sign
 }
 
-// 请求快手post  x-www-form-urlencoded方式传参
-func (p *KsPay) post(url string, postData map[string]string) (body []byte, err error) {
-	dataStr := ""
-	for k, v := range postData {
-		kvStr := fmt.Sprintf("%s=%s", k, v)
-		dataStr += "&" + kvStr
-	}
-	dataStr = strings.Trim(dataStr, "&")
-	payload := strings.NewReader(dataStr)
+// // 请求快手post  x-www-form-urlencoded方式传参
+// func (p *KsPay) post(url string, postData map[string]string) (body []byte, err error) {
+// 	dataStr := ""
+// 	for k, v := range postData {
+// 		kvStr := fmt.Sprintf("%s=%s", k, v)
+// 		dataStr += "&" + kvStr
+// 	}
+// 	dataStr = strings.Trim(dataStr, "&")
+// 	payload := strings.NewReader(dataStr)
 
-	client := &http.Client{}
-	req, err := http.NewRequest("POST", url, payload)
+// 	client := &http.Client{}
+// 	req, err := http.NewRequest("POST", url, payload)
 
-	if err != nil {
-		return
-	}
-	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+// 	if err != nil {
+// 		return
+// 	}
+// 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
-	res, err := client.Do(req)
-	if err != nil {
-		return
-	}
-	defer res.Body.Close()
+// 	res, err := client.Do(req)
+// 	if err != nil {
+// 		return
+// 	}
+// 	defer res.Body.Close()
 
-	body, err = ioutil.ReadAll(res.Body)
-	if err != nil {
-		return
-	}
-	return
-}
+// 	body, err = ioutil.ReadAll(res.Body)
+// 	if err != nil {
+// 		return
+// 	}
+// 	return
+// }
 
 // 回调签名
 func (p *KsPay) NotifySign(bodyStr string) (sign string) {
