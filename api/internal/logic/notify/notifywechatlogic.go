@@ -45,6 +45,9 @@ func NewNotifyWechatLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Noti
 	}
 }
 
+// 如何从平台证书切换成微信支付公钥
+//
+// https://pay.weixin.qq.com/doc/v3/merchant/4012154180
 func (l *NotifyWechatLogic) NotifyWechat(request *http.Request) (resp *types.WeChatResp, err error) {
 	appId := request.Header.Get("AppId")
 
@@ -62,7 +65,7 @@ func (l *NotifyWechatLogic) NotifyWechat(request *http.Request) (resp *types.WeC
 	var transaction *payments.Transaction
 	wxCli := client.NewWeChatCommPay(*payCfg.TransClientConfig())
 	transaction, _, err = wxCli.Notify(request)
-	if err != nil {
+	if err != nil || transaction == nil {
 		err = fmt.Errorf("微信支付回调 解析及验证内容失败 err=%v ", err)
 		DingdingNotify(l.ctx, err.Error())
 

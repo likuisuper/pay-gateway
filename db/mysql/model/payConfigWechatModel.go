@@ -2,7 +2,6 @@ package model
 
 import (
 	"context"
-	"time"
 
 	"gitee.com/zhuyunkj/pay-gateway/common/client"
 	"gitee.com/zhuyunkj/pay-gateway/db"
@@ -30,12 +29,11 @@ type PmPayConfigWechatTable struct {
 	SerialNumber   string `gorm:"column:serial_number;NOT NULL" json:"serial_number"`       // 商户证书序列号
 	Remark         string `gorm:"column:remark;NOT NULL" json:"remark"`                     // 备注信息
 	XPayAppKey     string `gorm:"column:xpay_appkey;NOT NULL" json:"xpay_appkey"`           // 虚拟支付现网AppKey
-
-	WapUrl  string `gorm:"column:wap_url" json:"wap_url"`   // 支付H5域名
-	WapName string `gorm:"column:wap_name" json:"wap_name"` // 支付名称
-
-	CreatedAt time.Time `gorm:"column:created_at" json:"created_at"`
-	UpdatedAt time.Time `gorm:"column:updated_at" json:"updated_at"`
+	PlatformNumer  string `gorm:"column:platform_numer;NOT NULL" json:"platform_numer"`     // 微信支付平台证书编号
+	WapUrl         string `gorm:"column:wap_url" json:"wap_url"`                            // 支付H5域名
+	WapName        string `gorm:"column:wap_name" json:"wap_name"`                          // 支付名称
+	// CreatedAt      time.Time `gorm:"column:created_at" json:"created_at"`
+	// UpdatedAt      time.Time `gorm:"column:updated_at" json:"updated_at"`
 }
 
 func (m *PmPayConfigWechatTable) TableName() string {
@@ -55,6 +53,7 @@ func (m *PmPayConfigWechatTable) TransClientConfig() (clientCfg *client.WechatPa
 		ApiKeyV2:       m.ApiKeyV2,
 		WapName:        m.WapName,
 		WapUrl:         m.WapUrl,
+		PlatformNumer:  m.PlatformNumer,
 	}
 	return
 }
@@ -84,7 +83,7 @@ func (o *PmPayConfigWechatModel) GetOneByAppID(appID string) (*PmPayConfigWechat
 
 	err = o.DB.Where(" `app_id` = ?", appID).First(&cfg).Error
 	if err != nil {
-		logx.Errorf("获取wechatPay配置信息失败，err:=%v,appID=%s", err, appID)
+		logx.Errorf("获取wechatPay配置信息失败 err:=%v,appID=%s", err, appID)
 		getPayConfigWechatErr.CounterInc()
 		return nil, err
 	}

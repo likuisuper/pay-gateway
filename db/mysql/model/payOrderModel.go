@@ -112,7 +112,8 @@ func (o *PmPayOrderModel) QueryAfterUpdate(orderSn, appId, thirdOrderNo string, 
 		return false, err
 	}
 
-	if orderInfo.PayStatus != PmPayOrderTablePayStatusNo { //订单已被处理
+	if orderInfo.PayStatus != PmPayOrderTablePayStatusNo {
+		//订单已被处理
 		tx.Rollback()
 		return false, NoNeedSupplementaryError
 	}
