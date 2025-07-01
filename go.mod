@@ -17,8 +17,8 @@ require (
 	gitlab.muchcloud.com/consumer-project/zhuyun-core v1.12.1
 	go.opentelemetry.io/otel v1.10.0
 	go.opentelemetry.io/otel/trace v1.10.0
-	google.golang.org/grpc v1.50.1
-	google.golang.org/protobuf v1.28.1
+	google.golang.org/grpc v1.55.0
+	google.golang.org/protobuf v1.30.0
 	gorm.io/gorm v1.23.6
 	k8s.io/apimachinery v0.22.9
 )
@@ -29,7 +29,7 @@ require (
 	github.com/buger/jsonparser v1.1.1 // indirect
 	github.com/bytedance/sonic/loader v0.1.1 // indirect
 	github.com/cenkalti/backoff/v4 v4.1.3 // indirect
-	github.com/cespare/xxhash/v2 v2.1.2 // indirect
+	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/cloudwego/base64x v0.1.4 // indirect
 	github.com/cloudwego/iasm v0.2.0 // indirect
 	github.com/coreos/go-semver v0.3.0 // indirect
@@ -46,7 +46,7 @@ require (
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang-jwt/jwt/v4 v4.4.3 // indirect
 	github.com/golang/mock v1.6.0 // indirect
-	github.com/golang/protobuf v1.5.2 // indirect
+	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/gomodule/redigo v1.9.2 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
@@ -91,14 +91,14 @@ require (
 	golang.org/x/arch v0.0.0-20210923205945-b76863e36670 // indirect
 	golang.org/x/crypto v0.24.0 // indirect
 	golang.org/x/net v0.26.0 // indirect
-	golang.org/x/oauth2 v0.0.0-20221014153046-6fdb5e3db783 // indirect
+	golang.org/x/oauth2 v0.6.0 // indirect
 	golang.org/x/sync v0.7.0 // indirect
 	golang.org/x/sys v0.21.0 // indirect
 	golang.org/x/term v0.21.0 // indirect
 	golang.org/x/text v0.16.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/genproto v0.0.0-20221111202108-142d8a6fa32e // indirect
+	google.golang.org/genproto v0.0.0-20230306155012-7f2fa6fef1f4 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
@@ -113,4 +113,4 @@ require (
 	sigs.k8s.io/yaml v1.2.0 // indirect
 )
 
-replace google.golang.org/grpc v1.71.0 => google.golang.org/grpc v1.50.1
+// replace google.golang.org/grpc v1.71.0 => google.golang.org/grpc v1.55.0
