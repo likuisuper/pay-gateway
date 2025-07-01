@@ -2,11 +2,12 @@ package logic
 
 import (
 	"context"
-	"gitee.com/zhuyunkj/pay-gateway/common/define"
-	"gitee.com/zhuyunkj/pay-gateway/db/mysql/model"
 
-	"gitee.com/zhuyunkj/pay-gateway/rpc/internal/svc"
-	"gitee.com/zhuyunkj/pay-gateway/rpc/pb/pb"
+	"gitlab.muchcloud.com/consumer-project/pay-gateway/common/define"
+	"gitlab.muchcloud.com/consumer-project/pay-gateway/db/mysql/model"
+
+	"gitlab.muchcloud.com/consumer-project/pay-gateway/rpc/internal/svc"
+	"gitlab.muchcloud.com/consumer-project/pay-gateway/rpc/pb/pb"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -27,7 +28,7 @@ func NewDyPeriodOrderLogic(ctx context.Context, svcCtx *svc.ServiceContext) *DyP
 	}
 }
 
-//DyPeriodOrder 查询抖音周期代扣订单
+// DyPeriodOrder 查询抖音周期代扣订单
 func (l *DyPeriodOrderLogic) DyPeriodOrder(in *pb.DyPeriodOrderReq) (*pb.DyPeriodOrderResp, error) {
 
 	dyPeriodOrder, err := l.payDyPeriodOrderModel.GetOneByOrderSnAndPkg(in.OrderSn, in.AppPkg)

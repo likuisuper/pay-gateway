@@ -9,17 +9,17 @@ import (
 	"net/http"
 	"time"
 
-	"gitee.com/zhuyunkj/pay-gateway/common/client"
-	"gitee.com/zhuyunkj/pay-gateway/common/define"
-	"gitee.com/zhuyunkj/pay-gateway/common/exception"
-	"gitee.com/zhuyunkj/pay-gateway/db/mysql/model"
-	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
-	"gitee.com/zhuyunkj/zhuyun-core/util"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/zeromicro/go-zero/rest/httpx"
+	"gitlab.muchcloud.com/consumer-project/pay-gateway/common/client"
+	"gitlab.muchcloud.com/consumer-project/pay-gateway/common/define"
+	"gitlab.muchcloud.com/consumer-project/pay-gateway/common/exception"
+	"gitlab.muchcloud.com/consumer-project/pay-gateway/db/mysql/model"
+	kv_m "gitlab.muchcloud.com/consumer-project/zhuyun-core/kv_monitor"
+	"gitlab.muchcloud.com/consumer-project/zhuyun-core/util"
 
-	"gitee.com/zhuyunkj/pay-gateway/api/internal/svc"
-	"gitee.com/zhuyunkj/pay-gateway/api/internal/types"
+	"gitlab.muchcloud.com/consumer-project/pay-gateway/api/internal/svc"
+	"gitlab.muchcloud.com/consumer-project/pay-gateway/api/internal/types"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )

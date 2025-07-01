@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"time"
 
-	alipay2 "gitee.com/zhuyunkj/alipay/v3"
-	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
 	"github.com/zeromicro/go-zero/core/logx"
+	alipay2 "gitlab.muchcloud.com/consumer-project/alipay"
+	kv_m "gitlab.muchcloud.com/consumer-project/zhuyun-core/kv_monitor"
 )
 
 var (

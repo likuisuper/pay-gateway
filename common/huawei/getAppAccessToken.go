@@ -9,9 +9,9 @@ import (
 	"io/ioutil"
 	"net/url"
 
-	"gitee.com/zhuyunkj/pay-gateway/db"
-	"gitee.com/zhuyunkj/zhuyun-core/cache"
 	"github.com/zeromicro/go-zero/core/logx"
+	"gitlab.muchcloud.com/consumer-project/pay-gateway/db"
+	"gitlab.muchcloud.com/consumer-project/zhuyun-core/cache"
 )
 
 // https://developer.huawei.com/consumer/cn/doc/HMSCore-References/obtain-application-level-at-0000001051066052

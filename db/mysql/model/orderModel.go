@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"time"
 
-	"gitee.com/zhuyunkj/pay-gateway/common/code"
-	"gitee.com/zhuyunkj/pay-gateway/db"
-	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
-	"gitee.com/zhuyunkj/zhuyun-core/util"
 	"github.com/zeromicro/go-zero/core/logx"
+	"gitlab.muchcloud.com/consumer-project/pay-gateway/common/code"
+	"gitlab.muchcloud.com/consumer-project/pay-gateway/db"
+	kv_m "gitlab.muchcloud.com/consumer-project/zhuyun-core/kv_monitor"
+	"gitlab.muchcloud.com/consumer-project/zhuyun-core/util"
 	"gorm.io/gorm"
 )
 

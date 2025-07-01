@@ -4,11 +4,11 @@ package handler
 import (
 	"net/http"
 
-	crontab "gitee.com/zhuyunkj/pay-gateway/api/internal/handler/crontab"
-	health "gitee.com/zhuyunkj/pay-gateway/api/internal/handler/health"
-	inter "gitee.com/zhuyunkj/pay-gateway/api/internal/handler/inter"
-	notify "gitee.com/zhuyunkj/pay-gateway/api/internal/handler/notify"
-	"gitee.com/zhuyunkj/pay-gateway/api/internal/svc"
+	crontab "gitlab.muchcloud.com/consumer-project/pay-gateway/api/internal/handler/crontab"
+	health "gitlab.muchcloud.com/consumer-project/pay-gateway/api/internal/handler/health"
+	inter "gitlab.muchcloud.com/consumer-project/pay-gateway/api/internal/handler/inter"
+	notify "gitlab.muchcloud.com/consumer-project/pay-gateway/api/internal/handler/notify"
+	"gitlab.muchcloud.com/consumer-project/pay-gateway/api/internal/svc"
 
 	"github.com/zeromicro/go-zero/rest"
 )

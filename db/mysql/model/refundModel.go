@@ -3,9 +3,9 @@ package model
 import (
 	"time"
 
-	"gitee.com/zhuyunkj/pay-gateway/db"
-	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
 	"github.com/zeromicro/go-zero/core/logx"
+	"gitlab.muchcloud.com/consumer-project/pay-gateway/db"
+	kv_m "gitlab.muchcloud.com/consumer-project/zhuyun-core/kv_monitor"
 	"gorm.io/gorm"
 )
 

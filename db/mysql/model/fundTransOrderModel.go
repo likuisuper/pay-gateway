@@ -1,10 +1,11 @@
 package model
 
 import (
-	"gitee.com/zhuyunkj/pay-gateway/db"
-	"github.com/zeromicro/go-zero/core/logx"
-	"gorm.io/gorm"
 	"time"
+
+	"github.com/zeromicro/go-zero/core/logx"
+	"gitlab.muchcloud.com/consumer-project/pay-gateway/db"
+	"gorm.io/gorm"
 )
 
 // 转出订单
@@ -34,7 +35,7 @@ func NewPmFundTransOrderModel(dbName string) *PmFundTransOrderModel {
 	}
 }
 
-//创建订单
+// 创建订单
 func (o *PmFundTransOrderModel) Create(info *PmFundTransOrderTable) (err error) {
 	err = o.DB.Create(info).Error
 	if err != nil {

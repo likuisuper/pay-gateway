@@ -2,13 +2,14 @@
 package model
 
 import (
-	"gitee.com/zhuyunkj/pay-gateway/common/client"
-	"gitee.com/zhuyunkj/pay-gateway/db"
-	"gitee.com/zhuyunkj/zhuyun-core/cache"
-	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
-	"github.com/zeromicro/go-zero/core/logx"
-	"gorm.io/gorm"
 	"time"
+
+	"github.com/zeromicro/go-zero/core/logx"
+	"gitlab.muchcloud.com/consumer-project/pay-gateway/common/client"
+	"gitlab.muchcloud.com/consumer-project/pay-gateway/db"
+	"gitlab.muchcloud.com/consumer-project/zhuyun-core/cache"
+	kv_m "gitlab.muchcloud.com/consumer-project/zhuyun-core/kv_monitor"
+	"gorm.io/gorm"
 )
 
 var (
@@ -52,18 +53,18 @@ func (m *PmPayConfigAlipayTable) TransClientConfig() (clientCfg *client.AliPayCo
 }
 
 type PmPayConfigAlipayModel struct {
-	DB *gorm.DB
+	DB  *gorm.DB
 	RDB *cache.RedisInstance
 }
 
 func NewPmPayConfigAlipayModel(dbName string) *PmPayConfigAlipayModel {
 	return &PmPayConfigAlipayModel{
-		DB: db.WithDBContext(dbName),
+		DB:  db.WithDBContext(dbName),
 		RDB: db.WithRedisDBContext(dbName),
 	}
 }
 
-//获取应用配置信息
+// 获取应用配置信息
 func (o *PmPayConfigAlipayModel) GetOneByAppID(appID string) (appConfig *PmPayConfigAlipayTable, err error) {
 	var cfg PmPayConfigAlipayTable
 	err = o.DB.Where(" `app_id` = ?", appID).First(&cfg).Error

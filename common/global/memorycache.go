@@ -2,9 +2,10 @@ package global
 
 import (
 	"encoding/json"
-	"gitee.com/zhuyunkj/zhuyun-core/util"
+
 	"github.com/coocood/freecache"
 	"github.com/zeromicro/go-zero/core/logx"
+	"gitlab.muchcloud.com/consumer-project/zhuyun-core/util"
 )
 
 var MemoryCacheInstance *memoryCache
@@ -48,7 +49,7 @@ func (instance *memoryCache) GetDataWithCache(cacheKey string, expire int, data 
 	return
 }
 
-//清除全部本地缓存
+// 清除全部本地缓存
 func (instance *memoryCache) ClearAll() {
 	instance.FreeCache.Clear()
 	logx.Info("清除内存缓存成功")

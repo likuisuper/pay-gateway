@@ -2,11 +2,12 @@ package health
 
 import (
 	"context"
-	"gitee.com/zhuyunkj/pay-gateway/api/common/response"
 	"time"
 
-	"gitee.com/zhuyunkj/pay-gateway/api/internal/svc"
-	"gitee.com/zhuyunkj/pay-gateway/api/internal/types"
+	"gitlab.muchcloud.com/consumer-project/pay-gateway/api/common/response"
+
+	"gitlab.muchcloud.com/consumer-project/pay-gateway/api/internal/svc"
+	"gitlab.muchcloud.com/consumer-project/pay-gateway/api/internal/types"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )

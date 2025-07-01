@@ -8,8 +8,8 @@ import (
 	"strconv"
 	"time"
 
-	"gitee.com/zhuyunkj/zhuyun-core/util"
 	"github.com/google/uuid"
+	"gitlab.muchcloud.com/consumer-project/zhuyun-core/util"
 )
 
 func ToString(v interface{}) string {

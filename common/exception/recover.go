@@ -1,8 +1,8 @@
 package exception
 
 import (
-	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
 	"github.com/zeromicro/go-zero/core/logx"
+	kv_m "gitlab.muchcloud.com/consumer-project/zhuyun-core/kv_monitor"
 )
 
 var (

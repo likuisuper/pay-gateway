@@ -15,9 +15,9 @@ import (
 	"strconv"
 	"time"
 
-	"gitee.com/zhuyunkj/zhuyun-core/util"
 	"github.com/bytedance/sonic"
 	"github.com/zeromicro/go-zero/core/logx"
+	"gitlab.muchcloud.com/consumer-project/zhuyun-core/util"
 )
 
 // 订单查询url
@@ -595,10 +595,10 @@ func (c *PayClient) TerminateSign(clientToken, authOrderId string) (*ApiCommonRe
 	return resp, nil
 }
 
-//CreateSignRefund 周期代扣发起退款
-//https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/server/payment/management-capacity/periodic-deduction/refund/create-sign-refund
-//可用该接口，对已经扣款成功的代扣单发起退款。
-//out_pay_refund_no 请保证在小程序内不重复，请勿传入已经在担保支付或交易系统使用过的开发者侧单号。
+// CreateSignRefund 周期代扣发起退款
+// https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/server/payment/management-capacity/periodic-deduction/refund/create-sign-refund
+// 可用该接口，对已经扣款成功的代扣单发起退款。
+// out_pay_refund_no 请保证在小程序内不重复，请勿传入已经在担保支付或交易系统使用过的开发者侧单号。
 func (c *PayClient) CreateSignRefund(clientToken, outPayRefundNo, thirdOrderNo, notifyUrl, reason string, refundAmount int64) (string, error) {
 	header := map[string]string{
 		"access-token": clientToken,

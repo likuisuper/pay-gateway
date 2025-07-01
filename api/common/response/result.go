@@ -1,8 +1,8 @@
 package response
 
 import (
-	"gitee.com/zhuyunkj/pay-gateway/api/internal/types"
-	"gitee.com/zhuyunkj/zhuyun-core/util"
+	"gitlab.muchcloud.com/consumer-project/pay-gateway/api/internal/types"
+	"gitlab.muchcloud.com/consumer-project/zhuyun-core/util"
 )
 
 func MakeResult(status int, desc string, data interface{}) types.ResultResp {

@@ -6,14 +6,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
-	"gitee.com/zhuyunkj/zhuyun-core/util"
-	jsoniter "github.com/json-iterator/go"
-	"github.com/zeromicro/go-zero/core/logx"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
+
+	jsoniter "github.com/json-iterator/go"
+	"github.com/zeromicro/go-zero/core/logx"
+	kv_m "gitlab.muchcloud.com/consumer-project/zhuyun-core/kv_monitor"
+	"gitlab.muchcloud.com/consumer-project/zhuyun-core/util"
 )
 
 var (
@@ -29,7 +30,7 @@ const (
 	Sign              = "sign"                // 签名 (sign)
 )
 
-//请求地址
+// 请求地址
 const (
 	tikTokCreateUri       = "https://developer.toutiao.com/api/apps/ecpay/v1/create_order"
 	tikTokQueryUri        = "https://developer.toutiao.com/api/apps/ecpay/v1/query_order"
@@ -38,7 +39,7 @@ const (
 	tikTokValidTime       = 300
 )
 
-//字节支付配置
+// 字节支付配置
 type TikTokPayConfig struct {
 	AppId     string //应用ID
 	SALT      string //加密参数
@@ -59,7 +60,7 @@ func NewTikTokPay(config TikTokPayConfig) *TikTokPay {
 	return tikTokPay
 }
 
-//请求响应
+// 请求响应
 type TikTokReply struct {
 	TikTokNotifyResp
 	Data TikTokReplyData `json:"data"`
@@ -71,13 +72,13 @@ type TikTokReplyData struct {
 	OrderCode  string `json:"order_code"`
 }
 
-//回调回复
+// 回调回复
 type TikTokNotifyResp struct {
 	ErrNO   int    `json:"err_no"`
 	ErrTips string `json:"err_tips"`
 }
 
-//创建支付订单
+// 创建支付订单
 func (t *TikTokPay) CreateEcPayOrder(info *PayOrder) (result TikTokReply, err error) {
 
 	cpExtra := fmt.Sprintf(`{"amount":%d,"order_code":"%s"`, info.Amount, info.OrderSn)
@@ -115,7 +116,7 @@ func (t *TikTokPay) CreateEcPayOrder(info *PayOrder) (result TikTokReply, err er
 	return result, nil
 }
 
-//获取签名
+// 获取签名
 func (t *TikTokPay) getSign(paramsMap map[string]interface{}) string {
 	var paramsArr []string
 	for k, v := range paramsMap {
@@ -140,7 +141,7 @@ func (t *TikTokPay) getSign(paramsMap map[string]interface{}) string {
 
 //以下回调相关
 
-//支付回调msg解析结构体
+// 支付回调msg解析结构体
 type TikTokNotifyMsgData struct {
 	Appid          string `json:"appid"`            //当前交易发起的小程序id
 	CpOrderno      string `json:"cp_orderno"`       //开发者侧的订单号
@@ -156,7 +157,7 @@ type TikTokNotifyMsgData struct {
 	OrderId        string `json:"order_id"`         //抖音侧订单号
 }
 
-//退款回调msg解析结构体
+// 退款回调msg解析结构体
 type TikTokNotifyMsgRefundData struct {
 	Appid        string `json:"appid"`          //当前交易发起的小程序id
 	CpRefundno   string `json:"cp_refundno"`    //开发者侧的退款订单号
@@ -178,7 +179,7 @@ type ByteDanceReq struct {
 	MsgSignature string `json:"msg_signature,optional"`
 }
 
-//回调验证返回
+// 回调验证返回
 func (t *TikTokPay) Notify(req *ByteDanceReq) (orderInfo *TikTokNotifyMsgData, err error) {
 	//签名核对
 	timestamp, _ := strconv.Atoi(req.Timestamp)
@@ -199,7 +200,7 @@ func (t *TikTokPay) Notify(req *ByteDanceReq) (orderInfo *TikTokNotifyMsgData, e
 	return &orderData, nil
 }
 
-//获取验签
+// 获取验签
 func (t *TikTokPay) NotifySign(timestamp int, nonce, msg string) string {
 
 	sortedString := make([]string, 0)
@@ -217,7 +218,7 @@ func (t *TikTokPay) NotifySign(timestamp int, nonce, msg string) string {
 
 //以下为支付结果查询
 
-//结果信息返回解析结构体
+// 结果信息返回解析结构体
 type TikTokOrderStatusReply struct {
 	ErrNo       int               `json:"err_no"`       //返回码，详见错误码
 	ErrTips     string            `json:"err_tips"`     //返回码描述，详见错误码描述
@@ -238,7 +239,7 @@ type TikTokPaymentInfo struct {
 	ItemId           string `json:"item_id"`            //订单来源视频对应视频 id
 }
 
-//查询订单结果
+// 查询订单结果
 func (t *TikTokPay) GetOrderStatus(orderCode string) (orderInfo *TikTokPaymentInfo, err error) {
 	data := map[string]interface{}{
 		"app_id":       t.Config.AppId,
@@ -265,7 +266,7 @@ func (t *TikTokPay) GetOrderStatus(orderCode string) (orderInfo *TikTokPaymentIn
 	return nil, nil
 }
 
-//创建退款订单
+// 创建退款订单
 type TikTokCreateRefundOrderReq struct {
 	AppId        string `json:"app_id"`               //小程序APPID
 	OutOrderNo   string `json:"out_order_no"`         //商户分配支付单号，标识进行退款的订单
@@ -282,7 +283,7 @@ type TikTokCreateRefundOrderResp struct {
 	RefundNo string `json:"refund_no"` //担保交易服务端退款单号
 }
 
-//创建退款订单
+// 创建退款订单
 func (t *TikTokPay) CreateRefundOrder(refundReq TikTokCreateRefundOrderReq) (resp TikTokCreateRefundOrderResp, err error) {
 	refundReq.NotifyUrl = t.Config.NotifyUrl
 

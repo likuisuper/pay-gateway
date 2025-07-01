@@ -3,10 +3,10 @@ package inter
 import (
 	"net/http"
 
-	"gitee.com/zhuyunkj/pay-gateway/api/internal/logic/inter"
-	"gitee.com/zhuyunkj/pay-gateway/api/internal/svc"
-	"gitee.com/zhuyunkj/pay-gateway/api/internal/types"
 	"github.com/zeromicro/go-zero/rest/httpx"
+	"gitlab.muchcloud.com/consumer-project/pay-gateway/api/internal/logic/inter"
+	"gitlab.muchcloud.com/consumer-project/pay-gateway/api/internal/svc"
+	"gitlab.muchcloud.com/consumer-project/pay-gateway/api/internal/types"
 )
 
 func HandlePaySubscribeMoneyHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {

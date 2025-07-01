@@ -6,9 +6,9 @@ package server
 import (
 	"context"
 
-	"gitee.com/zhuyunkj/pay-gateway/rpc/internal/logic"
-	"gitee.com/zhuyunkj/pay-gateway/rpc/internal/svc"
-	"gitee.com/zhuyunkj/pay-gateway/rpc/pb/pb"
+	"gitlab.muchcloud.com/consumer-project/pay-gateway/rpc/internal/logic"
+	"gitlab.muchcloud.com/consumer-project/pay-gateway/rpc/internal/svc"
+	"gitlab.muchcloud.com/consumer-project/pay-gateway/rpc/pb/pb"
 )
 
 type PaymentServer struct {
@@ -58,7 +58,7 @@ func (s *PaymentServer) DyOrderRefund(ctx context.Context, in *pb.DyOrderRefundR
 	return l.DyOrderRefund(in)
 }
 
-//  抖音退款 使用通用交易系统
+// 抖音退款 使用通用交易系统
 func (s *PaymentServer) CreateDouyinRefund(ctx context.Context, in *pb.CreateDouyinRefundReq) (*pb.CreateDouyinRefundResp, error) {
 	l := logic.NewCreateDouyinRefundLogic(ctx, s.svcCtx)
 	return l.CreateDouyinRefund(in)
@@ -124,61 +124,61 @@ func (s *PaymentServer) WechatRefundOrder(ctx context.Context, in *pb.WechatRefu
 	return l.WechatRefundOrder(in)
 }
 
-//  微信h5支付，对接文档：https://pay.weixin.qq.com/docs/merchant/apis/h5-payment/direct-jsons/h5-prepay.html
+// 微信h5支付，对接文档：https://pay.weixin.qq.com/docs/merchant/apis/h5-payment/direct-jsons/h5-prepay.html
 func (s *PaymentServer) WechatPayH5Order(ctx context.Context, in *pb.AlipayPageSignReq) (*pb.WxH5PayReplay, error) {
 	l := logic.NewWechatPayH5OrderLogic(ctx, s.svcCtx)
 	return l.WechatPayH5Order(in)
 }
 
-//  绑定订单号和华为购买token
+// 绑定订单号和华为购买token
 func (s *PaymentServer) BindHuaweiPayData(ctx context.Context, in *pb.BindHuaweiPayDataReq) (*pb.BindHuaweiPayDataResp, error) {
 	l := logic.NewBindHuaweiPayDataLogic(ctx, s.svcCtx)
 	return l.BindHuaweiPayData(in)
 }
 
-//  用户主动解除华为订阅
+// 用户主动解除华为订阅
 func (s *PaymentServer) UnsubscribeHuawei(ctx context.Context, in *pb.UnsubscribeHuaweiReq) (*pb.UnsubscribeHuaweiResp, error) {
 	l := logic.NewUnsubscribeHuaweiLogic(ctx, s.svcCtx)
 	return l.UnsubscribeHuawei(in)
 }
 
-//  抖音周期代扣相关查询和修改(包括解约)
+// 抖音周期代扣相关查询和修改(包括解约)
 func (s *PaymentServer) DouyinPeriodOrder(ctx context.Context, in *pb.DouyinPeriodOrderReq) (*pb.DouyinPeriodOrderResp, error) {
 	l := logic.NewDouyinPeriodOrderLogic(ctx, s.svcCtx)
 	return l.DouyinPeriodOrder(in)
 }
 
-//  小程序-微信的退款申请
+// 小程序-微信的退款申请
 func (s *PaymentServer) WechatMiniRefund(ctx context.Context, in *pb.WechatMiniRefundReq) (*pb.WechatMiniRefundResp, error) {
 	l := logic.NewWechatMiniRefundLogic(ctx, s.svcCtx)
 	return l.WechatMiniRefund(in)
 }
 
-//  小程序-微信的退款单详情
+// 小程序-微信的退款单详情
 func (s *PaymentServer) WechatMiniRefundQuery(ctx context.Context, in *pb.WechatMiniRefundQueryReq) (*pb.WechatMiniRefundQueryResp, error) {
 	l := logic.NewWechatMiniRefundQueryLogic(ctx, s.svcCtx)
 	return l.WechatMiniRefundQuery(in)
 }
 
-//  微信虚拟支付-退款申请
+// 微信虚拟支付-退款申请
 func (s *PaymentServer) WechatMiniXPayRefund(ctx context.Context, in *pb.WechatMiniXPayRefundReq) (*pb.WechatMiniXPayRefundResp, error) {
 	l := logic.NewWechatMiniXPayRefundLogic(ctx, s.svcCtx)
 	return l.WechatMiniXPayRefund(in)
 }
 
-//  微信虚拟支付-退款/订单详情
+// 微信虚拟支付-退款/订单详情
 func (s *PaymentServer) WechatMiniXPayQueryOrder(ctx context.Context, in *pb.WechatMiniXPayQueryOrderReq) (*pb.WechatMiniXPayQueryOrderResp, error) {
 	l := logic.NewWechatMiniXPayQueryOrderLogic(ctx, s.svcCtx)
 	return l.WechatMiniXPayQueryOrder(in)
 }
 
-//  AutoPkgAdd 自动创建应用
+// AutoPkgAdd 自动创建应用
 func (s *PaymentServer) AutoPkgAdd(ctx context.Context, in *pb.AutoPkgAddReq) (*pb.AutoPkgAddResp, error) {
 	l := logic.NewAutoPkgAddLogic(ctx, s.svcCtx)
 	return l.AutoPkgAdd(in)
 }
 
-//  DyPeriodOrder 查询抖音周期代扣订单
+// DyPeriodOrder 查询抖音周期代扣订单
 func (s *PaymentServer) DyPeriodOrder(ctx context.Context, in *pb.DyPeriodOrderReq) (*pb.DyPeriodOrderResp, error) {
 	l := logic.NewDyPeriodOrderLogic(ctx, s.svcCtx)
 	return l.DyPeriodOrder(in)

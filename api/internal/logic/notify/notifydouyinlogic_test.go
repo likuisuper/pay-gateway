@@ -2,13 +2,14 @@ package notify
 
 import (
 	"context"
-	"gitee.com/zhuyunkj/pay-gateway/api/internal/svc"
-	"gitee.com/zhuyunkj/pay-gateway/api/internal/types"
-	"gitee.com/zhuyunkj/pay-gateway/db/mysql/model"
-	"github.com/zeromicro/go-zero/core/logx"
 	"net/http"
 	"reflect"
 	"testing"
+
+	"github.com/zeromicro/go-zero/core/logx"
+	"gitlab.muchcloud.com/consumer-project/pay-gateway/api/internal/svc"
+	"gitlab.muchcloud.com/consumer-project/pay-gateway/api/internal/types"
+	"gitlab.muchcloud.com/consumer-project/pay-gateway/db/mysql/model"
 )
 
 func TestNotifyDouyinLogic_NotifyDouyin(t *testing.T) {

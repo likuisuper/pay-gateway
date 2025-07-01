@@ -1,10 +1,10 @@
 package svc
 
 import (
-	"gitee.com/zhuyunkj/pay-gateway/api/internal/config"
-	"gitee.com/zhuyunkj/pay-gateway/api/internal/middleware"
-	"gitee.com/zhuyunkj/zhuyun-core/appConfigServer"
 	"github.com/zeromicro/go-zero/rest"
+	"gitlab.muchcloud.com/consumer-project/pay-gateway/api/internal/config"
+	"gitlab.muchcloud.com/consumer-project/pay-gateway/api/internal/middleware"
+	"gitlab.muchcloud.com/consumer-project/zhuyun-core/appConfigServer"
 )
 
 type ServiceContext struct {

@@ -2,10 +2,11 @@ package notice
 
 import (
 	"context"
-	"gitee.com/zhuyunkj/zhuyun-core/util"
+	"time"
+
 	"github.com/bytedance/sonic"
 	"github.com/zeromicro/go-zero/core/logx"
-	"time"
+	"gitlab.muchcloud.com/consumer-project/zhuyun-core/util"
 )
 
 type RobotSendReq struct {

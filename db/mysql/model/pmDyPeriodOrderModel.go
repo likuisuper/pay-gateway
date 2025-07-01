@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"time"
 
-	"gitee.com/zhuyunkj/pay-gateway/db"
-	"gitee.com/zhuyunkj/zhuyun-core/util"
 	"github.com/zeromicro/go-zero/core/logx"
+	"gitlab.muchcloud.com/consumer-project/pay-gateway/db"
+	"gitlab.muchcloud.com/consumer-project/zhuyun-core/util"
 	"gorm.io/gorm"
 )
 

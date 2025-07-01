@@ -1,9 +1,9 @@
 package config
 
 import (
-	"gitee.com/zhuyunkj/zhuyun-core/cache"
-	"gitee.com/zhuyunkj/zhuyun-core/db"
 	"github.com/zeromicro/go-zero/zrpc"
+	"gitlab.muchcloud.com/consumer-project/zhuyun-core/cache"
+	"gitlab.muchcloud.com/consumer-project/zhuyun-core/db"
 )
 
 type Config struct {

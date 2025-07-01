@@ -8,14 +8,14 @@ import (
 	"strconv"
 	"time"
 
-	"gitee.com/zhuyunkj/pay-gateway/api/internal/svc"
-	"gitee.com/zhuyunkj/pay-gateway/api/internal/types"
-	"gitee.com/zhuyunkj/pay-gateway/common/client"
-	"gitee.com/zhuyunkj/pay-gateway/common/define"
-	"gitee.com/zhuyunkj/pay-gateway/common/exception"
-	"gitee.com/zhuyunkj/pay-gateway/db/mysql/model"
-	"gitee.com/zhuyunkj/zhuyun-core/util"
 	jsoniter "github.com/json-iterator/go"
+	"gitlab.muchcloud.com/consumer-project/pay-gateway/api/internal/svc"
+	"gitlab.muchcloud.com/consumer-project/pay-gateway/api/internal/types"
+	"gitlab.muchcloud.com/consumer-project/pay-gateway/common/client"
+	"gitlab.muchcloud.com/consumer-project/pay-gateway/common/define"
+	"gitlab.muchcloud.com/consumer-project/pay-gateway/common/exception"
+	"gitlab.muchcloud.com/consumer-project/pay-gateway/db/mysql/model"
+	"gitlab.muchcloud.com/consumer-project/zhuyun-core/util"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )

@@ -2,11 +2,12 @@ package db
 
 import (
 	"fmt"
-	redisdb "gitee.com/zhuyunkj/zhuyun-core/cache"
-	mysql "gitee.com/zhuyunkj/zhuyun-core/db"
-	"github.com/zeromicro/go-zero/core/logx"
-	"gorm.io/gorm"
 	"os"
+
+	"github.com/zeromicro/go-zero/core/logx"
+	redisdb "gitlab.muchcloud.com/consumer-project/zhuyun-core/cache"
+	mysql "gitlab.muchcloud.com/consumer-project/zhuyun-core/db"
+	"gorm.io/gorm"
 
 	"strings"
 )
@@ -52,7 +53,7 @@ func WithRedisDBContext(name string) *redisdb.RedisInstance {
 	return instance
 }
 
-//mysql字段自增或自减方法
+// mysql字段自增或自减方法
 func IncrementOrDecrementField(Db *gorm.DB, tableName string, where map[string]interface{}, files map[string]int) (int64, error) {
 	//组装mysql语句
 	sqlString := make([]string, 0)

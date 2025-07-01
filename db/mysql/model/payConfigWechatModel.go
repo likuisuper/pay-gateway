@@ -3,11 +3,11 @@ package model
 import (
 	"context"
 
-	"gitee.com/zhuyunkj/pay-gateway/common/client"
-	"gitee.com/zhuyunkj/pay-gateway/db"
-	"gitee.com/zhuyunkj/zhuyun-core/cache"
-	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
 	"github.com/zeromicro/go-zero/core/logx"
+	"gitlab.muchcloud.com/consumer-project/pay-gateway/common/client"
+	"gitlab.muchcloud.com/consumer-project/pay-gateway/db"
+	"gitlab.muchcloud.com/consumer-project/zhuyun-core/cache"
+	kv_m "gitlab.muchcloud.com/consumer-project/zhuyun-core/kv_monitor"
 	"gorm.io/gorm"
 )
 

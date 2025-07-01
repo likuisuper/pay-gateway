@@ -6,7 +6,7 @@ package payment
 import (
 	"context"
 
-	"gitee.com/zhuyunkj/pay-gateway/rpc/pb/pb"
+	"gitlab.muchcloud.com/consumer-project/pay-gateway/rpc/pb/pb"
 
 	"github.com/zeromicro/go-zero/zrpc"
 	"google.golang.org/grpc"
@@ -171,7 +171,7 @@ func (m *defaultPayment) DyOrderRefund(ctx context.Context, in *DyOrderRefundReq
 	return client.DyOrderRefund(ctx, in, opts...)
 }
 
-//  抖音退款 使用通用交易系统
+// 抖音退款 使用通用交易系统
 func (m *defaultPayment) CreateDouyinRefund(ctx context.Context, in *CreateDouyinRefundReq, opts ...grpc.CallOption) (*CreateDouyinRefundResp, error) {
 	client := pb.NewPaymentClient(m.cli.Conn())
 	return client.CreateDouyinRefund(ctx, in, opts...)
@@ -237,61 +237,61 @@ func (m *defaultPayment) WechatRefundOrder(ctx context.Context, in *WechatRefund
 	return client.WechatRefundOrder(ctx, in, opts...)
 }
 
-//  微信h5支付，对接文档：https://pay.weixin.qq.com/docs/merchant/apis/h5-payment/direct-jsons/h5-prepay.html
+// 微信h5支付，对接文档：https://pay.weixin.qq.com/docs/merchant/apis/h5-payment/direct-jsons/h5-prepay.html
 func (m *defaultPayment) WechatPayH5Order(ctx context.Context, in *AlipayPageSignReq, opts ...grpc.CallOption) (*WxH5PayReplay, error) {
 	client := pb.NewPaymentClient(m.cli.Conn())
 	return client.WechatPayH5Order(ctx, in, opts...)
 }
 
-//  绑定订单号和华为购买token
+// 绑定订单号和华为购买token
 func (m *defaultPayment) BindHuaweiPayData(ctx context.Context, in *BindHuaweiPayDataReq, opts ...grpc.CallOption) (*BindHuaweiPayDataResp, error) {
 	client := pb.NewPaymentClient(m.cli.Conn())
 	return client.BindHuaweiPayData(ctx, in, opts...)
 }
 
-//  用户主动解除华为订阅
+// 用户主动解除华为订阅
 func (m *defaultPayment) UnsubscribeHuawei(ctx context.Context, in *UnsubscribeHuaweiReq, opts ...grpc.CallOption) (*UnsubscribeHuaweiResp, error) {
 	client := pb.NewPaymentClient(m.cli.Conn())
 	return client.UnsubscribeHuawei(ctx, in, opts...)
 }
 
-//  抖音周期代扣相关查询和修改(包括解约)
+// 抖音周期代扣相关查询和修改(包括解约)
 func (m *defaultPayment) DouyinPeriodOrder(ctx context.Context, in *DouyinPeriodOrderReq, opts ...grpc.CallOption) (*DouyinPeriodOrderResp, error) {
 	client := pb.NewPaymentClient(m.cli.Conn())
 	return client.DouyinPeriodOrder(ctx, in, opts...)
 }
 
-//  小程序-微信的退款申请
+// 小程序-微信的退款申请
 func (m *defaultPayment) WechatMiniRefund(ctx context.Context, in *WechatMiniRefundReq, opts ...grpc.CallOption) (*WechatMiniRefundResp, error) {
 	client := pb.NewPaymentClient(m.cli.Conn())
 	return client.WechatMiniRefund(ctx, in, opts...)
 }
 
-//  小程序-微信的退款单详情
+// 小程序-微信的退款单详情
 func (m *defaultPayment) WechatMiniRefundQuery(ctx context.Context, in *WechatMiniRefundQueryReq, opts ...grpc.CallOption) (*WechatMiniRefundQueryResp, error) {
 	client := pb.NewPaymentClient(m.cli.Conn())
 	return client.WechatMiniRefundQuery(ctx, in, opts...)
 }
 
-//  微信虚拟支付-退款申请
+// 微信虚拟支付-退款申请
 func (m *defaultPayment) WechatMiniXPayRefund(ctx context.Context, in *WechatMiniXPayRefundReq, opts ...grpc.CallOption) (*WechatMiniXPayRefundResp, error) {
 	client := pb.NewPaymentClient(m.cli.Conn())
 	return client.WechatMiniXPayRefund(ctx, in, opts...)
 }
 
-//  微信虚拟支付-退款/订单详情
+// 微信虚拟支付-退款/订单详情
 func (m *defaultPayment) WechatMiniXPayQueryOrder(ctx context.Context, in *WechatMiniXPayQueryOrderReq, opts ...grpc.CallOption) (*WechatMiniXPayQueryOrderResp, error) {
 	client := pb.NewPaymentClient(m.cli.Conn())
 	return client.WechatMiniXPayQueryOrder(ctx, in, opts...)
 }
 
-//  AutoPkgAdd 自动创建应用
+// AutoPkgAdd 自动创建应用
 func (m *defaultPayment) AutoPkgAdd(ctx context.Context, in *AutoPkgAddReq, opts ...grpc.CallOption) (*AutoPkgAddResp, error) {
 	client := pb.NewPaymentClient(m.cli.Conn())
 	return client.AutoPkgAdd(ctx, in, opts...)
 }
 
-//  DyPeriodOrder 查询抖音周期代扣订单
+// DyPeriodOrder 查询抖音周期代扣订单
 func (m *defaultPayment) DyPeriodOrder(ctx context.Context, in *DyPeriodOrderReq, opts ...grpc.CallOption) (*DyPeriodOrderResp, error) {
 	client := pb.NewPaymentClient(m.cli.Conn())
 	return client.DyPeriodOrder(ctx, in, opts...)

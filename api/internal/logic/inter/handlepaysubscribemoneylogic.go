@@ -2,12 +2,13 @@ package inter
 
 import (
 	"context"
-	"gitee.com/zhuyunkj/pay-gateway/api/common/response"
-	"gitee.com/zhuyunkj/pay-gateway/api/internal/crontab"
-	"gitee.com/zhuyunkj/pay-gateway/api/internal/svc"
-	"gitee.com/zhuyunkj/pay-gateway/api/internal/types"
-	"gitee.com/zhuyunkj/pay-gateway/common/code"
+
 	"github.com/zeromicro/go-zero/core/logx"
+	"gitlab.muchcloud.com/consumer-project/pay-gateway/api/common/response"
+	"gitlab.muchcloud.com/consumer-project/pay-gateway/api/internal/crontab"
+	"gitlab.muchcloud.com/consumer-project/pay-gateway/api/internal/svc"
+	"gitlab.muchcloud.com/consumer-project/pay-gateway/api/internal/types"
+	"gitlab.muchcloud.com/consumer-project/pay-gateway/common/code"
 )
 
 type HandlePaySubscribeMoneyLogic struct {

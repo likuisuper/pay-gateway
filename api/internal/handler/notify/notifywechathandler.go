@@ -3,9 +3,9 @@ package notify
 import (
 	"net/http"
 
-	"gitee.com/zhuyunkj/pay-gateway/api/internal/logic/notify"
-	"gitee.com/zhuyunkj/pay-gateway/api/internal/svc"
 	"github.com/zeromicro/go-zero/rest/httpx"
+	"gitlab.muchcloud.com/consumer-project/pay-gateway/api/internal/logic/notify"
+	"gitlab.muchcloud.com/consumer-project/pay-gateway/api/internal/svc"
 )
 
 func NotifyWechatHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {

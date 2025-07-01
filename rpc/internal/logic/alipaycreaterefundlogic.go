@@ -6,13 +6,13 @@ import (
 	"fmt"
 	"strconv"
 
-	"gitee.com/zhuyunkj/pay-gateway/common/define"
-	"gitee.com/zhuyunkj/pay-gateway/common/utils"
-	"gitee.com/zhuyunkj/pay-gateway/db/mysql/model"
-	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
+	"gitlab.muchcloud.com/consumer-project/pay-gateway/common/define"
+	"gitlab.muchcloud.com/consumer-project/pay-gateway/common/utils"
+	"gitlab.muchcloud.com/consumer-project/pay-gateway/db/mysql/model"
+	kv_m "gitlab.muchcloud.com/consumer-project/zhuyun-core/kv_monitor"
 
-	"gitee.com/zhuyunkj/pay-gateway/rpc/internal/svc"
-	"gitee.com/zhuyunkj/pay-gateway/rpc/pb/pb"
+	"gitlab.muchcloud.com/consumer-project/pay-gateway/rpc/internal/svc"
+	"gitlab.muchcloud.com/consumer-project/pay-gateway/rpc/pb/pb"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )

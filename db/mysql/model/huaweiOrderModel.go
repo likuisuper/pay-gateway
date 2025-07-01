@@ -3,8 +3,8 @@ package model
 import (
 	"time"
 
-	"gitee.com/zhuyunkj/pay-gateway/db"
 	"github.com/zeromicro/go-zero/core/logx"
+	"gitlab.muchcloud.com/consumer-project/pay-gateway/db"
 	"gorm.io/gorm"
 )
 

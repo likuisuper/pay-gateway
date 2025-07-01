@@ -3,9 +3,9 @@ package douyin
 import (
 	"time"
 
-	"gitee.com/zhuyunkj/zhuyun-core/util"
 	"github.com/bytedance/sonic"
 	"github.com/zeromicro/go-zero/core/logx"
+	"gitlab.muchcloud.com/consumer-project/zhuyun-core/util"
 )
 
 type CreateRefundOrderReq struct {
@@ -111,7 +111,7 @@ type PreCreateRefundMsg struct {
 	Currency string `json:"currency,omitempty"` // 非必填 支付币种 钻石支付为DIAMOND
 }
 
-//SignRefundMsg 周期代扣退款结果通知 https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/server/payment/management-capacity/periodic-deduction/refund/sign-refund-callback
+// SignRefundMsg 周期代扣退款结果通知 https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/server/payment/management-capacity/periodic-deduction/refund/sign-refund-callback
 type SignRefundMsg struct {
 	AppId             string `json:"app_id"`              //小程序 app_id
 	Status            string `json:"status"`              //退款结果状态，状态枚举：SUCCESS：退款成功  FAIL：退款失败

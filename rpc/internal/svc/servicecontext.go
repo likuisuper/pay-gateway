@@ -1,8 +1,8 @@
 package svc
 
 import (
-	"gitee.com/zhuyunkj/pay-gateway/rpc/internal/config"
-	"gitee.com/zhuyunkj/zhuyun-core/appConfigServer"
+	"gitlab.muchcloud.com/consumer-project/pay-gateway/rpc/internal/config"
+	"gitlab.muchcloud.com/consumer-project/zhuyun-core/appConfigServer"
 )
 
 type ServiceContext struct {

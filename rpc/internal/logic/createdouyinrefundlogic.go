@@ -4,13 +4,13 @@ import (
 	"context"
 	"errors"
 
-	douyin "gitee.com/zhuyunkj/pay-gateway/common/client/douyinGeneralTrade"
-	"gitee.com/zhuyunkj/pay-gateway/common/define"
-	"gitee.com/zhuyunkj/pay-gateway/db/mysql/model"
-	"gitee.com/zhuyunkj/pay-gateway/rpc/internal/svc"
-	"gitee.com/zhuyunkj/pay-gateway/rpc/pb/pb"
-	kv_m "gitee.com/zhuyunkj/zhuyun-core/kv_monitor"
 	"github.com/zeromicro/go-zero/core/logx"
+	douyin "gitlab.muchcloud.com/consumer-project/pay-gateway/common/client/douyinGeneralTrade"
+	"gitlab.muchcloud.com/consumer-project/pay-gateway/common/define"
+	"gitlab.muchcloud.com/consumer-project/pay-gateway/db/mysql/model"
+	"gitlab.muchcloud.com/consumer-project/pay-gateway/rpc/internal/svc"
+	"gitlab.muchcloud.com/consumer-project/pay-gateway/rpc/pb/pb"
+	kv_m "gitlab.muchcloud.com/consumer-project/zhuyun-core/kv_monitor"
 )
 
 var CreateDyRefundFailNum = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "CreateDyRefundFailNum", nil, "抖音创建退款订单异常", nil})}

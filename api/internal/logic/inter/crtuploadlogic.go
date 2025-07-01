@@ -9,11 +9,11 @@ import (
 	"os"
 	"path/filepath"
 
-	"gitee.com/zhuyunkj/zhuyun-core/util"
+	"gitlab.muchcloud.com/consumer-project/zhuyun-core/util"
 	"google.golang.org/grpc/codes"
 
-	"gitee.com/zhuyunkj/pay-gateway/api/internal/svc"
-	"gitee.com/zhuyunkj/pay-gateway/api/internal/types"
+	"gitlab.muchcloud.com/consumer-project/pay-gateway/api/internal/svc"
+	"gitlab.muchcloud.com/consumer-project/pay-gateway/api/internal/types"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )

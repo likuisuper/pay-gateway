@@ -1,12 +1,13 @@
 package inter
 
 import (
-	"gitee.com/zhuyunkj/pay-gateway/api/internal/logic/inter"
 	"net/http"
 
-	"gitee.com/zhuyunkj/pay-gateway/api/internal/svc"
-	"gitee.com/zhuyunkj/pay-gateway/api/internal/types"
+	"gitlab.muchcloud.com/consumer-project/pay-gateway/api/internal/logic/inter"
+
 	"github.com/zeromicro/go-zero/rest/httpx"
+	"gitlab.muchcloud.com/consumer-project/pay-gateway/api/internal/svc"
+	"gitlab.muchcloud.com/consumer-project/pay-gateway/api/internal/types"
 )
 
 func GetPayNodeListHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
