@@ -33,6 +33,11 @@ import (
 	kv_m "gitlab.muchcloud.com/consumer-project/zhuyun-core/kv_monitor"
 )
 
+// 微信支付文档
+//
+// https://pay.weixin.qq.com/doc/v3/merchant/4012791856
+//
+
 var (
 	weChatHttpRequestErr = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "weChatHttpRequestErr", nil, "weChat请求错误", nil})}
 	weChatNotifyErr      = kv_m.Register{kv_m.Regist(&kv_m.Monitor{kv_m.CounterValue, kv_m.KvLabels{"kind": "common"}, "weChatNotifyErr", nil, "weChat回调通知错误", nil})}
@@ -540,31 +545,34 @@ func (l *WeChatCommPay) WechatPayV3(info *PayOrder, openId string) (uniAppResp *
 		logx.Errorf("请求微信支付发生错误,err =%v", err)
 		return nil, err
 	}
+
 	body := info.Subject
 	svc := jsapi.JsapiApiService{Client: client}
-	// 得到prepay_id，以及调起支付所需的参数和签名
-	resp, result, err := svc.PrepayWithRequestPayment(l.Ctx,
-		jsapi.PrepayRequest{
-			Appid:       core.String(l.Config.AppId),
-			Mchid:       core.String(l.Config.MchId),
-			Description: core.String(body),
-			OutTradeNo:  core.String(info.OrderSn),
-			Attach:      core.String(attach),
-			NotifyUrl:   core.String(l.Config.NotifyUrl),
-			Amount: &jsapi.Amount{
-				Total: core.Int64(int64(info.Amount)),
-			},
-			Payer: &jsapi.Payer{
-				Openid: core.String(openId),
-			},
+
+	tmpReq := jsapi.PrepayRequest{
+		Appid:       core.String(l.Config.AppId),
+		Mchid:       core.String(l.Config.MchId),
+		Description: core.String(body),
+		OutTradeNo:  core.String(info.OrderSn),
+		Attach:      core.String(attach),
+		NotifyUrl:   core.String(l.Config.NotifyUrl),
+		Amount: &jsapi.Amount{
+			Total: core.Int64(int64(info.Amount)),
 		},
-	)
+		Payer: &jsapi.Payer{
+			Openid: core.String(openId),
+		},
+	}
+
+	// 得到prepay_id，以及调起支付所需的参数和签名
+	resp, result, err := svc.PrepayWithRequestPayment(l.Ctx, tmpReq)
 	if err != nil {
 		weChatHttpRequestErr.CounterInc()
-		logx.Errorf("请求微信支付发生错误,err =%v", err)
+		logx.Errorw("请求微信支付发生错误", logx.Field("err", err), logx.Field("params", tmpReq))
 		return nil, err
 	}
-	logx.Infof("请求微信支付成功！result = %v", result)
+
+	logx.Infof("请求微信支付成功 result = %v", result)
 	payResult := &UniAppResp{
 		TimeStamp: *resp.TimeStamp,
 		NonceStr:  *resp.NonceStr,
@@ -573,6 +581,7 @@ func (l *WeChatCommPay) WechatPayV3(info *PayOrder, openId string) (uniAppResp *
 		PaySign:   *resp.PaySign,
 		OrderCode: info.OrderSn,
 	}
+
 	return payResult, nil
 }
 
