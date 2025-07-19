@@ -649,12 +649,12 @@ func (l *WeChatCommPay) Notify(r *http.Request) (orderInfo *payments.Transaction
 		if wechatpaySerial != l.Config.PublicKeyId {
 			// 公钥id不匹配
 			// 先记录错误日志
-			logx.Errorf("数据库公钥id和微信回调的不一致, 微信回调: %s , 数据库: %s", wechatpaySerial, l.Config.PublicKeyId)
+			logx.Errorf("数据库公钥id和微信回调的不一致, 微信回调: %s , 数据库: %v", wechatpaySerial, l.Config)
 		}
 	} else if wechatpaySerial != l.Config.PlatformNumer {
 		// 平台证书不匹配
 		// 先记录错误日志
-		logx.Errorf("数据库平台证书和微信回调的不一致, 微信回调: %s , 数据库: %s", wechatpaySerial, l.Config.PlatformNumer)
+		logx.Errorf("数据库平台证书和微信回调的不一致, 微信回调: %s , 数据库: %v", wechatpaySerial, l.Config)
 	}
 
 	var handler *notify.Handler
