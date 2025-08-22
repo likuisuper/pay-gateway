@@ -144,7 +144,7 @@ func (l *AlipayPagePayAndSignLogic) AlipayPagePayAndSign(in *pb.AlipayPageSignRe
 	}
 
 	bytes, err := json.Marshal(appPay)
-	logx.Slowf("请求参数: %v, err:%v", string(bytes), err)
+	logx.Slowf("请求支付宝的参数: %v, err:%v, notifyUrl:%s", string(bytes), err, notifyUrl)
 
 	result, err := payClient.TradeAppPay(appPay)
 	if err != nil {
