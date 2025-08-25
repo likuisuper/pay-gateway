@@ -50,9 +50,9 @@ func NewNotifyAlipayNewLogic(ctx context.Context, svcCtx *svc.ServiceContext) *N
 }
 
 const (
-	ALI_NOTIFY_TYPE_TRADE_SYNC = "trade_status_sync"
-	ALI_NOTIFY_TYPE_SIGN       = "dut_user_sign"
-	ALI_NOTIFY_TYPE_UNSIGN     = "dut_user_unsign"
+	ALI_NOTIFY_TYPE_TRADE_SYNC = "trade_status_sync" // 交易状态同步
+	ALI_NOTIFY_TYPE_SIGN       = "dut_user_sign"     // 签约
+	ALI_NOTIFY_TYPE_UNSIGN     = "dut_user_unsign"   // 解约
 )
 
 var (
@@ -90,14 +90,15 @@ func (l *NotifyAlipayNewLogic) NotifyAlipayNew(r *http.Request, w http.ResponseW
 		if signErr != nil {
 			desc += signErr.Error()
 		}
-		logx.Error(desc)
+
+		logx.Errorf(desc+", bodyData:%s", desc)
 		notifyAlipayErrNum.CounterInc()
 		return
 	}
 
 	if ALI_NOTIFY_TYPE_TRADE_SYNC == notifyType {
-		var outTradeNo = r.Form.Get("out_trade_no")
-		var tradeNo = r.Form.Get("trade_no")
+		var outTradeNo = r.Form.Get("out_trade_no") // 内部订单号
+		var tradeNo = r.Form.Get("trade_no")        // 外部订单号
 		var tradeQuery = alipay.TradeQuery{
 			OutTradeNo: outTradeNo,
 		}
@@ -111,7 +112,7 @@ func (l *NotifyAlipayNewLogic) NotifyAlipayNew(r *http.Request, w http.ResponseW
 				return
 			}
 
-			// 支付成功
+			// 主动查询支付 支付状态
 			res, aliErr := client.TradeQuery(tradeQuery)
 			if aliErr != nil {
 				aliErr = fmt.Errorf("TradeQuery err=%v", aliErr)
