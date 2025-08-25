@@ -68,6 +68,9 @@ func (l *NotifyAlipayNewLogic) NotifyAlipayNew(r *http.Request, w http.ResponseW
 		return
 	}
 
+	// 回调数据类似
+	// app_id=2021004114603349&auth_app_id=2021004114603349&buyer_logon_id=130****7665&buyer_open_id=074ve892AJRzm_wsYPsbwHFP2MyT0D5y4kex42P5hHQYqw2&buyer_pay_amount=0.01&charset=utf-8&fund_bill_list=[{"amount":"0.01","fundChannel":"ALIPAYACCOUNT"}]&gmt_create=2025-08-22 14:21:33&gmt_payment=2025-08-22 14:21:33&invoice_amount=0.01&merchant_app_id=2021004114603349&notify_id=2025082201222142134008741427530118&notify_time=2025-08-23 14:50:17&notify_type=trade_status_sync&out_trade_no=14084560438721249281155&point_amount=0.00&receipt_amount=0.01&seller_email=yuanwang_zhifubao@yunxiacn.com&seller_id=2088641875013687&sign=mqc72yjvfWXlZw2zUh8JYMx8AwpVNO6JDXImmD5G+lNxOHkrL5/67fYkS/p/gtCKvpZoQ+hBzxze3LJQt0n/sWjmbhK5Llc+fLhJKIO8q5mp9+QnWMxGR7XJvZ/JttIqziqkoW6Zyem559Fdp7DySWpRGvwlt9Aj79wMmziIBcyAjv32qMIcPWz+FHelk+F6cbGB13oVU+k1N8FE9ZzaPW9kCRlaOpWu3lPXSu3nLUlLwUkYnDPILwtKqmlI/j0WxF7g9pZ4rsWtczGkloCJqK0D3Q1TB9PoCIChvV7kPIeQ1rYrXqOru5OonDY68usRMT85Hi0BLdi6WFM+3jOiug==&sign_type=RSA2&subject=限时1天会员&total_amount=0.01&trade_no=2025082222001408741424392849&trade_status=TRADE_SUCCESS&version=1.0
+
 	bodyData := r.Form.Encode()
 	logx.Slowf("NotifyAlipay form %s", bodyData)
 
@@ -75,7 +78,7 @@ func (l *NotifyAlipayNewLogic) NotifyAlipayNew(r *http.Request, w http.ResponseW
 
 	client, _, _, err := clientMgr.GetAlipayClientByAppIdWithCache(appId)
 	if err != nil {
-		logx.Errorf("GetAlipayClientByAppIdWithCache err:%s", err.Error())
+		logx.Errorf("GetAlipayClientByAppIdWithCache err:%s, appId:%s", err.Error(), appId)
 		notifyAlipayErrNum.CounterInc()
 		return
 	}
