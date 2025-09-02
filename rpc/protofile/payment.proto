@@ -558,6 +558,9 @@ service Payment {
   // 用户主动解除华为订阅
   rpc UnsubscribeHuawei(UnsubscribeHuaweiReq) returns (UnsubscribeHuaweiResp);
 
+  // 用户主动解除华为订阅后的退款操作
+  rpc UnsubscribeHuaweiRefund(UnsubscribeHuaweiReq) returns (UnsubscribeHuaweiResp);
+
   // 抖音周期代扣相关查询和修改(包括解约)
   rpc DouyinPeriodOrder(DouyinPeriodOrderReq) returns (DouyinPeriodOrderResp);
 

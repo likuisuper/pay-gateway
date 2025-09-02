@@ -8,7 +8,7 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"time"
 
@@ -41,7 +41,7 @@ func SendRequest(authHeaderString string, url string, bodyMap map[string]string)
 	}
 
 	defer response.Body.Close()
-	bodyBytes, err := ioutil.ReadAll(response.Body)
+	bodyBytes, err := io.ReadAll(response.Body)
 	if err != nil {
 		logx.Errorf("ioutil.ReadAll, err: %v", err)
 		return "", err
