@@ -126,7 +126,7 @@ func (l *WechatUnifiedOrderLogic) pureCreateHuaweiOrder(in *pb.AlipayPageSignReq
 		ExternalAgreementNo: utils.GenerateOrderCode(l.svcCtx.Config.SnowFlake.MachineNo, l.svcCtx.Config.SnowFlake.WorkerNo),
 	}
 
-	err := l.huaweiOrderModel.Create(&orderInfo)
+	err := l.huaweiOrderModel.CreateHuaweiOrder(&orderInfo)
 	if err != nil {
 		payAndSignCreateOrderErr.CounterInc()
 		logx.Errorf("创建订单异常,创建订单表失败 err:%s, orderInfo: %+v", err.Error(), orderInfo)

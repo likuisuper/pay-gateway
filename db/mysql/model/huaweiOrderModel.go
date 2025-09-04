@@ -62,7 +62,7 @@ func NewHuaweiOrderModel(dbName string) *HuaweiOrderModel {
 }
 
 // 创建记录
-func (o *HuaweiOrderModel) Create(info *HuaweiOrderTable) error {
+func (o *HuaweiOrderModel) CreateHuaweiOrder(info *HuaweiOrderTable) error {
 	err := o.DB.Create(info).Error
 	if err != nil {
 		logx.Errorf("创建失败 err:%v", err)
