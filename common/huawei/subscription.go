@@ -137,7 +137,7 @@ type InAppPurchaseData struct {
 	// 1：顾客因为在App内遇到了问题而取消了订阅。
 	// 0：其他原因取消，比如顾客错误地订阅了商品。
 	// 如果为空且cancelTime有值，表示是升级等操作导致的取消。
-	CancelReason string `json:"cancelReason"`
+	CancelReason int `json:"cancelReason"`
 	// App信息，预留
 	AppInfo string `json:"appInfo"`
 	// 用户是否已经关闭订阅上的通知。
