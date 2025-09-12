@@ -80,4 +80,5 @@ type StatusUpdateNotification struct {
 	ProductId                         string `json:"productId"`                         // 订阅型商品ID
 	ApplicationId                     string `json:"applicationId"`                     // 应用ID
 	ExpirationIntent                  int    `json:"expirationIntent"`                  // 超期原因，仅在notificationType为RENEWAL或INTERACTIVE_RENEWAL时并且续期失败情况下有值
+	DeveloperPayload                  string `json:"developerPayload"`                  // 这个里面放的是内部订单号
 }

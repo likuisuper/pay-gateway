@@ -53,6 +53,7 @@ func (l *NotifyHuaweiLogic) NotifyHuawei(req *types.HuaweiReq) *huawei.Notificat
 
 	if req.EventType == "" {
 		// 配置的时候保存的回调 不处理 记录一下日志就可以了
+		l.Error("NotifyHuawei param error, event type is empty")
 		return nil
 	}
 
@@ -77,23 +78,31 @@ func (l *NotifyHuaweiLogic) NotifyHuawei(req *types.HuaweiReq) *huawei.Notificat
 	}
 	l.notifyHuaweiLogModel.Create(logModel)
 
+	var err error
 	if req.EventType == huawei.HUAWEI_EVENT_TYPE_SUBSCRIPTION {
 		// 处理订阅
-		err := l.handleHuaweiSub(req, hwApp, logModel.Id)
+		err = l.handleHuaweiSub(req, hwApp, logModel.Id)
 		if err != nil {
 			l.Errorf("handleHuaweiSub error: %v", err)
 		}
 	} else if req.EventType == huawei.HUAWEI_EVENT_TYPE_ORDER {
 		// 处理订单
-		err := l.handleHuaweiOrder(req, logModel.Id)
+		err = l.handleHuaweiOrder(req, logModel.Id)
 		if err != nil {
 			l.Errorf("handleHuaweiOrder error: %v", err)
 		}
 	}
 
-	// 统一返回处理成功 避免华为重试
+	if err == nil {
+		// 华为重试不重试
+		return &huawei.NotificationResponse{
+			ErrorCode: "0",
+		}
+	}
+
+	// 华为需要重试
 	return &huawei.NotificationResponse{
-		ErrorCode: "0",
+		ErrorCode: "500",
 	}
 }
 
@@ -118,18 +127,26 @@ func (l *NotifyHuaweiLogic) handleHuaweiSub(req *types.HuaweiReq, hwApp *model.H
 		return err
 	}
 
+	if info.DeveloperPayload == "" {
+		l.Errorf("DeveloperPayload is empty raw string: %s", err, req.SubNotification.StatusUpdateNotification)
+		return nil
+	}
+
 	var purchaseData huawei.InAppPurchaseData
 
 	// 取消订阅时间
 	cancellationTime := 0
 
-	if info.NotificationType == 1 || info.LatestReceiptInfo == "" {
-		// 都是订阅取消
+	if info.NotificationType == huawei.NOTIFICATION_TYPE_CANCEL {
+		// 订阅取消
 		if info.CancellationDate > 1000 {
 			cancellationTime = int(info.CancellationDate) / 1000
+		} else {
+			cancellationTime = int(time.Now().Unix())
 		}
 	} else {
-		if info.SubscriptionId == "" || info.PurchaseToken == "" || info.LatestReceiptInfo == "" {
+		// if info.SubscriptionId == "" || info.PurchaseToken == "" || info.LatestReceiptInfo == "" {
+		if info.LatestReceiptInfo == "" {
 			l.Errorf("subscription some data is empty, raw data:%v", req.SubNotification.StatusUpdateNotification)
 			return errors.New("subscription some data is empty")
 		}
@@ -166,155 +183,162 @@ func (l *NotifyHuaweiLogic) handleHuaweiSub(req *types.HuaweiReq, hwApp *model.H
 		}
 	}
 
-	// 根据购买token查找订单数据
-	hworder, err := l.huaweiOrderModel.GetOneByTokenAndSubId(info.PurchaseToken, info.SubscriptionId, purchaseData.OriSubscriptionId, purchaseData.OrderId)
-	if err != nil {
-		l.Errorf("GetOneByTokenAndSubId error: %v, token: %s", err, info.PurchaseToken)
-		return err
-	}
-
-	if hworder == nil || hworder.Id < 1 {
-		err = errors.New("获取订单失败")
-		l.Error(err.Error() + " 订单为空, token: " + info.PurchaseToken)
-		return err
-	}
-
-	if hworder.AppId != info.ApplicationId {
-		err = errors.New("应用id不一致")
-		l.Errorf(err.Error()+" 数据库app id: %s, 回传app id: %s", hworder.AppId, info.ApplicationId)
-		return err
-	}
-
-	// 购买时间
-	var purchaseTime string
-	if purchaseData.OriPurchaseTime > 1000 {
-		// OriPurchaseTime 原购买时间，UTC时间戳，以毫秒为单位
-		purchaseTime = time.Unix(int64(purchaseData.OriPurchaseTime/1000), 0).Format("2006-01-02 15:04:05")
-	} else if purchaseData.PurchaseTime > 1000 {
-		purchaseTime = time.Unix(int64(purchaseData.PurchaseTime/1000), 0).Format("2006-01-02 15:04:05")
-	}
-
-	// 使用回调来 提供服务
 	// 通知事件的类型
 	notificationType := info.NotificationType
 
-	// switch notificationType {
-	// case huawei.NOTIFICATION_TYPE_INITIAL_BUY:
-	// case huawei.NOTIFICATION_TYPE_CANCEL:
-	// case huawei.NOTIFICATION_TYPE_RENEWAL:
-	// case huawei.NOTIFICATION_TYPE_INTERACTIVE_RENEWAL:
-	// case huawei.NOTIFICATION_TYPE_NEW_RENEWAL_PREF:
-	// case huawei.NOTIFICATION_TYPE_RENEWAL_STOPPED:
-	// case huawei.NOTIFICATION_TYPE_RENEWAL_RESTORED:
-	// case huawei.NOTIFICATION_TYPE_RENEWAL_RECURRING:
-	// case huawei.NOTIFICATION_TYPE_ON_HOLD:
-	// case huawei.NOTIFICATION_TYPE_PAUSED:
-	// case huawei.NOTIFICATION_TYPE_PAUSE_PLAN_CHANGED:
-	// case huawei.NOTIFICATION_TYPE_PRICE_CHANGE_CONFIRMED:
-	// case huawei.NOTIFICATION_TYPE_DEFERRED:
-	// default:
-	// }
+	// 这里直接填线上地址
+	tmpNotifyUrl := "http://quick4-go-pre.muchcloud.com/ver/user/notifyUser"
 
-	// 更新数据
-	var updateData map[string]interface{}
-	if hworder.Status == 0 {
-		// 未处理过
-		updateData = map[string]interface{}{
-			"log_id":            logId,
-			"version":           req.Version,
-			"event_type":        req.EventType,
-			"notify_time":       int(req.NotifyTime / 1000), // 毫秒转成秒级时间戳
-			"notification_type": notificationType,
-			"environment":       strings.ToLower(info.Environment),
-			"pay_order_id":      info.OrderId,
-			"platform_trade_no": info.OrderId,
-			"subscription_id":   purchaseData.SubscriptionId,
-			"auto_renew_status": info.AutoRenewStatus,
-			"status":            1, // 已处理
-			"pay_time":          purchaseTime,
-			"expiration_date":   int(purchaseData.ExpirationDate / 1000),
-		}
-	} else {
-		// 已经处理过
-		updateData = map[string]interface{}{
-			"version":           req.Version,
-			"event_type":        req.EventType,
-			"notify_time":       int(req.NotifyTime / 1000), // 毫秒转成秒级时间戳
-			"notification_type": notificationType,
-			"auto_renew_status": info.AutoRenewStatus,
-		}
-
-		if purchaseTime != "" {
-			updateData["pay_time"] = purchaseTime
-		}
-
-		if info.Environment != "" {
-			updateData["environment"] = strings.ToLower(info.Environment)
-		}
-
-		if info.OrderId != "" {
-			updateData["pay_order_id"] = info.OrderId
-			updateData["platform_trade_no"] = info.OrderId
-		}
-
-		if purchaseData.SubscriptionId != "" {
-			updateData["subscription_id"] = purchaseData.SubscriptionId
-		}
-
-		if purchaseData.ExpirationDate > 1000 {
-			updateData["expiration_date"] = int(purchaseData.ExpirationDate / 1000)
-		}
-	}
-
-	newProductId := ""
-	if info.ProductId != "" && hworder.ProductId != info.ProductId {
-		// 商品id不一致 更改了订阅商品id
-		updateData["product_id"] = info.ProductId
-		newProductId = info.ProductId
-	}
-
-	if cancellationTime < 1 && purchaseData.CancellationTime > 1000 {
-		cancellationTime = int(purchaseData.CancellationTime / 1000)
-	}
-	if cancellationTime > 0 {
-		updateData["cancellation_date"] = cancellationTime
-	} else {
-		updateData["cancellation_date"] = 0
-	}
-
-	err = l.huaweiOrderModel.UpdateData(hworder.Id, updateData)
+	// 根据内部订单号查询订单信息
+	hworder, err := l.huaweiOrderModel.GetOneByOutTradeNo(info.DeveloperPayload)
 	if err != nil {
-		return err
+		l.Errorf("GetOneByOutTradeNo error: %v, developerPayload: %s", err, info.DeveloperPayload)
+	}
+
+	// 默认 恸燃心局 com.yxwl.trxj
+	callbackPkg := "com.yxwl.trxj"
+
+	// 回调数据
+	callbackData := map[string]interface{}{
+		"notify_type":       code.APP_NOTIFY_HUAWEI_PRODUCT_SUBSCIRBE,
+		"user_id":           0,
+		"out_trade_no":      info.DeveloperPayload,
+		"pkg":               callbackPkg,
+		"notification_type": notificationType,
+		"new_product_id":    "",               // 新商品id
+		"notidy_desc":       notifyDesc,       // 通知描述
+		"cancellation_time": cancellationTime, // 取消订阅时间
+	}
+
+	if hworder != nil && hworder.Id > 0 {
+		if hworder.AppPkg != "" {
+			callbackPkg = hworder.AppPkg
+			callbackData["pkg"] = hworder.AppPkg
+		}
+
+		callbackData["user_id"] = hworder.UserId
+
+		if hworder.AppNotifyUrl != "" {
+			tmpNotifyUrl = hworder.AppNotifyUrl
+		}
+
+		if hworder.AppId != info.ApplicationId {
+			err = errors.New("应用id不一致")
+			l.Errorf(err.Error()+" 数据库app id: %s, 回传app id: %s", hworder.AppId, info.ApplicationId)
+			return err
+		}
+
+		// 购买时间
+		var purchaseTime string
+		if purchaseData.OriPurchaseTime > 1000 {
+			// OriPurchaseTime 原购买时间，UTC时间戳，以毫秒为单位
+			purchaseTime = time.Unix(int64(purchaseData.OriPurchaseTime/1000), 0).Format("2006-01-02 15:04:05")
+		} else if purchaseData.PurchaseTime > 1000 {
+			purchaseTime = time.Unix(int64(purchaseData.PurchaseTime/1000), 0).Format("2006-01-02 15:04:05")
+		}
+
+		// switch notificationType {
+		// case huawei.NOTIFICATION_TYPE_INITIAL_BUY:
+		// case huawei.NOTIFICATION_TYPE_CANCEL:
+		// case huawei.NOTIFICATION_TYPE_RENEWAL:
+		// case huawei.NOTIFICATION_TYPE_INTERACTIVE_RENEWAL:
+		// case huawei.NOTIFICATION_TYPE_NEW_RENEWAL_PREF:
+		// case huawei.NOTIFICATION_TYPE_RENEWAL_STOPPED:
+		// case huawei.NOTIFICATION_TYPE_RENEWAL_RESTORED:
+		// case huawei.NOTIFICATION_TYPE_RENEWAL_RECURRING:
+		// case huawei.NOTIFICATION_TYPE_ON_HOLD:
+		// case huawei.NOTIFICATION_TYPE_PAUSED:
+		// case huawei.NOTIFICATION_TYPE_PAUSE_PLAN_CHANGED:
+		// case huawei.NOTIFICATION_TYPE_PRICE_CHANGE_CONFIRMED:
+		// case huawei.NOTIFICATION_TYPE_DEFERRED:
+		// default:
+		// }
+
+		// 更新数据
+		var updateData map[string]interface{}
+		if hworder.Status == 0 {
+			// 未处理过
+			updateData = map[string]interface{}{
+				"log_id":            logId,
+				"version":           req.Version,
+				"event_type":        req.EventType,
+				"notify_time":       int(req.NotifyTime / 1000), // 毫秒转成秒级时间戳
+				"notification_type": notificationType,
+				"environment":       strings.ToLower(info.Environment),
+				"pay_order_id":      info.OrderId,
+				"platform_trade_no": info.OrderId,
+				"subscription_id":   purchaseData.SubscriptionId,
+				"auto_renew_status": info.AutoRenewStatus,
+				"status":            1, // 已处理
+				"pay_time":          purchaseTime,
+				"expiration_date":   int(purchaseData.ExpirationDate / 1000),
+			}
+		} else {
+			// 已经处理过
+			updateData = map[string]interface{}{
+				"version":           req.Version,
+				"event_type":        req.EventType,
+				"notify_time":       int(req.NotifyTime / 1000), // 毫秒转成秒级时间戳
+				"notification_type": notificationType,
+				"auto_renew_status": info.AutoRenewStatus,
+			}
+
+			if purchaseTime != "" {
+				updateData["pay_time"] = purchaseTime
+			}
+
+			if info.Environment != "" {
+				updateData["environment"] = strings.ToLower(info.Environment)
+			}
+
+			if info.OrderId != "" {
+				updateData["pay_order_id"] = info.OrderId
+				updateData["platform_trade_no"] = info.OrderId
+			}
+
+			if purchaseData.SubscriptionId != "" {
+				updateData["subscription_id"] = purchaseData.SubscriptionId
+			}
+
+			if purchaseData.ExpirationDate > 1000 {
+				updateData["expiration_date"] = int(purchaseData.ExpirationDate / 1000)
+			}
+		}
+
+		if info.ProductId != "" && hworder.ProductId != info.ProductId {
+			// 商品id不一致 更改了订阅商品id
+			updateData["product_id"] = info.ProductId
+			callbackData["new_product_id"] = info.ProductId
+		}
+
+		if cancellationTime < 1 && purchaseData.CancellationTime > 1000 {
+			cancellationTime = int(purchaseData.CancellationTime / 1000)
+		}
+		if cancellationTime > 0 {
+			updateData["cancellation_date"] = cancellationTime
+		} else {
+			updateData["cancellation_date"] = 0
+		}
+
+		err = l.huaweiOrderModel.UpdateData(hworder.Id, updateData)
+		if err != nil {
+			return err
+		}
 	}
 
 	// 回调业务方接口 使用回调来 提供服务 回调才是处理实际逻辑的地方
 	// 成功操作时 异步回调 把订单号、通知类型、用户id、包名返回
-	if hworder.AppNotifyUrl != "" {
-		go util.SafeRun(func() {
-			// 回调数据
-			callbackData := map[string]interface{}{
-				"notify_type":       code.APP_NOTIFY_HUAWEI_PRODUCT_SUBSCIRBE,
-				"user_id":           hworder.UserId,
-				"out_trade_no":      hworder.OutTradeNo,
-				"pkg":               hworder.AppPkg,
-				"notification_type": notificationType,
-				"new_product_id":    newProductId,     // 新商品id
-				"notidy_desc":       notifyDesc,       // 通知描述
-				"cancellation_time": cancellationTime, // 取消订阅时间
-			}
+	go util.SafeRun(func() {
+		headerMap := map[string]string{
+			"App-Origin": callbackPkg,
+		}
 
-			headerMap := map[string]string{
-				"App-Origin": hworder.AppPkg,
-			}
-			l.Sloww("华为回调app数据", logx.Field("call back data", callbackData))
-			tmpErr := utils.CallbackWithRetry(hworder.AppNotifyUrl, headerMap, callbackData, 5*time.Second)
-			if tmpErr != nil {
-				l.Errorf("callback error: %v, call back data: %v", tmpErr, callbackData)
-			}
-		})
-	} else {
-		logx.Errorf("order id:%d, out_trade_no:%s, app notify url is empty", hworder.Id, hworder.OutTradeNo)
-	}
+		tmpErr := utils.CallbackWithRetry(tmpNotifyUrl, headerMap, callbackData, 5*time.Second)
+		l.Sloww("华为回调app数据", logx.Field("call back data", callbackData), logx.Field("tmpErr", tmpErr))
+		if tmpErr != nil {
+			l.Errorf("callback error: %v, call back data: %v", tmpErr, callbackData)
+		}
+	})
 
 	return nil
 }

@@ -1,6 +1,7 @@
 package model
 
 import (
+	"errors"
 	"time"
 
 	"github.com/zeromicro/go-zero/core/logx"
@@ -103,6 +104,19 @@ func (o *HuaweiOrderModel) GetOneByTokenAndSubId(purchaseToken, subscriptionId, 
 		}
 	}
 
+	return tbl, err
+}
+
+func (o *HuaweiOrderModel) GetOneByOutTradeNo(outTradeNo string) (*HuaweiOrderTable, error) {
+	if outTradeNo == "" {
+		return nil, errors.New("订单号为空")
+	}
+
+	tbl := new(HuaweiOrderTable)
+	err := o.DB.Table("huawei_order").Where("`out_trade_no`", outTradeNo).First(tbl).Error
+	if err != nil {
+		logx.Errorf("GetOneByOutTradeNo err: %v, outTradeNo: %s,", err, outTradeNo)
+	}
 	return tbl, err
 }
 
