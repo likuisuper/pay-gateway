@@ -132,7 +132,7 @@ func (l *NotifyHuaweiLogic) handleHuaweiSub(req *types.HuaweiReq, hwApp *model.H
 		return nil
 	}
 
-	var purchaseData huawei.InAppPurchaseData
+	purchaseData := huawei.InAppPurchaseData{}
 
 	// 取消订阅时间
 	cancellationTime := 0
@@ -205,9 +205,10 @@ func (l *NotifyHuaweiLogic) handleHuaweiSub(req *types.HuaweiReq, hwApp *model.H
 		"out_trade_no":      info.DeveloperPayload,
 		"pkg":               callbackPkg,
 		"notification_type": notificationType,
-		"new_product_id":    "",               // 新商品id
-		"notidy_desc":       notifyDesc,       // 通知描述
-		"cancellation_time": cancellationTime, // 取消订阅时间
+		"new_product_id":    "",                      // 新商品id
+		"notidy_desc":       notifyDesc,              // 通知描述
+		"cancellation_time": cancellationTime,        // 取消订阅时间
+		"platform_trade_no": purchaseData.PayOrderId, // 华为返回的订单号
 	}
 
 	if hworder != nil && hworder.Id > 0 {
@@ -415,30 +416,33 @@ func (l *NotifyHuaweiLogic) handleHuaweiOrder(req *types.HuaweiReq, logId int) e
 		return err
 	}
 
+	// 这里直接填线上地址
+	tmpNotifyUrl := "http://quick4-go-pre.muchcloud.com/ver/user/notifyUser"
+
 	// 回调业务方接口 使用回调来 提供服务 回调才是处理实际逻辑的地方
 	// 成功操作时 异步回调 把订单号、通知类型、用户id、包名返回
 	if hworder.AppNotifyUrl != "" {
-		go util.SafeRun(func() {
-			// 回调数据
-			callbackData := map[string]interface{}{
-				"notify_type":  code.APP_NOTIFY_HUAWEI_PRODUCT_BUY,
-				"user_id":      hworder.UserId,
-				"out_trade_no": hworder.OutTradeNo,
-				"pkg":          hworder.AppPkg,
-			}
-
-			headerMap := map[string]string{
-				"App-Origin": hworder.AppPkg,
-			}
-			l.Sloww("华为回调app数据", logx.Field("call back data", callbackData))
-			tmpErr := utils.CallbackWithRetry(hworder.AppNotifyUrl, headerMap, callbackData, 5*time.Second)
-			if tmpErr != nil {
-				l.Errorf("callback error: %v, call back data: %v", tmpErr, callbackData)
-			}
-		})
-	} else {
-		logx.Errorf("order id:%d, out_trade_no:%s, app notify url is empty", hworder.Id, hworder.OutTradeNo)
+		tmpNotifyUrl = hworder.AppNotifyUrl
 	}
+
+	go util.SafeRun(func() {
+		// 回调数据
+		callbackData := map[string]interface{}{
+			"notify_type":  code.APP_NOTIFY_HUAWEI_PRODUCT_BUY,
+			"user_id":      hworder.UserId,
+			"out_trade_no": hworder.OutTradeNo,
+			"pkg":          hworder.AppPkg,
+		}
+
+		headerMap := map[string]string{
+			"App-Origin": hworder.AppPkg,
+		}
+		l.Sloww("华为回调app数据", logx.Field("call back data", callbackData))
+		tmpErr := utils.CallbackWithRetry(tmpNotifyUrl, headerMap, callbackData, 5*time.Second)
+		if tmpErr != nil {
+			l.Errorf("callback error: %v, call back data: %v", tmpErr, callbackData)
+		}
+	})
 
 	return nil
 }
