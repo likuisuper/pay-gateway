@@ -22,11 +22,16 @@ const RedisAliPayConfigKey2 = "pay:config2:%s" //%s:支付宝的app_id
 var cliCache sync.Map
 
 func GetAlipayClientByAppPkgWithCache(pkgName string) (payClient *alipay2.Client, appId string, notifyUrl string, err error) {
-	return getAlipayClientWithCache(pkgName, "")
+	return getAlipayClientWithCache(pkgName, "", 1800)
+}
+
+// 缓存时间较短
+func GetAlipayClientByAppPkgWithCache2(pkgName string) (payClient *alipay2.Client, appId string, notifyUrl string, err error) {
+	return getAlipayClientWithCache(pkgName, "", 120)
 }
 
 func GetAlipayClientByAppIdWithCache(aliAppId string) (payClient *alipay2.Client, appId string, notifyUrl string, err error) {
-	return getAlipayClientWithCache("", aliAppId)
+	return getAlipayClientWithCache("", aliAppId, 1800)
 }
 
 // 需要选用不同的支付宝账号
@@ -59,7 +64,7 @@ func GetAlipayClienMerchantInfo(pkgName string) (payClient *alipay2.Client, appI
 // payCfg: 商户的配置，比如证书、回调地址
 // appCfg: 应用的配置，比如使用的商户id
 // 一般的场景是'包名->商户id->阿里client`, 但存在极端情况，收到支付宝回调的时候切换了商户, 所以收到回调的时候要使用商户app_id来找client
-func getAlipayClientWithCache(pkgName string, aliAppId string) (payClient *alipay2.Client, appId string, notifyUrl string, err error) {
+func getAlipayClientWithCache(pkgName string, aliAppId string, cacheTtl int) (payClient *alipay2.Client, appId string, notifyUrl string, err error) {
 	if pkgName == "" && aliAppId == "" {
 		return nil, "", "", errors.New("pkg name and aliAppId all empty")
 	}
@@ -116,10 +121,10 @@ func getAlipayClientWithCache(pkgName string, aliAppId string) (payClient *alipa
 		config := *payCfg.TransClientConfig()
 		cliCache.Delete(config.AppId)
 
-		appConfigModel.RDB.Set(context.TODO(), rKeyAppCfg, *pkgCfg, 3*3600)
+		appConfigModel.RDB.Set(context.TODO(), rKeyAppCfg, *pkgCfg, cacheTtl)
 
 		rKeyPayCfg = payConfigAlipayModel.RDB.GetRedisKey(RedisAliPayConfigKey, pkgCfg.AlipayAppID)
-		payConfigAlipayModel.RDB.Set(context.TODO(), rKeyPayCfg, *payCfg, 3*3600)
+		payConfigAlipayModel.RDB.Set(context.TODO(), rKeyPayCfg, *payCfg, cacheTtl)
 
 		payClient, err = client.GetAlipayClient(config)
 		if err == nil && payClient != nil {

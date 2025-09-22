@@ -39,9 +39,9 @@ func NewAlipayH5PayLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Alipa
 
 // 支付宝h5支付，目前只支持普通商品，不支持订阅商品
 func (l *AlipayH5PayLogic) AlipayH5Pay(in *pb.AlipayPageSignReq) (*pb.AlipayPageSignResp, error) {
-	payClient, payAppId, notifyUrl, err := clientMgr.GetAlipayClientByAppPkgWithCache(in.GetAppPkgName())
+	payClient, payAppId, notifyUrl, err := clientMgr.GetAlipayClientByAppPkgWithCache2(in.GetAppPkgName())
 	if err != nil {
-		l.Errorf("clientMgr.GetAlipayClientByAppPkgWithCache err: %v, pkg: %s", err, in.GetAppPkgName())
+		l.Errorf("clientMgr.GetAlipayClientByAppPkgWithCache2 err: %v, pkg: %s", err, in.GetAppPkgName())
 		return nil, err
 	}
 
