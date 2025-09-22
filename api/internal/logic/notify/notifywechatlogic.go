@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	jsoniter "github.com/json-iterator/go"
@@ -66,10 +67,14 @@ func (l *NotifyWechatLogic) NotifyWechat(request *http.Request) (resp *types.WeC
 	wxCli := client.NewWeChatCommPay(*payCfg.TransClientConfig())
 	transaction, _, err = wxCli.Notify(request)
 	if err != nil || transaction == nil {
-		err = fmt.Errorf("微信支付回调 解析及验证内容失败 err=%v ", err)
-		DingdingNotify(l.ctx, err.Error())
+		wechatpaySignature := request.Header.Get("Wechatpay-Signature")
+		if !strings.Contains(wechatpaySignature, "WECHATPAY/SIGNTEST/") {
+			err = fmt.Errorf("微信支付回调 解析及验证内容失败 err=%v ", err)
+			DingdingNotify(l.ctx, err.Error())
 
-		logx.Error(err.Error())
+			logx.Error(err.Error())
+		}
+
 		return
 	}
 
