@@ -525,6 +525,9 @@ service Payment {
   //支付宝：支付并签约
   rpc AlipayPagePayAndSign(AlipayPageSignReq) returns (AlipayPageSignResp);
 
+  //支付宝h5支付
+  rpc AlipayH5Pay(AlipayPageSignReq) returns (AlipayPageSignResp);
+
   //支付宝新的充值订阅 可以选择不同的支付宝账号：支付并签约
   rpc AlipayPagePayAndSignChoiceAccount(AlipayPageSignReq) returns (AlipayPageSignResp);
 

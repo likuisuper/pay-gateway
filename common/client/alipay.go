@@ -38,6 +38,7 @@ func GetAlipayClient(config AliPayConfig) (client *alipay2.Client, err error) {
 			Timeout:   10 * time.Second,
 		}
 	})
+
 	// 将 key 的验证调整到初始化阶段
 	if err != nil {
 		aliPayClientInitFailNum.CounterInc()
@@ -56,11 +57,13 @@ func GetAlipayClient(config AliPayConfig) (client *alipay2.Client, err error) {
 		aliPayClientInitFailNum.CounterInc()
 		return nil, err
 	}
+
 	err = client.LoadAliPayPublicCertFromFile(config.PublicKey) // 加载支付宝公钥证书
 	if err != nil {
 		logx.Errorf("加载支付宝公钥证书：%v, appId:%s", err.Error(), config.AppId)
 		aliPayClientInitFailNum.CounterInc()
 		return nil, err
 	}
+
 	return client, err
 }

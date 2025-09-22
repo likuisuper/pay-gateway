@@ -87,14 +87,16 @@ func getAlipayClientWithCache(pkgName string, aliAppId string) (payClient *alipa
 		payConfigAlipayModel.RDB.GetObject(context.TODO(), rKeyPayCfg, payCfg)
 	}
 
-	if payCfg.ID != 0 && pkgCfg.AlipayAppID != "" { // Redis缓存还在，直接从内存缓存中获取客户端
+	if payCfg.ID != 0 && pkgCfg.AlipayAppID != "" {
+		// Redis缓存还在，直接从内存缓存中获取客户端
 		config := *payCfg.TransClientConfig()
 		if cli, ok := cliCache.Load(config.AppId); ok {
 			payClient = cli.(*alipay2.Client)
 		}
 	}
 
-	if payCfg.ID == 0 || pkgCfg.ID == 0 || payClient == nil { // Redis缓存失效，或者内存缓存中没有客户端，再去读取配置还有证书，创建客户端
+	if payCfg.ID == 0 || pkgCfg.ID == 0 || payClient == nil {
+		// Redis缓存失效，或者内存缓存中没有客户端，再去读取配置还有证书，创建客户端
 		if pkgName != "" {
 			pkgCfg, err = appConfigModel.GetOneByPkgName(pkgName)
 			if err != nil {

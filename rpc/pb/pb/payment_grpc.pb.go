@@ -28,6 +28,7 @@ const (
 	Payment_CreateDouyinRefund_FullMethodName                = "/payment.Payment/CreateDouyinRefund"
 	Payment_AlipayTrade_FullMethodName                       = "/payment.Payment/AlipayTrade"
 	Payment_AlipayPagePayAndSign_FullMethodName              = "/payment.Payment/AlipayPagePayAndSign"
+	Payment_AlipayH5Pay_FullMethodName                       = "/payment.Payment/AlipayH5Pay"
 	Payment_AlipayPagePayAndSignChoiceAccount_FullMethodName = "/payment.Payment/AlipayPagePayAndSignChoiceAccount"
 	Payment_AlipayPageUnSign_FullMethodName                  = "/payment.Payment/AlipayPageUnSign"
 	Payment_AlipayCreateRefund_FullMethodName                = "/payment.Payment/AlipayCreateRefund"
@@ -71,6 +72,8 @@ type PaymentClient interface {
 	AlipayTrade(ctx context.Context, in *AlipayTradeReq, opts ...grpc.CallOption) (*AlipayPageSignResp, error)
 	// 支付宝：支付并签约
 	AlipayPagePayAndSign(ctx context.Context, in *AlipayPageSignReq, opts ...grpc.CallOption) (*AlipayPageSignResp, error)
+	// 支付宝h5支付
+	AlipayH5Pay(ctx context.Context, in *AlipayPageSignReq, opts ...grpc.CallOption) (*AlipayPageSignResp, error)
 	// 支付宝新的充值订阅 可以选择不同的支付宝账号：支付并签约
 	AlipayPagePayAndSignChoiceAccount(ctx context.Context, in *AlipayPageSignReq, opts ...grpc.CallOption) (*AlipayPageSignResp, error)
 	// 支付宝：解约
@@ -194,6 +197,15 @@ func (c *paymentClient) AlipayTrade(ctx context.Context, in *AlipayTradeReq, opt
 func (c *paymentClient) AlipayPagePayAndSign(ctx context.Context, in *AlipayPageSignReq, opts ...grpc.CallOption) (*AlipayPageSignResp, error) {
 	out := new(AlipayPageSignResp)
 	err := c.cc.Invoke(ctx, Payment_AlipayPagePayAndSign_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *paymentClient) AlipayH5Pay(ctx context.Context, in *AlipayPageSignReq, opts ...grpc.CallOption) (*AlipayPageSignResp, error) {
+	out := new(AlipayPageSignResp)
+	err := c.cc.Invoke(ctx, Payment_AlipayH5Pay_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -393,6 +405,8 @@ type PaymentServer interface {
 	AlipayTrade(context.Context, *AlipayTradeReq) (*AlipayPageSignResp, error)
 	// 支付宝：支付并签约
 	AlipayPagePayAndSign(context.Context, *AlipayPageSignReq) (*AlipayPageSignResp, error)
+	// 支付宝h5支付
+	AlipayH5Pay(context.Context, *AlipayPageSignReq) (*AlipayPageSignResp, error)
 	// 支付宝新的充值订阅 可以选择不同的支付宝账号：支付并签约
 	AlipayPagePayAndSignChoiceAccount(context.Context, *AlipayPageSignReq) (*AlipayPageSignResp, error)
 	// 支付宝：解约
@@ -464,6 +478,9 @@ func (UnimplementedPaymentServer) AlipayTrade(context.Context, *AlipayTradeReq) 
 }
 func (UnimplementedPaymentServer) AlipayPagePayAndSign(context.Context, *AlipayPageSignReq) (*AlipayPageSignResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AlipayPagePayAndSign not implemented")
+}
+func (UnimplementedPaymentServer) AlipayH5Pay(context.Context, *AlipayPageSignReq) (*AlipayPageSignResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AlipayH5Pay not implemented")
 }
 func (UnimplementedPaymentServer) AlipayPagePayAndSignChoiceAccount(context.Context, *AlipayPageSignReq) (*AlipayPageSignResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AlipayPagePayAndSignChoiceAccount not implemented")
@@ -693,6 +710,24 @@ func _Payment_AlipayPagePayAndSign_Handler(srv interface{}, ctx context.Context,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(PaymentServer).AlipayPagePayAndSign(ctx, req.(*AlipayPageSignReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Payment_AlipayH5Pay_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AlipayPageSignReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PaymentServer).AlipayH5Pay(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Payment_AlipayH5Pay_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PaymentServer).AlipayH5Pay(ctx, req.(*AlipayPageSignReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1081,6 +1116,10 @@ var Payment_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AlipayPagePayAndSign",
 			Handler:    _Payment_AlipayPagePayAndSign_Handler,
+		},
+		{
+			MethodName: "AlipayH5Pay",
+			Handler:    _Payment_AlipayH5Pay_Handler,
 		},
 		{
 			MethodName: "AlipayPagePayAndSignChoiceAccount",

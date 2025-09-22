@@ -77,6 +77,12 @@ func (s *PaymentServer) AlipayPagePayAndSign(ctx context.Context, in *pb.AlipayP
 	return l.AlipayPagePayAndSign(in)
 }
 
+// 支付宝h5支付
+func (s *PaymentServer) AlipayH5Pay(ctx context.Context, in *pb.AlipayPageSignReq) (*pb.AlipayPageSignResp, error) {
+	l := logic.NewAlipayH5PayLogic(ctx, s.svcCtx)
+	return l.AlipayH5Pay(in)
+}
+
 // 支付宝新的充值订阅 可以选择不同的支付宝账号：支付并签约
 func (s *PaymentServer) AlipayPagePayAndSignChoiceAccount(ctx context.Context, in *pb.AlipayPageSignReq) (*pb.AlipayPageSignResp, error) {
 	l := logic.NewAlipayPagePayAndSignChoiceAccountLogic(ctx, s.svcCtx)
